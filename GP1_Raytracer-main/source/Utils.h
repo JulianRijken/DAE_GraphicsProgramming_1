@@ -12,8 +12,36 @@ namespace dae
 		//SPHERE HIT-TESTS
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//todo W1
-			assert(false && "No Implemented Yet!");
+			Vector3 rayOriginToSphere = ray.origin - sphere.origin;
+
+			// Calculate coefficients of the quadratic equation for ray-sphere intersection.
+			const float a = Vector3::Dot(ray.direction, ray.direction);
+			const float b = Vector3::Dot(rayOriginToSphere, ray.direction);
+			const float c = Vector3::Dot(rayOriginToSphere, rayOriginToSphere) - (sphere.radius * sphere.radius);
+
+			const float discriminant = b * b - a * c;
+
+			// Check if ray intersects
+			if (discriminant > 0) 
+			{
+				float root = sqrt(discriminant);
+
+				float t = (-b - root) / a;
+
+				if (t < hitRecord.t) 
+				{
+					if (!ignoreHitRecord)
+					{
+						hitRecord.t = t;
+						hitRecord.origin = ray.origin + ray.direction * hitRecord.t;
+						hitRecord.normal = (hitRecord.origin - sphere.origin) / sphere.radius;
+						hitRecord.didHit = true;
+						hitRecord.materialIndex = sphere.materialIndex;
+					}
+					return true;
+				}
+			}
+
 			return false;
 		}
 
@@ -27,8 +55,33 @@ namespace dae
 		//PLANE HIT-TESTS
 		inline bool HitTest_Plane(const Plane& plane, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//todo W1
-			assert(false && "No Implemented Yet!");
+			// Calculate the dot product of the ray direction and the plane's normal
+			float normalDot = Vector3::Dot(ray.direction, plane.normal);
+
+
+			// Calculate the parameter 't' at which the ray intersects the plane
+			float t = Vector3::Dot(plane.origin - ray.origin, plane.normal) / normalDot;
+
+			// Check if the intersection point is behind the ray's origin
+			if (t < 0.0f)
+				return false;
+			
+
+			// Check if this intersection is closer than the previously recorded one
+			if (t < hitRecord.t)
+			{
+				if (!ignoreHitRecord)
+				{
+					hitRecord.t = t;
+					hitRecord.origin = ray.origin + ray.direction * t;
+					hitRecord.normal = plane.normal;
+					hitRecord.didHit = true;
+					hitRecord.materialIndex = plane.materialIndex;
+				}
+
+				return true;
+			}
+
 			return false;
 		}
 

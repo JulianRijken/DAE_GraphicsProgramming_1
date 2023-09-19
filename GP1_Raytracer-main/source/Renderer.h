@@ -20,7 +20,7 @@ namespace dae
 		Renderer& operator=(const Renderer&) = delete;
 		Renderer& operator=(Renderer&&) noexcept = delete;
 
-		void Render(Scene* pScene) const;
+		void Render(Scene* scenePtr) const;
 		bool SaveBufferToImage() const;
 
 	private:

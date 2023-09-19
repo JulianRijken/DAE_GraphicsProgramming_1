@@ -4,6 +4,9 @@
 
 //Project includes
 #include "Renderer.h"
+
+#include <iostream>
+
 #include "Math.h"
 #include "Matrix.h"
 #include "Material.h"
@@ -21,42 +24,52 @@ Renderer::Renderer(SDL_Window * pWindow) :
 	m_pBufferPixels = static_cast<uint32_t*>(m_pBuffer->pixels);
 }
 
-void Renderer::Render(Scene* pScene) const
+void Renderer::Render(Scene* scenePtr) const
 {
-	Camera& camera = pScene->GetCamera();
-	auto& materials = pScene->GetMaterials();
-	auto& lights = pScene->GetLights();
+	Camera& camera = scenePtr->GetCamera();
+	auto& materials = scenePtr->GetMaterials();
+	auto& lights = scenePtr->GetLights();
 
+	float aspectRatio = (float)m_Width / (float)m_Height;
 
-	for (int px{}; px < m_Width; ++px)
+	for (int pixelX{}; pixelX < m_Width; ++pixelX)
 	{
-		for (int py{}; py < m_Height; ++py)
+		for (int pixelY{}; pixelY < m_Height; ++pixelY)
 		{
-			//float gradient = px / static_cast<float>(m_Width);
-			//gradient += py / static_cast<float>(m_Width);
-			//gradient /= 2.0f;
 
 
-			float aspect = (float)m_Width / (float)m_Height;
-
-
-			float pxc = (float)px + 0.5f;
-			float pxy = (float)py + 0.5f;
-
-			float pixelX = (2.0f * pxc / (float)m_Width - 1.0f) * aspect;
-			float pixelY = 1.0f - 2.0f * pxy / (float)m_Height;
-
+			float pixelCenterX = (float)pixelX + 0.5f;
+			float pixelCenterY = (float)pixelY + 0.5f;
 
 			
-			Vector3 rayDirection{pixelX,pixelY,1 };
+			Vector3 rayDirection
+			{
+				(2.0f * pixelCenterX / (float)m_Width - 1.0f) * aspectRatio,
+				1.0f - 2.0f * pixelCenterY / (float)m_Height,
+				1
+			};
 			rayDirection.Normalize();
 
-			ColorRGB finalColor{ rayDirection.x,rayDirection.y,rayDirection.z };
 
-			//Update Color in Buffer
+			Ray viewRay{ camera.origin,rayDirection };
+
+			HitRecord closestHit{};
+			scenePtr->GetClosestHit(viewRay, closestHit);
+
+
+			ColorRGB finalColor{};
+
+			if (closestHit.didHit)
+			{
+				float scaled_t = closestHit.t / 250.0f;
+				scaled_t = 1.0f - scaled_t;
+
+				finalColor = materials[closestHit.materialIndex]->Shade() * scaled_t;
+			}
+
 			finalColor.MaxToOne();
 
-			m_pBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBuffer->format,
+			m_pBufferPixels[pixelX + (pixelY * m_Width)] = SDL_MapRGB(m_pBuffer->format,
 				static_cast<uint8_t>(finalColor.r * 255),
 				static_cast<uint8_t>(finalColor.g * 255),
 				static_cast<uint8_t>(finalColor.b * 255));
