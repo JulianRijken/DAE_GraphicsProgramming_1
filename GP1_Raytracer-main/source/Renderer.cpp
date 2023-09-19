@@ -32,6 +32,7 @@ void Renderer::Render(Scene* scenePtr) const
 
 	float aspectRatio = (float)m_Width / (float)m_Height;
 
+#pragma omp parallel for schedule(guided)
 	for (int pixelX{}; pixelX < m_Width; ++pixelX)
 	{
 		for (int pixelY{}; pixelY < m_Height; ++pixelY)

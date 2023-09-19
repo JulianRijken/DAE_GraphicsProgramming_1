@@ -1,6 +1,8 @@
 #pragma once
 #include <cassert>
 #include <fstream>
+#include <iostream>
+
 #include "Math.h"
 #include "DataTypes.h"
 
@@ -12,6 +14,36 @@ namespace dae
 		//SPHERE HIT-TESTS
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
+			//const float radius2 = sphere.radius * sphere.radius;
+
+			//Vector3 cameraToOrigin = sphere.origin - ray.origin;
+			//float tInsideSphere = Vector3::Dot(ray.direction, cameraToOrigin);
+
+			//if (tInsideSphere <= 0)
+			//	return false; // looking away from sphere
+
+			//float originToInsideDist2 = cameraToOrigin.SqrMagnitude() - tInsideSphere * tInsideSphere;
+			//if (originToInsideDist2 > radius2)
+			//	return false; // 'inside' point is outside of sphere
+
+			//float tDiff = std::sqrt(radius2 - originToInsideDist2);
+			//float t = tInsideSphere - tDiff;
+
+			//const bool hit = t > 0;
+
+			//if (hit && !ignoreHitRecord)
+			//{
+			//	hitRecord.didHit = hit;
+			//	hitRecord.t = t;
+			//	hitRecord.origin = ray.direction * t;
+			//	hitRecord.materialIndex = sphere.materialIndex;
+
+			//	hitRecord.normal = (hitRecord.origin - sphere.origin) / sphere.radius;
+			//}
+
+			//return hit;
+
+
 			Vector3 rayOriginToSphere = ray.origin - sphere.origin;
 
 			// Calculate coefficients of the quadratic equation for ray-sphere intersection.
@@ -22,12 +54,11 @@ namespace dae
 			const float discriminant = b * b - a * c;
 
 			// Check if ray intersects
-			if (discriminant > 0) 
+			if (discriminant > 0)
 			{
-
 				float t = (-b - sqrt(discriminant)) / a;
 
-				if (t < hitRecord.t) 
+				if (t < hitRecord.t)
 				{
 					if (!ignoreHitRecord)
 					{
