@@ -24,9 +24,8 @@ namespace dae
 			// Check if ray intersects
 			if (discriminant > 0) 
 			{
-				float root = sqrt(discriminant);
 
-				float t = (-b - root) / a;
+				float t = (-b - sqrt(discriminant)) / a;
 
 				if (t < hitRecord.t) 
 				{

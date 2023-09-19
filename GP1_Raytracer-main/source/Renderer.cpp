@@ -37,15 +37,10 @@ void Renderer::Render(Scene* scenePtr) const
 		for (int pixelY{}; pixelY < m_Height; ++pixelY)
 		{
 
-
-			float pixelCenterX = (float)pixelX + 0.5f;
-			float pixelCenterY = (float)pixelY + 0.5f;
-
-			
 			Vector3 rayDirection
 			{
-				(2.0f * pixelCenterX / (float)m_Width - 1.0f) * aspectRatio,
-				1.0f - 2.0f * pixelCenterY / (float)m_Height,
+				(2.0f * ((float)pixelX + 0.5f) / (float)m_Width - 1.0f) * aspectRatio,
+				1.0f - 2.0f * ((float)pixelY + 0.5f) / (float)m_Height,
 				1
 			};
 			rayDirection.Normalize();
@@ -55,7 +50,6 @@ void Renderer::Render(Scene* scenePtr) const
 
 			HitRecord closestHit{};
 			scenePtr->GetClosestHit(viewRay, closestHit);
-
 
 			ColorRGB finalColor{};
 
