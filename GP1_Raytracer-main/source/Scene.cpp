@@ -29,10 +29,10 @@ namespace dae {
 	void dae::Scene::GetClosestHit(const Ray& ray, HitRecord& closestHit) const
 	{
 		HitRecord testHitRecord{};
-		testHitRecord.t = FLT_MAX;
 
 		for (Sphere sphere : m_SphereGeometries)
 		{
+			// Apply test to tesHitRecord
 			GeometryUtils::HitTest_Sphere(sphere, ray, testHitRecord);
 
 			if (testHitRecord.t < closestHit.t)
@@ -41,6 +41,7 @@ namespace dae {
 
 		for (Plane plane: m_PlaneGeometries)
 		{
+			// Apply test to tesHitRecord
 			GeometryUtils::HitTest_Plane(plane, ray, testHitRecord);
 
 			if (testHitRecord.t < closestHit.t)
