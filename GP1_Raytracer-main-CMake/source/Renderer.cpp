@@ -4,7 +4,7 @@
 
 //Project includes
 #include "Renderer.h"
-#include "Math/Math.h"
+
 #include "Math/Matrix.h"
 #include "Misc/Material.h"
 #include "Misc/Scene.h"
@@ -12,7 +12,7 @@
 
 using namespace dae;
 
-Renderer::Renderer(SDL_Window * pWindow) :
+Renderer::Renderer(SDL_Window* pWindow) :
 	m_pWindow(pWindow),
 	m_pBuffer(SDL_GetWindowSurface(pWindow))
 {
@@ -21,58 +21,47 @@ Renderer::Renderer(SDL_Window * pWindow) :
 	m_pBufferPixels = static_cast<uint32_t*>(m_pBuffer->pixels);
 }
 
-void Renderer::Render(Scene* pScene) const
+void Renderer::Render(Scene* scenePtr) const
 {
-	Camera& camera = pScene->GetCamera();
-	auto& materials = pScene->GetMaterials();
-	auto& lights = pScene->GetLights();
+	Camera& camera = scenePtr->GetCamera();
+	auto& materials = scenePtr->GetMaterials();
+	auto& lights = scenePtr->GetLights();
 
-    float aspectRatio{ static_cast<float>(m_Width) / static_cast<float>(m_Height) };
+	const float aspectRatio = (float)m_Width / (float)m_Height;
 
-    Vector3 origin{ 0, 0, 0 };
-    Sphere testSphere{ {0.f, 0.f, 100.f}, 50.f, 0 };
-
-    #pragma omp parallel for schedule(guided) default(none) shared(origin, testSphere, aspectRatio, pScene, materials)
-    for (int px{}; px < m_Width; ++px)
+#pragma omp parallel for schedule(guided) default(none) shared(aspectRatio, scenePtr, materials)
+	for (int pixelX{}; pixelX < m_Width; ++pixelX)
 	{
-        HitRecord closestHit{};
-
-        for (int py{}; py < m_Height; ++py)
+		for (int pixelY{}; pixelY < m_Height; ++pixelY)
 		{
-            float x = ((2.f * (static_cast<float>(px) + 0.5f)) / static_cast<float>(m_Width) - 1.f) * aspectRatio;
-            float y = 1.f - 2.f * (static_cast<float>(py) + 0.5f) / static_cast<float>(m_Height);
 
-            Vector3 rayDirection{
-                x,
-                y,
-                1.f
-            };
+			Vector3 rayDirection
+			{
+				(2.0f * (static_cast<float>(pixelX) + 0.5f) / static_cast<float>(m_Width) - 1.0f) * aspectRatio,
+				1.0f - 2.0f * ((float)pixelY + 0.5f) / static_cast<float>(m_Height),
+				1
+			};
+			rayDirection.Normalize();
 
-            rayDirection.Normalize();
 
-			Ray hitRay{origin, rayDirection};
+			Ray viewRay{ camera.origin,rayDirection };
 
-            pScene->GetClosestHit(hitRay, closestHit);
+			HitRecord closestHit{};
+			scenePtr->GetClosestHit(viewRay, closestHit);
 
-			ColorRGB finalColor{ 0.f, 0.f, 0.f };
+			ColorRGB finalColor{};
 
-            if (closestHit.didHit) {
-                const float scaled_t = (closestHit.t - 50.f) / 40.f;
-                finalColor = scaled_t * materials[closestHit.materialIndex]->Shade();
-//                finalColor = {scaled_t, scaled_t, scaled_t};
-//                Vector3 normalColor{
-//                    abs(closestHit.normal.x),
-//                    abs(closestHit.normal.y),
-//                    abs(closestHit.normal.z)
-//                };
+			if (closestHit.didHit)
+			{
+				float scaled_t = closestHit.t / 250.0f;
+				scaled_t = 1.0f - scaled_t;
 
-//                finalColor = {normalColor.x, normalColor.y, normalColor.z};
-            }
+				finalColor = materials[closestHit.materialIndex]->Shade() * scaled_t;
+			}
 
-			//Update Color in Buffer
 			finalColor.MaxToOne();
 
-			m_pBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBuffer->format,
+			m_pBufferPixels[pixelX + (pixelY * m_Width)] = SDL_MapRGB(m_pBuffer->format,
 				static_cast<uint8_t>(finalColor.r * 255),
 				static_cast<uint8_t>(finalColor.g * 255),
 				static_cast<uint8_t>(finalColor.b * 255));

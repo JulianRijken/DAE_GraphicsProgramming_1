@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.18)
 
 # Change project name here
-set(PROJECT_NAME "game" CACHE STRING "Project name")
+set(PROJECT_NAME "GrapicsProgramming" CACHE STRING "")
 
 set(ASPECT_RATIO "4/3" CACHE STRING "Aspect ratio")
 set(CLICK_TO_START ON CACHE BOOL "A click is required to activate sound on web")

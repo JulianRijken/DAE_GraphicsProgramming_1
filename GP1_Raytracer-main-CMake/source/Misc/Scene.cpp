@@ -1,13 +1,13 @@
 #include "Scene.h"
 #include "Utils.h"
-#include "Misc/Material.h"
+#include "Material.h"
 
 namespace dae {
 
 #pragma region Base Scene
 	//Initialize Scene with Default Solid Color Material (RED)
-	Scene::Scene():
-		m_Materials({ new Material_SolidColor({1,0,0})})
+	Scene::Scene() :
+		m_Materials({ new Material_SolidColor({1,0,0}) })
 	{
 		m_SphereGeometries.reserve(32);
 		m_PlaneGeometries.reserve(32);
@@ -17,7 +17,7 @@ namespace dae {
 
 	Scene::~Scene()
 	{
-		for(auto& pMaterial : m_Materials)
+		for (auto& pMaterial : m_Materials)
 		{
 			delete pMaterial;
 			pMaterial = nullptr;
@@ -28,25 +28,25 @@ namespace dae {
 
 	void dae::Scene::GetClosestHit(const Ray& ray, HitRecord& closestHit) const
 	{
-        HitRecord currentHit{};
-        closestHit.didHit = false;
-        float currentT{ 9999999999999.0f };
+		HitRecord testHitRecord{};
 
-        for (const Sphere &sphere : m_SphereGeometries) {
-            GeometryUtils::HitTest_Sphere(sphere, ray, currentHit);
-            if (currentHit.didHit && currentT > currentHit.t) {
-                currentT = currentHit.t;
-                closestHit = currentHit;
-            }
-        }
+		for (Sphere sphere : m_SphereGeometries)
+		{
+			// Apply test to tesHitRecord
+			GeometryUtils::HitTest_Sphere(sphere, ray, testHitRecord);
 
-        for (const Plane &plane : m_PlaneGeometries) {
-            GeometryUtils::HitTest_Plane(plane, ray, currentHit);
-            if (currentHit.didHit && currentT > currentHit.t) {
-                currentT = currentHit.t;
-                closestHit = currentHit;
-            }
-        }
+			if (testHitRecord.t < closestHit.t)
+				closestHit = testHitRecord;
+		}
+
+		for (Plane plane : m_PlaneGeometries)
+		{
+			// Apply test to tesHitRecord
+			GeometryUtils::HitTest_Plane(plane, ray, testHitRecord);
+
+			if (testHitRecord.t < closestHit.t)
+				closestHit = testHitRecord;
+		}
 	}
 
 	bool Scene::DoesHit(const Ray& ray) const
@@ -124,7 +124,7 @@ namespace dae {
 #pragma region SCENE W1
 	void Scene_W1::Initialize()
 	{
-				//default: Material id0 >> SolidColor Material (RED)
+		//default: Material id0 >> SolidColor Material (RED)
 		constexpr unsigned char matId_Solid_Red = 0;
 		const unsigned char matId_Solid_Blue = AddMaterial(new Material_SolidColor{ colors::Blue });
 
@@ -132,9 +132,19 @@ namespace dae {
 		const unsigned char matId_Solid_Green = AddMaterial(new Material_SolidColor{ colors::Green });
 		const unsigned char matId_Solid_Magenta = AddMaterial(new Material_SolidColor{ colors::Magenta });
 
+
+		// for (int i = 0; i < 20; ++i)
+		// 	AddSphere({ -25.f, -10.f * static_cast<float>(i), 100.0f }, 50.f, matId_Solid_Red);
+		
+
 		//Spheres
-		AddSphere({ -25.f, 0.f, 100.f }, 50.f, matId_Solid_Red);
+		AddSphere({ -25.f, -10.f, 110.f }, 50.f, matId_Solid_Red);
 		AddSphere({ 25.f, 0.f, 100.f }, 50.f, matId_Solid_Blue);
+		AddSphere({ -15.f, 30.f, 120.f }, 50.f, matId_Solid_Green);
+
+
+		//AddSphere({ -25.f, 0.f, 100.f }, 50.f, matId_Solid_Red);
+		//AddSphere({ 25.f, 0.f, 100.f }, 50.f, matId_Solid_Blue);
 
 		//Plane
 		AddPlane({ -75.f, 0.f, 0.f }, { 1.f, 0.f,0.f }, matId_Solid_Green);

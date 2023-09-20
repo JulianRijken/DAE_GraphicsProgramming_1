@@ -1,8 +1,10 @@
 #pragma once
 #include <cassert>
 #include <fstream>
-#include "Math/Math.h"
-#include "Misc/DataTypes.h"
+#include <iostream>
+
+#include "Math.h"
+#include "DataTypes.h"
 
 namespace dae
 {
@@ -12,30 +14,65 @@ namespace dae
 		//SPHERE HIT-TESTS
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-            float dotResult{Vector3::Dot(ray.direction, ray.origin - sphere.origin) };
+			//const float radius2 = sphere.radius * sphere.radius;
 
-            float circle{ (ray.origin - sphere.origin).SqrMagnitude() - sphere.radius * sphere.radius };
-            float discriminant{ dotResult * dotResult - circle };
-            bool didHit{ discriminant > 0 };
+			//Vector3 cameraToOrigin = sphere.origin - ray.origin;
+			//float tInsideSphere = Vector3::Dot(ray.direction, cameraToOrigin);
 
-            if (ignoreHitRecord) {
-                return didHit;
-            }
+			//if (tInsideSphere <= 0)
+			//	return false; // looking away from sphere
 
-            if (!didHit) {
-                hitRecord.didHit = false;
-                return false;
-            }
+			//float originToInsideDist2 = cameraToOrigin.SqrMagnitude() - tInsideSphere * tInsideSphere;
+			//if (originToInsideDist2 > radius2)
+			//	return false; // 'inside' point is outside of sphere
 
-            float sqrtDiscriminant{ sqrtf(discriminant) };
+			//float tDiff = std::sqrt(radius2 - originToInsideDist2);
+			//float t = tInsideSphere - tDiff;
 
-            hitRecord.didHit = true;
-            hitRecord.materialIndex = sphere.materialIndex;
-            hitRecord.origin = ray.origin + ray.direction * hitRecord.t;
-            hitRecord.t = -dotResult - sqrtDiscriminant;
-            hitRecord.normal = (hitRecord.origin - sphere.origin) / sphere.radius;
+			//const bool hit = t > 0;
 
-            return true;
+			//if (hit && !ignoreHitRecord)
+			//{
+			//	hitRecord.didHit = hit;
+			//	hitRecord.t = t;
+			//	hitRecord.origin = ray.direction * t;
+			//	hitRecord.materialIndex = sphere.materialIndex;
+
+			//	hitRecord.normal = (hitRecord.origin - sphere.origin) / sphere.radius;
+			//}
+
+			//return hit;
+
+
+			Vector3 rayOriginToSphere = ray.origin - sphere.origin;
+
+			// Calculate coefficients of the quadratic equation for ray-sphere intersection.
+			const float a = Vector3::Dot(ray.direction, ray.direction);
+			const float b = Vector3::Dot(rayOriginToSphere, ray.direction);
+			const float c = Vector3::Dot(rayOriginToSphere, rayOriginToSphere) - (sphere.radius * sphere.radius);
+
+			const float discriminant = b * b - a * c;
+
+			// Check if ray intersects
+			if (discriminant > 0)
+			{
+				float t = (-b - sqrt(discriminant)) / a;
+
+				if (t < hitRecord.t)
+				{
+					if (!ignoreHitRecord)
+					{
+						hitRecord.t = t;
+						hitRecord.origin = ray.origin + ray.direction * hitRecord.t;
+						hitRecord.normal = (hitRecord.origin - sphere.origin) / sphere.radius;
+						hitRecord.didHit = true;
+						hitRecord.materialIndex = sphere.materialIndex;
+					}
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray)
@@ -48,25 +85,34 @@ namespace dae
 		//PLANE HIT-TESTS
 		inline bool HitTest_Plane(const Plane& plane, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			float t{
-                Vector3::Dot(plane.origin - ray.origin, plane.normal)
-                / Vector3::Dot(ray.direction, plane.normal)
-            };
+			// Calculate the dot product of the ray direction and the plane's normal
+			float normalDot = Vector3::Dot(ray.direction, plane.normal);
 
-            bool didHit{ t > ray.min && t < ray.max };
-            if (ignoreHitRecord) return didHit;
 
-            hitRecord.didHit = didHit;
+			// Calculate the parameter 't' at which the ray intersects the plane
+			float t = Vector3::Dot(plane.origin - ray.origin, plane.normal) / normalDot;
 
-            if (!didHit)
-                return false;
+			// Check if the intersection point is behind the ray's origin
+			if (t < 0.0f)
+				return false;
 
-            hitRecord.t = t;
-            hitRecord.origin = ray.origin + ray.direction * t;
-            hitRecord.normal = plane.normal;
-            hitRecord.materialIndex = plane.materialIndex;
 
-            return true;
+			// Check if this intersection is closer than the previously recorded one
+			if (t < hitRecord.t)
+			{
+				if (!ignoreHitRecord)
+				{
+					hitRecord.t = t;
+					hitRecord.origin = ray.origin + ray.direction * t;
+					hitRecord.normal = plane.normal;
+					hitRecord.didHit = true;
+					hitRecord.materialIndex = plane.materialIndex;
+				}
+
+				return true;
+			}
+
+			return false;
 		}
 
 		inline bool HitTest_Plane(const Plane& plane, const Ray& ray)
@@ -165,7 +211,7 @@ namespace dae
 				//read till end of line and ignore all remaining chars
 				file.ignore(1000, '\n');
 
-				if (file.eof()) 
+				if (file.eof())
 					break;
 			}
 
@@ -180,7 +226,7 @@ namespace dae
 				Vector3 edgeV0V2 = positions[i2] - positions[i0];
 				Vector3 normal = Vector3::Cross(edgeV0V1, edgeV0V2);
 
-				if(isnan(normal.x))
+				if (isnan(normal.x))
 				{
 					int k = 0;
 				}
