@@ -71,7 +71,7 @@ function(MicrosoftWindows_AddCompileCommands)
     # legacy platform support (manual copy every build)
     add_custom_command(TARGET "${PROJECT_NAME}" PRE_BUILD
                    COMMAND ${CMAKE_COMMAND} -E copy_directory
-                   ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources)
+                   ${CMAKE_SOURCE_DIR}/source/resources $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources)
 
     # need to manually copy shared libs on legacy platforms like Microsoft Windows
     add_custom_command(

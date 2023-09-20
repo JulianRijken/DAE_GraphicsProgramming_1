@@ -20,7 +20,7 @@ if(WIN32)
     # on legacy platforms, we must download the libraries because there is no package manager :(
     MicrosoftWindows_SetupLibs()
 else()
-    set(CMAKE_CXX_FLAGS "-march=native -g -fPIC -flto -Wl,-flto")
+    set(CMAKE_CXX_FLAGS "-g -fPIC")
 endif()
 
 # enable C++20
@@ -31,7 +31,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project("${PROJECT_NAME}")
 
-file(GLOB_RECURSE DIR_SRC source/*.cpp engine/*.cpp)
+file(GLOB_RECURSE DIR_SRC source/Math/*.cpp source/Misc/*.cpp source/*.cpp engine/*.cpp)
 add_executable("${PROJECT_NAME}" ${DIR_SRC})
 
 if(EMSCRIPTEN)
@@ -47,6 +47,12 @@ else()
 
     find_package(OpenGL)
     include_directories(${PROJECT_NAME} ${OPENGL_INCLUDE_DIRS})
+    target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES})
+endif()
+
+find_package(OpenMP)
+if (OpenMP_FOUND)
+    target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_CXX)
 endif()
 
 # include directories
