@@ -44,7 +44,7 @@ namespace dae
 			//return hit;
 
 
-			Vector3 rayOriginToSphere = ray.origin - sphere.origin;
+			const Vector3 rayOriginToSphere = ray.origin - sphere.origin;
 
 			// Calculate coefficients of the quadratic equation for ray-sphere intersection.
 			const float a = Vector3::Dot(ray.direction, ray.direction);
@@ -56,7 +56,7 @@ namespace dae
 			// Check if ray intersects
 			if (discriminant > 0)
 			{
-				float t = (-b - sqrt(discriminant)) / a;
+				const float t = (-b - sqrt(discriminant)) / a;
 
 				if (t < hitRecord.t)
 				{

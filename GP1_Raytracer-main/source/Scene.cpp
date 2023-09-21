@@ -133,13 +133,13 @@ namespace dae {
 		const unsigned char matId_Solid_Magenta = AddMaterial(new Material_SolidColor{ colors::Magenta });
 
 		//Spheres
-		AddSphere({ -25.f, -10.f, 110.f }, 50.f, matId_Solid_Red);
+		// AddSphere({ -25.f, -10.f, 110.f }, 50.f, matId_Solid_Red);
+		// AddSphere({ 25.f, 0.f, 100.f }, 50.f, matId_Solid_Blue);
+		// AddSphere({ -15.f, 30.f, 120.f }, 50.f, matId_Solid_Green);
+
+
+		AddSphere({ -25.f, 0.f, 100.f }, 50.f, matId_Solid_Red);
 		AddSphere({ 25.f, 0.f, 100.f }, 50.f, matId_Solid_Blue);
-		AddSphere({ -15.f, 30.f, 120.f }, 50.f, matId_Solid_Green);
-
-
-		//AddSphere({ -25.f, 0.f, 100.f }, 50.f, matId_Solid_Red);
-		//AddSphere({ 25.f, 0.f, 100.f }, 50.f, matId_Solid_Blue);
 
 		//Plane
 		AddPlane({ -75.f, 0.f, 0.f }, { 1.f, 0.f,0.f }, matId_Solid_Green);

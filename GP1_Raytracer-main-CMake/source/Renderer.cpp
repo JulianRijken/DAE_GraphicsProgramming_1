@@ -23,13 +23,13 @@ Renderer::Renderer(SDL_Window* pWindow) :
 
 void Renderer::Render(Scene* scenePtr) const
 {
-	Camera& camera = scenePtr->GetCamera();
+	const Camera& camera = scenePtr->GetCamera();
 	auto& materials = scenePtr->GetMaterials();
 	auto& lights = scenePtr->GetLights();
 
-	const float aspectRatio = (float)m_Width / (float)m_Height;
+	const float aspectRatio = static_cast<float>(m_Width) / static_cast<float>(m_Height);
 
-#pragma omp parallel for schedule(guided) default(none) shared(aspectRatio, scenePtr, materials)
+//#pragma omp parallel for schedule(guided) default(none) shared(aspectRatio, scenePtr, materials)
 	for (int pixelX{}; pixelX < m_Width; ++pixelX)
 	{
 		for (int pixelY{}; pixelY < m_Height; ++pixelY)
@@ -38,7 +38,7 @@ void Renderer::Render(Scene* scenePtr) const
 			Vector3 rayDirection
 			{
 				(2.0f * (static_cast<float>(pixelX) + 0.5f) / static_cast<float>(m_Width) - 1.0f) * aspectRatio,
-				1.0f - 2.0f * ((float)pixelY + 0.5f) / static_cast<float>(m_Height),
+				1.0f - 2.0f * (static_cast<float>(pixelY) + 0.5f) / static_cast<float>(m_Height),
 				1
 			};
 			rayDirection.Normalize();
@@ -50,24 +50,17 @@ void Renderer::Render(Scene* scenePtr) const
 			HitRecord closestHit{};
 			scenePtr->GetClosestHit(activeRay, closestHit);
 
-			for (int i = 0; i < 1; ++i)
-			{
-				const float dot{ Vector3::Dot(activeRay.direction,closestHit.normal) };
-				Vector3 reflectedDirection{ activeRay.direction - 2 * dot * closestHit.normal };
-				reflectedDirection.Normalize();
+			//for (int i = 0; i < 1; ++i)
+			//{
+			//	const float dot{ Vector3::Dot(activeRay.direction,closestHit.normal) };
+			//	Vector3 reflectedDirection{ activeRay.direction - 2 * dot * closestHit.normal };
+			//	reflectedDirection.Normalize();
 
-				activeRay.origin = closestHit.origin;
-				activeRay.direction = reflectedDirection;
+			//	activeRay.origin = closestHit.origin;
+			//	activeRay.direction = reflectedDirection;
 
-				scenePtr->GetClosestHit(activeRay, closestHit);
-			}
-
-
-
-
-
-
-
+			//	scenePtr->GetClosestHit(activeRay, closestHit);
+			//}
 
 
 
