@@ -44,19 +44,54 @@ void Renderer::Render(Scene* scenePtr) const
 			rayDirection.Normalize();
 
 
-			Ray viewRay{ camera.origin,rayDirection };
+
+			Ray activeRay{ camera.origin,rayDirection };
 
 			HitRecord closestHit{};
-			scenePtr->GetClosestHit(viewRay, closestHit);
+			scenePtr->GetClosestHit(activeRay, closestHit);
+
+			for (int i = 0; i < 1; ++i)
+			{
+				const float dot{ Vector3::Dot(activeRay.direction,closestHit.normal) };
+				Vector3 reflectedDirection{ activeRay.direction - 2 * dot * closestHit.normal };
+				reflectedDirection.Normalize();
+
+				activeRay.origin = closestHit.origin;
+				activeRay.direction = reflectedDirection;
+
+				scenePtr->GetClosestHit(activeRay, closestHit);
+			}
+
+
+
+
+
+
+
+
+
+
+
 
 			ColorRGB finalColor{};
 
 			if (closestHit.didHit)
 			{
-				float scaled_t = closestHit.t / 250.0f;
-				scaled_t = 1.0f - scaled_t;
+				//float scaled_t = closestHit.t / 250.0f;
+				//scaled_t = 1.0f - scaled_t;
 
-				finalColor = materials[closestHit.materialIndex]->Shade() * scaled_t;
+				//finalColor = materials[closestHit.materialIndex]->Shade() * scaled_t;
+
+
+				finalColor = materials[closestHit.materialIndex]->Shade();
+
+
+				//finalColor = ColorRGB
+				//{
+				//	abs(closestHit.normal.x),
+				//	abs(closestHit.normal.y),
+				//	abs(closestHit.normal.z)
+				//};
 			}
 
 			finalColor.MaxToOne();

@@ -31,13 +31,13 @@ namespace dae
 		virtual void Initialize() = 0;
 		virtual void Update(dae::Timer* pTimer)
 		{
-			float rad1{ std::sin(SDL_GetTicks64() / 1000.f) * 40.f };
+			float rad1{ abs(std::sin(SDL_GetTicks64() / 1000.f) * 40.f) };
 			m_SphereGeometries[0].radius = rad1;
 			
-			float rad2{ std::sin(SDL_GetTicks64() / 1600.f) * 60.f };
+			float rad2{ abs(std::sin(SDL_GetTicks64() / 1600.f) * 60.f) };
 			m_SphereGeometries[1].radius = rad2;
 			
-			float rad3{ std::sin(SDL_GetTicks64() / 1900.f) * 30.f };
+			float rad3{ abs(std::sin(SDL_GetTicks64() / 1900.f) * 30.f) };
 			m_SphereGeometries[2].radius = rad3;
 
 			m_Camera.Update(pTimer);
