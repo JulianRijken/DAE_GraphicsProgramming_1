@@ -31,14 +31,14 @@ namespace dae
 		virtual void Initialize() = 0;
 		virtual void Update(dae::Timer* pTimer)
 		{
-			// float rad1{ std::sin(SDL_GetTicks64() / 1000.f) * 40.f };
-			// m_SphereGeometries[0].radius = rad1;
-			// 
-			// float rad2{ std::sin(SDL_GetTicks64() / 1600.f) * 60.f };
-			// m_SphereGeometries[1].radius = rad2;
-			// 
-			// float rad3{ std::sin(SDL_GetTicks64() / 1900.f) * 30.f };
-			// m_SphereGeometries[2].radius = rad3;
+			//float rad1{ std::sin(SDL_GetTicks64() / 1000.f) * 40.f };
+			//m_SphereGeometries[0].radius = rad1;
+			//
+			//float rad2{ std::sin(SDL_GetTicks64() / 1600.f) * 60.f };
+			//m_SphereGeometries[1].radius = rad2;
+			//
+			//float rad3{ std::sin(SDL_GetTicks64() / 1900.f) * 30.f };
+			//m_SphereGeometries[2].radius = rad3;
 
 			m_Camera.Update(pTimer);
 		}
@@ -87,4 +87,20 @@ namespace dae
 
 		void Initialize() override;
 	};
+
+	//+++++++++++++++++++++++++++++++++++++++++
+	//WEEK 2 Test Scene 2
+	class Scene_W2 final : public Scene
+    {
+    public:
+        Scene_W2() = default;
+        ~Scene_W2() override = default;
+
+        Scene_W2(const Scene_W2&) = delete;
+        Scene_W2(Scene_W2&&) noexcept = delete;
+        Scene_W2& operator=(const Scene_W2&) = delete;
+        Scene_W2& operator=(Scene_W2&&) noexcept = delete;
+
+        void Initialize() override;
+    }; 
 }

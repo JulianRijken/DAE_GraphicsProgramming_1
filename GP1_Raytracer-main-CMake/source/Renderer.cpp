@@ -29,7 +29,7 @@ void Renderer::Render(Scene* scenePtr) const
 
 	const float aspectRatio = static_cast<float>(m_Width) / static_cast<float>(m_Height);
 
-//#pragma omp parallel for schedule(guided) default(none) shared(aspectRatio, scenePtr, materials)
+#pragma omp parallel for schedule(guided) default(none) shared(aspectRatio, scenePtr, materials)
 	for (int pixelX{}; pixelX < m_Width; ++pixelX)
 	{
 		for (int pixelY{}; pixelY < m_Height; ++pixelY)

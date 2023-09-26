@@ -26,23 +26,33 @@ Renderer::Renderer(SDL_Window * pWindow) :
 
 void Renderer::Render(Scene* scenePtr) const
 {
-	const Camera& camera = scenePtr->GetCamera();
+	Camera& camera = scenePtr->GetCamera();
 	auto& materials = scenePtr->GetMaterials();
 	auto& lights = scenePtr->GetLights();
 
 	const float aspectRatio = static_cast<float>(m_Width) / static_cast<float>(m_Height);
+
+	const Matrix cameraToWorld{ camera.CalculateCameraToWorld() };
+
 
 	for (int pixelX{}; pixelX < m_Width; ++pixelX)
 	{
 		for (int pixelY{}; pixelY < m_Height; ++pixelY)
 		{
 
+
+
 			Vector3 rayDirection
 			{
-				(2.0f * (static_cast<float>(pixelX) + 0.5f) / static_cast<float>(m_Width) - 1.0f) * aspectRatio,
-				1.0f - 2.0f * (static_cast<float>(pixelY) + 0.5f) / static_cast<float>(m_Height),
+				(2.0f * (static_cast<float>(pixelX) + 0.5f) / static_cast<float>(m_Width) - 1.0f) * aspectRatio * camera.fovValue,
+				(1.0f - 2.0f * (static_cast<float>(pixelY) + 0.5f) / static_cast<float>(m_Height)) * camera.fovValue,
 				1
 			};
+
+			
+			
+			rayDirection = cameraToWorld.TransformVector(rayDirection);
+
 			rayDirection.Normalize();
 
 
@@ -55,8 +65,8 @@ void Renderer::Render(Scene* scenePtr) const
 
 			if (closestHit.didHit)
 			{
-				//float scaled_t = closestHit.t / 250.0f;
-				//scaled_t = 1.0f - scaled_t;
+				float scaled_t = closestHit.t / 250.0f;
+				scaled_t = 1.0f - scaled_t;
 
 				finalColor = materials[closestHit.materialIndex]->Shade();
 			}
