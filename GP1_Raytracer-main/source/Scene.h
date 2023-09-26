@@ -40,6 +40,34 @@ namespace dae
 			//float rad3{ std::sin(SDL_GetTicks64() / 1900.f) * 30.f };
 			//m_SphereGeometries[2].radius = rad3;
 
+			//Keyboard Input
+			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
+
+
+			Vector3 inputVector{};
+
+			if (pKeyboardState[SDL_SCANCODE_J])
+				inputVector.x -= 1;
+
+			if (pKeyboardState[SDL_SCANCODE_L])
+				inputVector.x += 1;
+
+			if (pKeyboardState[SDL_SCANCODE_I])
+				inputVector.z += 1;
+
+			if (pKeyboardState[SDL_SCANCODE_K])
+				inputVector.z -= 1;
+
+			if (pKeyboardState[SDL_SCANCODE_U])
+				inputVector.y -= 1;
+
+			if (pKeyboardState[SDL_SCANCODE_O])
+				inputVector.y += 1;
+
+
+			m_Lights[0].origin += inputVector * pTimer->GetElapsed() * 10.0f;
+
+
 			m_Camera.Update(pTimer);
 		}
 

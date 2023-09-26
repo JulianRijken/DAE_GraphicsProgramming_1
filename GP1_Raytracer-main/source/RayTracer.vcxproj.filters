@@ -53,6 +53,7 @@
     <ClInclude Include="DataTypes.h">
       <Filter>Misc</Filter>
     </ClInclude>
+    <ClInclude Include="Jul.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -71,6 +72,9 @@
     </ClCompile>
     <ClCompile Include="Timer.cpp">
       <Filter>Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="Jul.cpp">
+      <Filter>Math</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

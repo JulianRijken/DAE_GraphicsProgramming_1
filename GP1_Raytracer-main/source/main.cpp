@@ -41,6 +41,9 @@ int main(int argc, char* args[])
 	if (!pWindow)
 		return 1;
 
+	SDL_SetRelativeMouseMode(SDL_TRUE);
+
+
 	//Initialize "framework"
 	const auto pTimer = new Timer();
 	const auto pRenderer = new Renderer(pWindow);
@@ -71,7 +74,16 @@ int main(int argc, char* args[])
 			case SDL_KEYUP:
 				if(e.key.keysym.scancode == SDL_SCANCODE_X)
 					takeScreenshot = true;
+				if (e.key.keysym.scancode == SDL_SCANCODE_ESCAPE)
+					SDL_SetRelativeMouseMode(SDL_FALSE);
 				break;
+			case SDL_MOUSEWHEEL:
+				if (e.wheel.y > 0)
+					pScene->GetCamera().AdjustFOV(-5.0f);
+				else if (e.wheel.y < 0)
+					pScene->GetCamera().AdjustFOV(5.0f);
+				break;
+
 			}
 		}
 

@@ -6,29 +6,41 @@
 
 #include "Math.h"
 #include "Timer.h"
+#include "Jul.h"
 
 namespace dae
 {
 	struct Camera
 	{
-		Camera() = default;
+		Camera()
+		{
+			SetFOV(fovAngle);
+		}
 
-		Camera(const Vector3& _origin, float _fovAngleDegrees):
-			origin{_origin},
-			fovAngle{_fovAngleDegrees}
-		{}
+		//Camera(const Vector3& _origin, float _fovAngleDegrees):
+		//	origin{_origin},
+		//	fovAngle{_fovAngleDegrees}
+		//{}
 
-
+		Vector3 targetOrigin{};
 		Vector3 origin{};
+
+
 		float fovAngle{45.0f};
-		float fovValue{ tanf((fovAngle * static_cast<float>(M_PI) / 180.0f) / 2.0f) };
+		float fovValue{};
 
 		Vector3 forward{Vector3::UnitZ};
 		Vector3 up{Vector3::UnitY};
 		Vector3 right{Vector3::UnitX};
 
-		float a{0.f};
-		float y{0.f};
+		float cameraRotateSmoothing{ 0.06f };
+		float cameraMoveSmoothing{ 0.1f };
+
+		float targetCameraPitch{ 0.f };
+		float targetCameraYaw{ 0.f };
+
+		float cameraPitch{0.f};
+		float cameraYaw{0.f};
 
 
 
@@ -47,9 +59,29 @@ namespace dae
 			};
 		}
 
+		void AdjustFOV(float _fovDelta)
+		{
+			SetFOV(fovAngle + _fovDelta);
+		}
+
+		void SetFOV(float _fovDegrees)
+		{
+			fovAngle =  std::min(180.0f, std::max(0.0f, _fovDegrees));
+			fovValue = tanf((fovAngle * static_cast<float>(M_PI) / 180.0f) / 2.0f);
+		}
+
 		void Update(Timer* pTimer)
 		{
 			const float deltaTime = pTimer->GetElapsed();
+
+			const Matrix rotation
+			{
+				Vector3{cosf(cameraPitch), 0, sinf(cameraPitch)},
+				Vector3{sinf(cameraPitch) * sinf(cameraYaw), cosf(cameraYaw), -sinf(cameraYaw) * cosf(cameraPitch)},
+				Vector3{-cosf(cameraYaw) * sinf(cameraPitch), sinf(cameraYaw), cosf(cameraYaw) * cosf(cameraPitch)},
+				Vector3::Zero
+			};
+
 
 			//Keyboard Input
 			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
@@ -76,27 +108,26 @@ namespace dae
 			if (pKeyboardState[SDL_SCANCODE_E])
 				inputVector.y += 1;
 
-			origin += inputVector * deltaTime * 20.0f; 
+
+
+			inputVector = rotation.TransformVector(inputVector);
+			targetOrigin += inputVector * deltaTime * 20.0f; 
+
+			origin = Jul::Lerp(origin, targetOrigin, deltaTime / cameraMoveSmoothing);
 
 
 			//Mouse Input
 			int mouseX{}, mouseY{};
 			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
 
-			a -= mouseX * deltaTime * 0.4f;
-			y -= mouseY * deltaTime * 0.4f;
+			targetCameraPitch -= mouseX * deltaTime * 0.4f;
+			targetCameraYaw -= mouseY * deltaTime * 0.4f;
 
+			cameraPitch = Jul::Lerp(cameraPitch, targetCameraPitch, deltaTime / cameraRotateSmoothing);
+			cameraYaw = Jul::Lerp(cameraYaw, targetCameraYaw, deltaTime / cameraRotateSmoothing);
 
 
 			forward = Vector3::UnitZ;
-			Matrix rotation
-			{
-				Vector3{cosf(a), 0, sinf(a)},
-				Vector3{sinf(a) * sinf(y), cosf(y), -sinf(y) * cosf(a)},
-				Vector3{-cosf(y) * sinf(a), sinf(y), cosf(y) * cosf(a)},
-				Vector3::Zero
-			};
-
 			forward = rotation.TransformVector(forward);
 
 		}
