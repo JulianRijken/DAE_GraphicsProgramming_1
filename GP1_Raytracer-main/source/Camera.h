@@ -48,7 +48,7 @@ namespace dae
 		Matrix CalculateCameraToWorld()
 		{
 			right = Vector3::Cross(Vector3::UnitY, forward).Normalized();
-			up = Vector3::Cross(forward, right);
+			up = Vector3::Cross(forward, right).Normalized();
 
 			return
 			{
@@ -74,7 +74,7 @@ namespace dae
 		{
 			const float deltaTime = pTimer->GetElapsed();
 
-			const Matrix rotation
+			const Matrix pitchYawRotation
 			{
 				Vector3{cosf(cameraPitch), 0, sinf(cameraPitch)},
 				Vector3{sinf(cameraPitch) * sinf(cameraYaw), cosf(cameraYaw), -sinf(cameraYaw) * cosf(cameraPitch)},
@@ -110,7 +110,7 @@ namespace dae
 
 
 
-			inputVector = rotation.TransformVector(inputVector);
+			inputVector = pitchYawRotation.TransformVector(inputVector);
 			targetOrigin += inputVector * deltaTime * 20.0f; 
 
 			origin = Jul::Lerp(origin, targetOrigin, deltaTime / cameraMoveSmoothing);
@@ -128,7 +128,7 @@ namespace dae
 
 
 			forward = Vector3::UnitZ;
-			forward = rotation.TransformVector(forward);
+			forward = pitchYawRotation.TransformVector(forward);
 
 		}
 	};
