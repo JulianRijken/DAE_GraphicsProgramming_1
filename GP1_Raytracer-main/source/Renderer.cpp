@@ -47,7 +47,6 @@ void Renderer::Render(Scene* scenePtr) const
 			};
 
 			rayDirection = cameraToWorld.TransformVector(rayDirection);
-
 			rayDirection.Normalize();
 
 
@@ -56,37 +55,30 @@ void Renderer::Render(Scene* scenePtr) const
 			HitRecord closestHit{};
 			scenePtr->GetClosestHit(viewRay, closestHit);
 
-
-			float lightStrength{};
-			for (const Light& light: lights)
-			{
-				const Vector3 hitPointToLight{ (light.origin - closestHit.point).Normalized() };
-
-				Ray lightRay{closestHit.point + closestHit.normal * 0.001f,hitPointToLight };
-
-				const float distance{ (light.origin - closestHit.point).Magnitude() };
-
-				HitRecord lightHit{};
-				scenePtr->GetClosestHit(lightRay, lightHit);
-
-				if (lightHit.didHit && lightHit.t > distance)
-				{
-					lightStrength = 10.0f / distance;
-				}
-				else
-				{
-					lightStrength = std::min(0.5f, (10.0f / distance));
-				}
-			}
-
-
 			ColorRGB finalColor{};
 
 			if (closestHit.didHit)
 			{
-				//float scaled_t = closestHit.t / 250.0f;
-				//scaled_t = 1.0f - scaled_t;
+				float lightStrength{};
+				for (const Light& light : lights)
+				{
+					Vector3 fromPoint{ closestHit.point + closestHit.normal * 0.001f };
+					Vector3 toPoint{ light.origin };
 
+					Vector3 directionVector{ toPoint - fromPoint };
+					const float distance{ directionVector.Magnitude()};
+
+					Ray lightRay{fromPoint,directionVector.Normalized()};
+					lightRay.max = distance;
+
+					HitRecord lightHit{};
+					scenePtr->GetClosestHit(lightRay, lightHit);
+
+					if(lightHit.didHit)
+						lightStrength = 0.5f;
+					else
+						lightStrength = 10.0f / distance;
+				}
 
 				finalColor = materials[closestHit.materialIndex]->Shade() * lightStrength;
 			}

@@ -120,8 +120,8 @@ namespace dae
 			int mouseX{}, mouseY{};
 			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
 
-			targetCameraPitch -= mouseX * deltaTime * 0.4f;
-			targetCameraYaw -= mouseY * deltaTime * 0.4f;
+			targetCameraPitch -= mouseX * deltaTime * 0.1f;
+			targetCameraYaw -= mouseY * deltaTime * 0.1f;
 
 			cameraPitch = Jul::Lerp(cameraPitch, targetCameraPitch, deltaTime / cameraRotateSmoothing);
 			cameraYaw = Jul::Lerp(cameraYaw, targetCameraYaw, deltaTime / cameraRotateSmoothing);
