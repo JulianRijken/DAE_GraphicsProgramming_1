@@ -61,42 +61,54 @@ void Renderer::Render(Scene* scenePtr) const
 
 			if (closestHit.didHit)
 			{
-				if (m_ShadowsEnabled)
+				for (const Light& light : lights)
 				{
-					for (const Light& light : lights)
+					// Setup ray
+					Vector3 fromPoint{ closestHit.point + closestHit.normal * 0.001f };
+					Vector3 hitToLightDirection{ light.origin - fromPoint };
+					const float distance{ hitToLightDirection.Magnitude() };
+					Ray hitToLightRay{ fromPoint,hitToLightDirection.Normalized() };
+					hitToLightRay.max = distance;
+
+
+					HitRecord lightHit{};
+					scenePtr->GetClosestHit(hitToLightRay, lightHit);
+
+
+
+					if (!lightHit.didHit || m_ShadowsEnabled)
 					{
-						// Setup ray
-						Vector3 fromPoint{ closestHit.point + closestHit.normal * 0.001f };
-						Vector3 hitToLightDirection{ light.origin - fromPoint };
-						const float distance{ hitToLightDirection.Magnitude()};
-						Ray hitToLightRay{fromPoint,hitToLightDirection.Normalized()};
-						hitToLightRay.max = distance;
+						Vector3 lightDirection = (light.origin - closestHit.point).Normalized();
+
+						const float cosineLaw = std::max(0.0f, Vector3::Dot(lightDirection, closestHit.normal));
 
 
-						HitRecord lightHit{};
-						scenePtr->GetClosestHit(hitToLightRay, lightHit);
 
-						// Add shadow
-						if (lightHit.didHit)
+						switch (m_CurrentLightMode)
 						{
-
-
-						}
-						else
-						{
-							Vector3 lightDirection = (light.origin - fromPoint).Normalized();
-
-							const float cosineLaw = Vector3::Dot(lightDirection, closestHit.normal.Normalized());
-
-							if (cosineLaw >= 0)
-							{
+							case LightMode::ObservedArea:
 								finalColor += ColorRGB(1, 1, 1) * cosineLaw;
-							}
+
+								break;
+							case LightMode::Radiance:
+								finalColor += LightUtils::GetRadiance(light, closestHit.point);
+
+								break;
+							case LightMode::BRDF:
+								finalColor += materials[closestHit.materialIndex]->Shade(closestHit,lightDirection, viewRay.direction * -1.0f);
+
+								break;
+							case LightMode::Combined:
+								finalColor += 
+									LightUtils::GetRadiance(light, closestHit.point) *
+									materials[closestHit.materialIndex]->Shade(closestHit, lightDirection, viewRay.direction * -1.0f) *
+									cosineLaw;
+								break;
 						}
+						
 					}
 				}
 
-				//finalColor = materials[closestHit.materialIndex]->Shade() * lightStrength;
 			}
 
 

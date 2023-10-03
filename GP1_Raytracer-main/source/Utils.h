@@ -119,15 +119,27 @@ namespace dae
 		inline Vector3 GetDirectionToLight(const Light& light, const Vector3 origin)
 		{
 			//todo W3
-			assert(false && "No Implemented Yet!");
-			return {};
+			//assert(false && "No Implemented Yet!");
+
+			return { light.origin - origin};
 		}
 
 		inline ColorRGB GetRadiance(const Light& light, const Vector3& target)
 		{
 			//todo W3
-			assert(false && "No Implemented Yet!");
-			return {};
+
+			if(light.type == LightType::Point)
+			{
+				const float radiusSquared{ Square((light.origin - target).Magnitude()) };
+				const float irradiance{ light.intensity / radiusSquared };
+
+				return{ light.color * irradiance };
+			}
+
+			if (light.type == LightType::Directional)
+			{
+				return{ light.color * light.intensity };
+			}
 		}
 	}
 
