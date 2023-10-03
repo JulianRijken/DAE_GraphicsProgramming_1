@@ -41,7 +41,6 @@ void Renderer::Render(Scene* scenePtr) const
 
 	Vector3 rayDirection{0,0,1};
 	Ray viewRay{camera.origin};
-	ColorRGB finalColor{};
 
 	for (float pixelX{ 0.5f }; pixelX < widthFloat; ++pixelX)
 	{
@@ -57,40 +56,49 @@ void Renderer::Render(Scene* scenePtr) const
 			HitRecord closestHit{};
 			scenePtr->GetClosestHit(viewRay, closestHit);
 
+
+			ColorRGB finalColor{};
+
 			if (closestHit.didHit)
 			{
-				float lightStrength{1.0f};
-
 				if (m_ShadowsEnabled)
 				{
 					for (const Light& light : lights)
 					{
+						// Setup ray
 						Vector3 fromPoint{ closestHit.point + closestHit.normal * 0.001f };
-						Vector3 toPoint{ light.origin };
+						Vector3 hitToLightDirection{ light.origin - fromPoint };
+						const float distance{ hitToLightDirection.Magnitude()};
+						Ray hitToLightRay{fromPoint,hitToLightDirection.Normalized()};
+						hitToLightRay.max = distance;
 
-						Vector3 directionVector{ toPoint - fromPoint };
-						const float distance{ directionVector.Magnitude()};
-
-						Ray lightRay{fromPoint,directionVector.Normalized()};
-						lightRay.max = distance;
 
 						HitRecord lightHit{};
-						scenePtr->GetClosestHit(lightRay, lightHit);
+						scenePtr->GetClosestHit(hitToLightRay, lightHit);
 
-				
+						// Add shadow
 						if (lightHit.didHit)
-							lightStrength = 0.5f;
+						{
+
+
+						}
 						else
-							lightStrength = 1.0f;
+						{
+							Vector3 lightDirection = (light.origin - fromPoint).Normalized();
+
+							const float cosineLaw = Vector3::Dot(lightDirection, closestHit.normal.Normalized());
+
+							if (cosineLaw >= 0)
+							{
+								finalColor += ColorRGB(1, 1, 1) * cosineLaw;
+							}
+						}
 					}
 				}
 
-				finalColor = materials[closestHit.materialIndex]->Shade() * lightStrength;
+				//finalColor = materials[closestHit.materialIndex]->Shade() * lightStrength;
 			}
-			else
-			{
-				finalColor = ColorRGB(0,0,0);
-			}
+
 
 			finalColor.MaxToOne();
 
