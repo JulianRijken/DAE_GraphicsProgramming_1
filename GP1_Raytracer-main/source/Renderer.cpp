@@ -75,14 +75,14 @@ void Renderer::Render(Scene* scenePtr) const
 					scenePtr->GetClosestHit(hitToLightRay, lightHit);
 
 
-
 					if (!lightHit.didHit || m_ShadowsEnabled)
 					{
-						Vector3 lightDirection = (light.origin - closestHit.point).Normalized();
-
-						const float cosineLaw = std::max(0.0f, Vector3::Dot(lightDirection, closestHit.normal));
 
 
+						Vector3 l = (light.origin - closestHit.point).Normalized();
+						Vector3 v{ viewRay.direction * -1.0f };
+
+						const float cosineLaw = std::max(0.0f, Vector3::Dot(closestHit.normal, l));
 
 						switch (m_CurrentLightMode)
 						{
@@ -95,13 +95,13 @@ void Renderer::Render(Scene* scenePtr) const
 
 								break;
 							case LightMode::BRDF:
-								finalColor += materials[closestHit.materialIndex]->Shade(closestHit,lightDirection, viewRay.direction * -1.0f);
+								finalColor += materials[closestHit.materialIndex]->Shade(closestHit, l, v);
 
 								break;
 							case LightMode::Combined:
 								finalColor += 
 									LightUtils::GetRadiance(light, closestHit.point) *
-									materials[closestHit.materialIndex]->Shade(closestHit, lightDirection, viewRay.direction * -1.0f) *
+									materials[closestHit.materialIndex]->Shade(closestHit, l, v) *
 									cosineLaw;
 								break;
 						}

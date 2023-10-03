@@ -84,8 +84,8 @@ public:
 	{
 		const float amplitude{ (max - min) / 2.0f };
 		const float intercept{ min + amplitude };
-		const float pulsation{ 2 * float(M_PI) / repeatTime };
-		const float phase{ 2 * float(M_PI) * startTime };
+		const float pulsation{ 2 * dae::PI / repeatTime };
+		const float phase{ 2 * dae::PI * startTime };
 
 		return amplitude * sinf(pulsation * time + phase) + intercept;
 	}
@@ -253,7 +253,7 @@ public:
 
 	static float RadToDeg(float radians)
 	{
-		return radians / float(M_PI) * 180.0f;
+		return radians / dae::PI * 180.0f;
 	}
 
 	static float DegToRad(float degrees)

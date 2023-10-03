@@ -42,7 +42,7 @@ namespace dae
 			COUNT
 		};
 
-		LightMode m_CurrentLightMode{ LightMode::Combined };
+		LightMode m_CurrentLightMode{ LightMode::BRDF };
 		bool m_ShadowsEnabled{ true };
 
 	};

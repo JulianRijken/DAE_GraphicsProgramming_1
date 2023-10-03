@@ -65,7 +65,7 @@ namespace dae
 		void SetFOV(float _fovDegrees)
 		{
 			fovAngle =  std::min(180.0f, std::max(0.0f, _fovDegrees));
-			fovValue = tanf((fovAngle * static_cast<float>(M_PI) / 180.0f) / 2.0f);
+			fovValue = tanf((fovAngle * PI / 180.0f) / 2.0f);
 		}
 
 		void Update(Timer* pTimer)

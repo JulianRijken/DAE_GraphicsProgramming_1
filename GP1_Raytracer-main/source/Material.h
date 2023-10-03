@@ -111,7 +111,19 @@ namespace dae
 			//todo: W3
 			//assert(false && "Not Implemented Yet");
 
-			return {};
+			Vector3 plusVL = v + l;
+			Vector3 h{ plusVL / plusVL.Magnitude() };
+
+
+			ColorRGB F{ BRDF::FresnelFunction_Schlick(h, v, ColorRGB(1, 1, 1) * 0.04f) };
+			float D{ BRDF::NormalDistribution_GGX(hitRecord.normal, h, m_Roughness) };
+			float G{ BRDF::GeometryFunction_SchlickGGX(hitRecord.normal, v, m_Roughness) };
+
+
+			return
+			{
+				(F * D * G) / (4.0f * Vector3::Dot(v,hitRecord.normal) * Vector3::Dot(l,hitRecord.normal))
+			};
 
 		}
 
