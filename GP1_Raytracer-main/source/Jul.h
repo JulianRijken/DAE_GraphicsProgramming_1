@@ -108,6 +108,16 @@ public:
 		};
 	}
 
+	static dae::ColorRGB Lerp(const dae::ColorRGB a, const dae::ColorRGB b, float t)
+	{
+		t = Clamp01(t);
+		return dae::ColorRGB
+		{
+			Lerp(a.r,b.r,t),
+			Lerp(a.g,b.g,t),
+			Lerp(a.b,b.b,t),
+		};
+	}
 
 
 	static float SmoothLerp(const float a, const float b, float t)

@@ -63,10 +63,10 @@ namespace dae
 		 */
 		static float NormalDistribution_GGX(const Vector3& n, const Vector3& h, float roughness)
 		{
-			const float roughnessSquared{ Square(roughness)};
+			const float a{ Square(roughness)};
 			const float dotNH = Vector3::Dot(n, h);
-			const float denominator = (dotNH * dotNH) * (roughnessSquared - 1.0f) + 1.0f;
-			const float result = roughnessSquared / (PI * Square(denominator));
+			const float denominator = Square(dotNH) * (Square(a) - 1.0f) + 1.0f;
+			const float result = Square(a) / (PI * Square(denominator));
 
 			return result;
 		}
@@ -81,11 +81,11 @@ namespace dae
 		 */
 		static float GeometryFunction_SchlickGGX(const Vector3& n, const Vector3& v, float roughness)
 		{
-			const float roughnessSquared{ roughness * roughness };
-			const float K{ Square(roughnessSquared + 1) / 8.0f };
-			const float dotNV{ Vector3::Dot(n,v) };
+			const float a{Square(roughness) };
+			const float kDirect{ Square(a + 1) / 8.0f };
+			const float dotNV{ std::max(Vector3::Dot(n,v),0.0f) };
 
-			return { dotNV / (dotNV * (1.0f - K) + K)};
+			return dotNV / (dotNV * (1.0f - kDirect) + kDirect);
 		}
 
 		/**
@@ -98,9 +98,7 @@ namespace dae
 		 */
 		static float GeometryFunction_Smith(const Vector3& n, const Vector3& v, const Vector3& l, float roughness)
 		{
-			//todo: W3
-			//assert(false && "Not Implemented Yet");
-			//return { GeometryFunction_SchlickGGX(n,v,roughness) * GeometryFunction_SchlickGGX(n,l,roughness) };
+			return GeometryFunction_SchlickGGX(n, v, roughness) * GeometryFunction_SchlickGGX(n, l, roughness);
 		}
 
 	}

@@ -42,6 +42,7 @@ void Renderer::Render(Scene* scenePtr) const
 	Vector3 rayDirection{0,0,1};
 	Ray viewRay{camera.origin};
 
+
 	for (float pixelX{ 0.5f }; pixelX < widthFloat; ++pixelX)
 	{
 		rayDirection.x = (pixelX * multiplierXValue - 1.0f) * fieldOfViewTimesAspect;
@@ -75,12 +76,10 @@ void Renderer::Render(Scene* scenePtr) const
 					scenePtr->GetClosestHit(hitToLightRay, lightHit);
 
 
-					if (!lightHit.didHit || m_ShadowsEnabled)
+					if (!lightHit.didHit ||!m_ShadowsEnabled)
 					{
-
-
 						Vector3 l = (light.origin - closestHit.point).Normalized();
-						Vector3 v{ viewRay.direction * -1.0f };
+						Vector3 v{ viewRay.direction.Normalized() * -1.0f };
 
 						const float cosineLaw = std::max(0.0f, Vector3::Dot(closestHit.normal, l));
 

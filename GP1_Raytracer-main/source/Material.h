@@ -2,6 +2,7 @@
 #include "Math.h"
 #include "DataTypes.h"
 #include "BRDFs.h"
+#include "Jul.h"
 
 namespace dae
 {
@@ -111,18 +112,21 @@ namespace dae
 			//todo: W3
 			//assert(false && "Not Implemented Yet");
 
-			Vector3 plusVL = v + l;
-			Vector3 h{ plusVL / plusVL.Magnitude() };
+			const Vector3 plusVL = v + l;
+			const Vector3 h{ plusVL / plusVL.Magnitude() };
 
 
-			ColorRGB F{ BRDF::FresnelFunction_Schlick(h, v, ColorRGB(1, 1, 1) * 0.04f) };
+			ColorRGB F{BRDF::FresnelFunction_Schlick(h, v, m_Albedo * m_Metalness)};
 			float D{ BRDF::NormalDistribution_GGX(hitRecord.normal, h, m_Roughness) };
-			float G{ BRDF::GeometryFunction_SchlickGGX(hitRecord.normal, v, m_Roughness) };
+			float G{ BRDF::GeometryFunction_Smith(hitRecord.normal, v,l, m_Roughness) };
+
+			ColorRGB specular{ (F * D * G) / (4.0f * Vector3::Dot(v,hitRecord.normal) * Vector3::Dot(l,hitRecord.normal)) };
+			specular.MaxToOne();
 
 
 			return
 			{
-				(F * D * G) / (4.0f * Vector3::Dot(v,hitRecord.normal) * Vector3::Dot(l,hitRecord.normal))
+				 specular
 			};
 
 		}
