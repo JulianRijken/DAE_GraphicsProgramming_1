@@ -43,8 +43,6 @@ namespace dae
 		float cameraYaw{0.f};
 
 
-
-
 		Matrix CalculateCameraToWorld()
 		{
 			right = Vector3::Cross(Vector3::UnitY, forward).Normalized();

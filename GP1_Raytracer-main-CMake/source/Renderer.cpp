@@ -63,9 +63,6 @@ void Renderer::Render(Scene* scenePtr) const
 			//}
 
 
-
-
-
 			ColorRGB finalColor{};
 
 			if (closestHit.didHit)

@@ -30,7 +30,7 @@ namespace dae
 			if (distance < ray.min || distance > ray.max)
 				return false;
 
-			if (!ignoreHitRecord)
+			if (not ignoreHitRecord)
 			{
 				hitRecord.t = distance;
 				hitRecord.point = ray.origin + ray.direction * hitRecord.t;
@@ -64,7 +64,7 @@ namespace dae
 			if (distance < ray.min || distance > ray.max)
 				return false;
 
-			if (!ignoreHitRecord)
+			if (not ignoreHitRecord)
 			{
 				hitRecord.t = distance;
 				hitRecord.point = ray.origin + ray.direction * distance;
