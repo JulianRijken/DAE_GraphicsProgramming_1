@@ -76,7 +76,7 @@ void Renderer::Render(Scene* scenePtr) const
 					scenePtr->GetClosestHit(hitToLightRay, lightHit);
 
 
-					if (!lightHit.didHit ||!m_ShadowsEnabled)
+					if (!(lightHit.didHit && m_ShadowsEnabled))
 					{
 						Vector3 l = (light.origin - closestHit.point).Normalized();
 						Vector3 v{ viewRay.direction.Normalized() * -1.0f };

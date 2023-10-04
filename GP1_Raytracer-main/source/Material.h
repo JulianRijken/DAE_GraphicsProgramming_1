@@ -115,18 +115,19 @@ namespace dae
 			const Vector3 plusVL = v + l;
 			const Vector3 h{ plusVL / plusVL.Magnitude() };
 
+			const ColorRGB f0{ m_Metalness * m_Albedo };
 
-			ColorRGB F{BRDF::FresnelFunction_Schlick(h, v, m_Albedo * m_Metalness)};
+			ColorRGB F{BRDF::FresnelFunction_Schlick(h, v, f0)};
 			float D{ BRDF::NormalDistribution_GGX(hitRecord.normal, h, m_Roughness) };
-			float G{ BRDF::GeometryFunction_Smith(hitRecord.normal, v,l, m_Roughness) };
+			float G{ BRDF::GeometryFunction_Smith(hitRecord.normal, v, l, m_Roughness) };
 
-			ColorRGB specular{ (F * D * G) / (4.0f * Vector3::Dot(v,hitRecord.normal) * Vector3::Dot(l,hitRecord.normal)) };
-			specular.MaxToOne();
+			//ColorRGB specular{ (F * D * G) / (4.0f * Vector3::Dot(v,hitRecord.normal) * Vector3::Dot(l,hitRecord.normal)) };
+			//specular.MaxToOne();
 
 
 			return
 			{
-				 specular
+				  F
 			};
 
 		}
