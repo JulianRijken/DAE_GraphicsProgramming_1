@@ -1,11 +1,13 @@
 #pragma once
-#include <SDL_timer.h>
 #include <string>
 #include <vector>
 
-#include "Math.h"
-#include "DataTypes.h"
-#include "Camera.h"
+#include "SDL_keyboard.h"
+#include "Math/Vector3.h"
+#include "Misc/Camera.h"
+#include "Misc/DataTypes.h"
+#include <math/ColorRGB.h>
+
 
 namespace dae
 {
@@ -31,14 +33,42 @@ namespace dae
 		virtual void Initialize() = 0;
 		virtual void Update(dae::Timer* pTimer)
 		{
-			// float rad1{ abs(std::sin(SDL_GetTicks64() / 1000.f) * 40.f) };
-			// m_SphereGeometries[0].radius = rad1;
-			// 
-			// float rad2{ abs(std::sin(SDL_GetTicks64() / 1600.f) * 60.f) };
-			// m_SphereGeometries[1].radius = rad2;
-			// 
-			// float rad3{ abs(std::sin(SDL_GetTicks64() / 1900.f) * 30.f) };
-			// m_SphereGeometries[2].radius = rad3;
+			//float rad1{ std::sin(SDL_GetTicks64() / 1000.f) * 40.f };
+			//m_SphereGeometries[0].radius = rad1;
+			//
+			//float rad2{ std::sin(SDL_GetTicks64() / 1600.f) * 60.f };
+			//m_SphereGeometries[1].radius = rad2;
+			//
+			//float rad3{ std::sin(SDL_GetTicks64() / 1900.f) * 30.f };
+			//m_SphereGeometries[2].radius = rad3;
+
+			//Keyboard Input
+			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
+
+
+			Vector3 inputVector{};
+
+			if (pKeyboardState[SDL_SCANCODE_J])
+				inputVector.x -= 1;
+
+			if (pKeyboardState[SDL_SCANCODE_L])
+				inputVector.x += 1;
+
+			if (pKeyboardState[SDL_SCANCODE_I])
+				inputVector.z += 1;
+
+			if (pKeyboardState[SDL_SCANCODE_K])
+				inputVector.z -= 1;
+
+			if (pKeyboardState[SDL_SCANCODE_U])
+				inputVector.y -= 1;
+
+			if (pKeyboardState[SDL_SCANCODE_O])
+				inputVector.y += 1;
+
+
+			m_Lights[0].origin += inputVector * pTimer->GetElapsed() * 10.0f;
+
 
 			m_Camera.Update(pTimer);
 		}
@@ -84,6 +114,38 @@ namespace dae
 		Scene_W1(Scene_W1&&) noexcept = delete;
 		Scene_W1& operator=(const Scene_W1&) = delete;
 		Scene_W1& operator=(Scene_W1&&) noexcept = delete;
+
+		void Initialize() override;
+	};
+
+	//+++++++++++++++++++++++++++++++++++++++++
+	//WEEK 2 Test Scene 2
+	class Scene_W2 final : public Scene
+    {
+    public:
+        Scene_W2() = default;
+        ~Scene_W2() override = default;
+
+        Scene_W2(const Scene_W2&) = delete;
+        Scene_W2(Scene_W2&&) noexcept = delete;
+        Scene_W2& operator=(const Scene_W2&) = delete;
+        Scene_W2& operator=(Scene_W2&&) noexcept = delete;
+
+        void Initialize() override;
+    };
+
+	//+++++++++++++++++++++++++++++++++++++++++
+	//WEEK 3 Test Scene 3
+	class Scene_W3 final : public Scene
+	{
+	public:
+		Scene_W3() = default;
+		~Scene_W3() override = default;
+
+		Scene_W3(const Scene_W3&) = delete;
+		Scene_W3(Scene_W3&&) noexcept = delete;
+		Scene_W3& operator=(const Scene_W3&) = delete;
+		Scene_W3& operator=(Scene_W3&&) noexcept = delete;
 
 		void Initialize() override;
 	};

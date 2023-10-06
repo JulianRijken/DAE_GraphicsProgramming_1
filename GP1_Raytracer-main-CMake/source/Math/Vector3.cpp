@@ -45,18 +45,17 @@ namespace dae {
 
 	float Vector3::Dot(const Vector3& v1, const Vector3& v2)
 	{
-		return v1.x * v2.x
-             + v1.y * v2.y
-             + v1.z * v2.z;
+		return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
 	}
 
-	Vector3 Vector3::Cross(const Vector3& v1, const Vector3& v2)
+	Vector3 Vector3::Cross(const Vector3& a, const Vector3& b)
 	{
-		return {
-            v2.y * v1.z - v2.z * v1.y,
-            v2.x * v1.z - v2.z * v1.x,
-            v2.x * v1.y - v2.y * v1.x
-        };
+		return Vector3
+		{
+			a.y * b.z - a.z * b.y,
+			a.z * b.x - a.x * b.z,
+			a.x * b.y - a.y * b.x,
+		};
 	}
 
 	Vector3 Vector3::Project(const Vector3& v1, const Vector3& v2)
@@ -71,7 +70,7 @@ namespace dae {
 
 	Vector3 Vector3::Reflect(const Vector3& v1, const Vector3& v2)
 	{
-		return v1 - (2.f * Vector3::Dot(v1, v2) * v2);
+		return v1 - 2.0f * Dot(v2, v1) * v2;
 	}
 
 	Vector4 Vector3::ToPoint4() const

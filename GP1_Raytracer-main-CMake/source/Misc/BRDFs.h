@@ -1,6 +1,8 @@
 #pragma once
 #include <cassert>
-#include "Math/Math.h"
+
+#include "Math/MathHelpers.h"
+#include "Math/ColorRGB.h"
 
 namespace dae
 {
@@ -14,15 +16,13 @@ namespace dae
 		static ColorRGB Lambert(float kd, const ColorRGB& cd)
 		{
 			//todo: W3
-			assert(false && "Not Implemented Yet");
-			return {};
+			return { (cd * kd) / PI };
 		}
 
 		static ColorRGB Lambert(const ColorRGB& kd, const ColorRGB& cd)
 		{
 			//todo: W3
-			assert(false && "Not Implemented Yet");
-			return {};
+			return { (cd * kd) / PI };
 		}
 
 		/**
@@ -36,9 +36,21 @@ namespace dae
 		 */
 		static ColorRGB Phong(float ks, float exp, const Vector3& l, const Vector3& v, const Vector3& n)
 		{
-			//todo: W3
-			assert(false && "Not Implemented Yet");
-			return {};
+			// Wannes
+			//ColorRGB reflectColor{ 1.f,1.f,1.f };
+			//Vector3 reflect{ l - (2 * Vector3::Dot(n, l) * n) };
+			//float cosAngle{ Vector3::Dot(reflect, v) };
+			//return { ks * powf(std::max(0.f, cosAngle),exp) * reflectColor };
+
+			// MAT
+			//Vector3 reflect{ l - 2 * Vector3::Dot(n, l) * n };
+			//float cosAlpha{ std::max(Vector3::Dot(reflect, v), 0.f) };
+			//return ColorRGB(1, 1, 1) * ks * std::pow(cosAlpha, exp);
+
+			const Vector3 reflectedRay = Vector3::Reflect(l, n);
+			const float cosAlpha{ std::max(Vector3::Dot(reflectedRay,v),0.0f) };
+			const float specularIntensity{ ks * powf(cosAlpha,exp) };
+			return { specularIntensity * colors::White };
 		}
 
 		/**
@@ -50,9 +62,7 @@ namespace dae
 		 */
 		static ColorRGB FresnelFunction_Schlick(const Vector3& h, const Vector3& v, const ColorRGB& f0)
 		{
-			//todo: W3
-			assert(false && "Not Implemented Yet");
-			return {};
+			return f0 + (1.0f - f0) * powf(1.0f - std::max(0.0f, Vector3::Dot(h,v)),5);
 		}
 
 		/**
@@ -64,9 +74,12 @@ namespace dae
 		 */
 		static float NormalDistribution_GGX(const Vector3& n, const Vector3& h, float roughness)
 		{
-			//todo: W3
-			assert(false && "Not Implemented Yet");
-			return {};
+			const float a{ Square(roughness)};
+			const float dotNH = Vector3::Dot(n, h);
+			const float denominator = Square(dotNH) * (Square(a) - 1.0f) + 1.0f;
+			const float result = Square(a) / (PI * Square(denominator));
+
+			return result;
 		}
 
 
@@ -79,9 +92,11 @@ namespace dae
 		 */
 		static float GeometryFunction_SchlickGGX(const Vector3& n, const Vector3& v, float roughness)
 		{
-			//todo: W3
-			assert(false && "Not Implemented Yet");
-			return {};
+			const float a{Square(roughness) };
+			const float kDirect{ Square(a + 1) / 8.0f };
+			const float dotNV{ std::max(Vector3::Dot(n,v),0.0f) };
+
+			return dotNV / (dotNV * (1.0f - kDirect) + kDirect);
 		}
 
 		/**
@@ -94,9 +109,7 @@ namespace dae
 		 */
 		static float GeometryFunction_Smith(const Vector3& n, const Vector3& v, const Vector3& l, float roughness)
 		{
-			//todo: W3
-			assert(false && "Not Implemented Yet");
-			return {};
+			return GeometryFunction_SchlickGGX(n, v, roughness) * GeometryFunction_SchlickGGX(n, l, roughness);
 		}
 
 	}

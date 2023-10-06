@@ -5,14 +5,16 @@
 //Project includes
 #include "Renderer.h"
 
-#include "Math/Matrix.h"
+#include <iostream>
+
+#include "Misc/Camera.h"
 #include "Misc/Material.h"
 #include "Misc/Scene.h"
-#include "Misc/Utils.h"
+
 
 using namespace dae;
 
-Renderer::Renderer(SDL_Window* pWindow) :
+Renderer::Renderer(SDL_Window * pWindow) :
 	m_pWindow(pWindow),
 	m_pBuffer(SDL_GetWindowSurface(pWindow))
 {
@@ -23,70 +25,92 @@ Renderer::Renderer(SDL_Window* pWindow) :
 
 void Renderer::Render(Scene* scenePtr) const
 {
-	const Camera& camera = scenePtr->GetCamera();
+	Camera& camera = scenePtr->GetCamera();
 	auto& materials = scenePtr->GetMaterials();
 	auto& lights = scenePtr->GetLights();
 
-	const float aspectRatio = static_cast<float>(m_Width) / static_cast<float>(m_Height);
+	const float widthFloat{ static_cast<float>(m_Width) };
+	const float heightFloat{ static_cast<float>(m_Height) };
+	const float multiplierXValue{ 2.0f / widthFloat };
+	const float multiplierYValue{ 2.0f / heightFloat };
+	const float aspectRatio = widthFloat / heightFloat;
+	const float fieldOfViewTimesAspect{ aspectRatio * camera.fovValue };
 
-#pragma omp parallel for schedule(guided) default(none) shared(aspectRatio, scenePtr, materials)
-	for (int pixelX{}; pixelX < m_Width; ++pixelX)
+	const Matrix cameraToWorld{ camera.CalculateCameraToWorld() };
+
+	Vector3 rayDirection{0,0,1};
+	Ray viewRay{camera.origin};
+
+
+	for (float pixelX{ 0.5f }; pixelX < widthFloat; ++pixelX)
 	{
-		for (int pixelY{}; pixelY < m_Height; ++pixelY)
+		rayDirection.x = (pixelX * multiplierXValue - 1.0f) * fieldOfViewTimesAspect;
+
+		for (float pixelY{ 0.5f }; pixelY < heightFloat; ++pixelY)
 		{
+			rayDirection.y = (1.0f - pixelY * multiplierYValue) * camera.fovValue;
 
-			Vector3 rayDirection
-			{
-				(2.0f * (static_cast<float>(pixelX) + 0.5f) / static_cast<float>(m_Width) - 1.0f) * aspectRatio,
-				1.0f - 2.0f * (static_cast<float>(pixelY) + 0.5f) / static_cast<float>(m_Height),
-				1
-			};
-			rayDirection.Normalize();
-
-
-
-			Ray activeRay{ camera.origin,rayDirection };
+			// Get view direction
+			viewRay.direction = cameraToWorld.TransformVector(rayDirection.Normalized());
+			Vector3 v{ viewRay.direction.Normalized() * -1.0f };
 
 			HitRecord closestHit{};
-			scenePtr->GetClosestHit(activeRay, closestHit);
-
-			//for (int i = 0; i < 1; ++i)
-			//{
-			//	const float dot{ Vector3::Dot(activeRay.direction,closestHit.normal) };
-			//	Vector3 reflectedDirection{ activeRay.direction - 2 * dot * closestHit.normal };
-			//	reflectedDirection.Normalize();
-
-			//	activeRay.origin = closestHit.origin;
-			//	activeRay.direction = reflectedDirection;
-
-			//	scenePtr->GetClosestHit(activeRay, closestHit);
-			//}
+			scenePtr->GetClosestHit(viewRay, closestHit);
 
 
 			ColorRGB finalColor{};
 
 			if (closestHit.didHit)
 			{
-				//float scaled_t = closestHit.t / 250.0f;
-				//scaled_t = 1.0f - scaled_t;
+				for (const Light& light : lights)
+				{
+					// Setup light ray
+					const Vector3 fromPoint{ closestHit.point + closestHit.normal * 0.001f };
+					const Vector3 hitToLightDirection{ light.origin - fromPoint };
+					const float distance{ hitToLightDirection.Magnitude() };
+					Ray hitToLightRay{ fromPoint,hitToLightDirection.Normalized() };
+					hitToLightRay.max = distance;
 
-				//finalColor = materials[closestHit.materialIndex]->Shade() * scaled_t;
+					if (!(scenePtr->DoesHit(hitToLightRay) && m_ShadowsEnabled))
+					{
+						Vector3 l = (light.origin - closestHit.point).Normalized();
 
+						const float cosineLaw = std::max(0.0f, Vector3::Dot(closestHit.normal, l));
 
-				finalColor = materials[closestHit.materialIndex]->Shade();
+						switch (m_CurrentLightMode)
+						{
+							case LightMode::ObservedArea:
+								finalColor += ColorRGB(1, 1, 1) * cosineLaw;
 
+								break;
+							case LightMode::Radiance:
+								finalColor += LightUtils::GetRadiance(light, closestHit.point);
+								break;
 
-				//finalColor = ColorRGB
-				//{
-				//	abs(closestHit.normal.x),
-				//	abs(closestHit.normal.y),
-				//	abs(closestHit.normal.z)
-				//};
+							case LightMode::RadianceAndObservedArea:
+								finalColor += LightUtils::GetRadiance(light, closestHit.point) * cosineLaw;
+
+								break;
+							case LightMode::BRDF:
+								finalColor += materials[closestHit.materialIndex]->Shade(closestHit, l, v);
+
+								break;
+							case LightMode::Combined:
+								finalColor += 
+									LightUtils::GetRadiance(light, closestHit.point) *
+									materials[closestHit.materialIndex]->Shade(closestHit, l, v) *
+									cosineLaw;
+								break;
+						}
+						
+					}
+				}
+
 			}
 
 			finalColor.MaxToOne();
 
-			m_pBufferPixels[pixelX + (pixelY * m_Width)] = SDL_MapRGB(m_pBuffer->format,
+			m_pBufferPixels[static_cast<int>(pixelX) + (static_cast<int>(pixelY) * m_Width)] = SDL_MapRGB(m_pBuffer->format,
 				static_cast<uint8_t>(finalColor.r * 255),
 				static_cast<uint8_t>(finalColor.g * 255),
 				static_cast<uint8_t>(finalColor.b * 255));
@@ -101,4 +125,20 @@ void Renderer::Render(Scene* scenePtr) const
 bool Renderer::SaveBufferToImage() const
 {
 	return SDL_SaveBMP(m_pBuffer, "RayTracing_Buffer.bmp");
+}
+
+void Renderer::ToggleShadows()
+{
+	m_ShadowsEnabled = !m_ShadowsEnabled;
+}
+
+void Renderer::CycleLightMode()
+{
+	int current{ static_cast<int>(m_CurrentLightMode) };
+	current++;
+
+	if (current >= static_cast<int>(LightMode::COUNT))
+		current = 0;
+
+	m_CurrentLightMode = static_cast<LightMode>(current);
 }

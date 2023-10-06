@@ -2,7 +2,7 @@
 
 #include <cassert>
 
-#include "Math/MathHelpers.h"
+#include "MathHelpers.h"
 #include <cmath>
 
 namespace dae {
@@ -104,42 +104,56 @@ namespace dae {
 
 	Matrix Matrix::CreateTranslation(float x, float y, float z)
 	{
-		//todo W2
-		assert(false && "Not Implemented Yet");
-		return {};
+		return CreateTranslation(Vector3{ x,y,z });
 	}
 
 	Matrix Matrix::CreateTranslation(const Vector3& t)
 	{
-		return { Vector3::UnitX, Vector3::UnitY, Vector3::UnitZ, t };
+		return
+		{
+			Vector3::UnitX,
+			Vector3::UnitY,
+			Vector3::UnitZ,
+			t
+		};
 	}
 
 	Matrix Matrix::CreateRotationX(float pitch)
 	{
-		//todo W2
-		assert(false && "Not Implemented Yet");
-		return {};
+		return
+		{
+			Vector3::UnitX,
+			Vector3{0,cosf(pitch),-sinf(pitch)},
+			Vector3{0,sinf(pitch),cosf(pitch)},
+			Vector3::Zero
+		};
 	}
 
 	Matrix Matrix::CreateRotationY(float yaw)
 	{
-		//todo W2
-		assert(false && "Not Implemented Yet");
-		return {};
+		return
+		{
+			Vector3{cosf(yaw),0,-sinf(yaw)},
+			Vector3{0,1,0},
+			Vector3{sinf(yaw),0,cosf(yaw)},
+			Vector3::Zero
+		};
 	}
 
 	Matrix Matrix::CreateRotationZ(float roll)
 	{
-		//todo W2
-		assert(false && "Not Implemented Yet");
-		return {};
+		return
+		{
+			Vector3{cosf(roll),sinf(roll),0},
+			Vector3{-sinf(roll),cosf(roll),0},
+			Vector3::UnitZ,
+			Vector3::Zero
+		};
 	}
 
 	Matrix Matrix::CreateRotation(const Vector3& r)
 	{
-		//todo W2
-		assert(false && "Not Implemented Yet");
-		return {};
+		return {CreateRotationX(r.x) * CreateRotationY(r.y) * CreateRotationZ(r.z)};
 	}
 
 	Matrix Matrix::CreateRotation(float pitch, float yaw, float roll)
@@ -149,9 +163,13 @@ namespace dae {
 
 	Matrix Matrix::CreateScale(float sx, float sy, float sz)
 	{
-		//todo W2
-		assert(false && "Not Implemented Yet");
-		return {};
+		return
+		{
+			Vector3::UnitX * sx,
+			Vector3::UnitY * sy,
+			Vector3::UnitZ * sz,
+			Vector3::Zero
+		};
 	}
 
 	Matrix Matrix::CreateScale(const Vector3& s)

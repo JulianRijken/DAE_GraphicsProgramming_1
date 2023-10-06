@@ -2,8 +2,10 @@
 
 #include <cstdint>
 
+
 struct SDL_Window;
 struct SDL_Surface;
+struct Vector3;
 
 namespace dae
 {
@@ -20,10 +22,14 @@ namespace dae
 		Renderer& operator=(const Renderer&) = delete;
 		Renderer& operator=(Renderer&&) noexcept = delete;
 
-		void Render(Scene* pScene) const;
+		void Render(Scene* scenePtr) const;
 		bool SaveBufferToImage() const;
+		void ToggleShadows();
+		void CycleLightMode();
 
 	private:
+
+
 		SDL_Window* m_pWindow{};
 
 		SDL_Surface* m_pBuffer{};
@@ -31,5 +37,19 @@ namespace dae
 
 		int m_Width{};
 		int m_Height{};
+
+		enum class LightMode
+		{
+			ObservedArea,
+			Radiance,
+			RadianceAndObservedArea,
+			BRDF,
+			Combined,
+			COUNT
+		};
+
+		LightMode m_CurrentLightMode{ LightMode::Combined };
+		bool m_ShadowsEnabled{ false };
+
 	};
 }

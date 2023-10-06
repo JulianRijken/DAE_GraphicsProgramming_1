@@ -1,15 +1,14 @@
 //External includes
 #include "SDL.h"
-#include "SDL_surface.h"
 #undef main
 
 //Standard includes
 #include <iostream>
 
 //Project includes
-#include "Misc/Timer.h"
 #include "Renderer.h"
 #include "Misc/Scene.h"
+#include "Misc/Timer.h"
 
 using namespace dae;
 
@@ -40,11 +39,14 @@ int main(int argc, char* args[])
 	if (!pWindow)
 		return 1;
 
+	SDL_SetRelativeMouseMode(SDL_TRUE);
+
+
 	//Initialize "framework"
 	const auto pTimer = new Timer();
 	const auto pRenderer = new Renderer(pWindow);
 
-	const auto pScene = new Scene_W1();
+	const auto pScene = new Scene_W3();
 	pScene->Initialize();
 
 	//Start loop
@@ -67,10 +69,27 @@ int main(int argc, char* args[])
 			case SDL_QUIT:
 				isLooping = false;
 				break;
-			case SDL_KEYUP:
+			case SDL_KEYDOWN:
 				if(e.key.keysym.scancode == SDL_SCANCODE_X)
 					takeScreenshot = true;
+
+				if (e.key.keysym.scancode == SDL_SCANCODE_ESCAPE)
+					SDL_SetRelativeMouseMode(SDL_FALSE);
+
+				if (e.key.keysym.scancode == SDL_SCANCODE_F2)
+					pRenderer->ToggleShadows();
+
+				if (e.key.keysym.scancode == SDL_SCANCODE_F3)
+					pRenderer->CycleLightMode();
+
 				break;
+			case SDL_MOUSEWHEEL:
+				if (e.wheel.y > 0)
+					pScene->GetCamera().AdjustFOV(-5.0f);
+				else if (e.wheel.y < 0)
+					pScene->GetCamera().AdjustFOV(5.0f);
+				break;
+
 			}
 		}
 

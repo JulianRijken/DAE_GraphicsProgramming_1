@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.18)
 
 # Change project name here
-set(PROJECT_NAME "GrapicsProgramming" CACHE STRING "")
+set(PROJECT_NAME "game" CACHE STRING "Project name")
 
 set(ASPECT_RATIO "4/3" CACHE STRING "Aspect ratio")
 set(CLICK_TO_START ON CACHE BOOL "A click is required to activate sound on web")
@@ -31,8 +31,18 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project("${PROJECT_NAME}")
 
-file(GLOB_RECURSE DIR_SRC source/Math/*.cpp source/Misc/*.cpp source/*.cpp engine/*.cpp)
+file(GLOB_RECURSE DIR_SRC source/*.cpp engine/*.cpp)
 add_executable("${PROJECT_NAME}" ${DIR_SRC})
+
+
+add_compile_options(-O3 -ffast-math -GA)
+
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+
 
 if(EMSCRIPTEN)
     include(Emscripten)
@@ -47,12 +57,8 @@ else()
 
     find_package(OpenGL)
     include_directories(${PROJECT_NAME} ${OPENGL_INCLUDE_DIRS})
-    target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES})
-endif()
 
-find_package(OpenMP)
-if (OpenMP_FOUND)
-    target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_CXX)
+    add_compile_options(-march=native -flto -Wl,-flto)
 endif()
 
 # include directories
@@ -70,7 +76,7 @@ set_source_files_properties(
 if(NOT WIN32)
     add_custom_command(TARGET "${PROJECT_NAME}" PRE_BUILD
                    COMMAND ${CMAKE_COMMAND} -E create_symlink
-                   ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources)
+                   ${CMAKE_SOURCE_DIR}/source/Resources $<TARGET_FILE_DIR:${PROJECT_NAME}>/Resources)
 else()
     MicrosoftWindows_AddCompileCommands()
 endif()

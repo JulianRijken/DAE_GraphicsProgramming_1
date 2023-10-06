@@ -1,8 +1,8 @@
 #pragma once
 #include <cassert>
 
-#include "Math/Math.h"
-#include "vector"
+#include "Math/Matrix.h"
+#include "Math/Vector3.h"
 
 namespace dae
 {
@@ -169,7 +169,7 @@ namespace dae
 
 	struct HitRecord
 	{
-		Vector3 origin{};
+		Vector3 point{};
 		Vector3 normal{};
 		float t = FLT_MAX;
 
