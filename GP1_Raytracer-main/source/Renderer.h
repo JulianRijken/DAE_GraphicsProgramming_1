@@ -30,8 +30,6 @@ namespace dae
 
 	private:
 
-		//static bool IsLightOccluded(const Scene* scenePtr, const Vector3& lightOrigin, const Vector3& hitOrigin);
-
 
 		SDL_Window* m_pWindow{};
 
@@ -51,8 +49,8 @@ namespace dae
 			COUNT
 		};
 
-		LightMode m_CurrentLightMode{ LightMode::BRDF };
-		bool m_ShadowsEnabled{ true };
+		LightMode m_CurrentLightMode{ LightMode::Combined };
+		bool m_ShadowsEnabled{ false };
 
 	};
 }

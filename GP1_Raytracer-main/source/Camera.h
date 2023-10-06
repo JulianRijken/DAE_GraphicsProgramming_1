@@ -68,9 +68,20 @@ namespace dae
 			fovValue = tanf((fovAngle * PI / 180.0f) / 2.0f);
 		}
 
-		void Update(Timer* pTimer)
+		void HandleCameraMovement(const float deltaTime)
 		{
-			const float deltaTime = pTimer->GetElapsed();
+			//Mouse Input
+			int mouseX{}, mouseY{};
+			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
+
+			if ((mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0)
+			{
+				targetCameraPitch -= mouseX * 0.001f;
+				targetCameraYaw -= mouseY * 0.001f;
+			}
+
+			cameraPitch = Jul::Lerp(cameraPitch, targetCameraPitch, deltaTime / cameraRotateSmoothing);
+			cameraYaw = Jul::Lerp(cameraYaw, targetCameraYaw, deltaTime / cameraRotateSmoothing);
 
 			const Matrix pitchYawRotation
 			{
@@ -80,10 +91,12 @@ namespace dae
 				Vector3::Zero
 			};
 
+			forward = Vector3::UnitZ;
+			forward = pitchYawRotation.TransformVector(forward);
+
 
 			//Keyboard Input
 			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
-
 
 			Vector3 inputVector{};
 
@@ -107,27 +120,15 @@ namespace dae
 				inputVector.y += 1;
 
 
-
 			inputVector = pitchYawRotation.TransformVector(inputVector);
-			targetOrigin += inputVector * deltaTime * 20.0f; 
-
+			targetOrigin += inputVector * deltaTime * 20.0f;
 			origin = Jul::Lerp(origin, targetOrigin, deltaTime / cameraMoveSmoothing);
 
+		}
 
-			//Mouse Input
-			int mouseX{}, mouseY{};
-			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
-
-			targetCameraPitch -= mouseX * 0.001f;
-			targetCameraYaw -= mouseY * 0.001f;
-
-			cameraPitch = Jul::Lerp(cameraPitch, targetCameraPitch, deltaTime / cameraRotateSmoothing);
-			cameraYaw = Jul::Lerp(cameraYaw, targetCameraYaw, deltaTime / cameraRotateSmoothing);
-
-
-			forward = Vector3::UnitZ;
-			forward = pitchYawRotation.TransformVector(forward);
-
+		void Update(Timer* pTimer)
+		{
+			HandleCameraMovement(pTimer->GetElapsed());
 		}
 	};
 }
