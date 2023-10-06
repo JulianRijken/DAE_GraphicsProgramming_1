@@ -34,11 +34,21 @@ namespace dae
 		 */
 		static ColorRGB Phong(float ks, float exp, const Vector3& l, const Vector3& v, const Vector3& n)
 		{
+			// Wannes
+			//ColorRGB reflectColor{ 1.f,1.f,1.f };
+			//Vector3 reflect{ l - (2 * Vector3::Dot(n, l) * n) };
+			//float cosAngle{ Vector3::Dot(reflect, v) };
+			//return { ks * powf(std::max(0.f, cosAngle),exp) * reflectColor };
+
+			// MAT
+			//Vector3 reflect{ l - 2 * Vector3::Dot(n, l) * n };
+			//float cosAlpha{ std::max(Vector3::Dot(reflect, v), 0.f) };
+			//return ColorRGB(1, 1, 1) * ks * std::pow(cosAlpha, exp);
+
 			const Vector3 reflectedRay = Vector3::Reflect(l, n);
 			const float cosAlpha{ std::max(Vector3::Dot(reflectedRay,v),0.0f) };
 			const float specularIntensity{ ks * powf(cosAlpha,exp) };
-
-			return { ColorRGB(1,1,1) * specularIntensity };
+			return { specularIntensity * colors::White };
 		}
 
 		/**

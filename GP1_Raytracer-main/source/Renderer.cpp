@@ -64,19 +64,14 @@ void Renderer::Render(Scene* scenePtr) const
 			{
 				for (const Light& light : lights)
 				{
-					// Setup ray
-					Vector3 fromPoint{ closestHit.point + closestHit.normal * 0.001f };
-					Vector3 hitToLightDirection{ light.origin - fromPoint };
+					// Setup light ray
+					const Vector3 fromPoint{ closestHit.point + closestHit.normal * 0.001f };
+					const Vector3 hitToLightDirection{ light.origin - fromPoint };
 					const float distance{ hitToLightDirection.Magnitude() };
 					Ray hitToLightRay{ fromPoint,hitToLightDirection.Normalized() };
 					hitToLightRay.max = distance;
 
-
-					HitRecord lightHit{};
-					scenePtr->GetClosestHit(hitToLightRay, lightHit);
-
-
-					if (!(lightHit.didHit && m_ShadowsEnabled))
+					if (!(scenePtr->DoesHit(hitToLightRay) && m_ShadowsEnabled))
 					{
 						Vector3 l = (light.origin - closestHit.point).Normalized();
 						Vector3 v{ viewRay.direction.Normalized() * -1.0f };
@@ -91,6 +86,10 @@ void Renderer::Render(Scene* scenePtr) const
 								break;
 							case LightMode::Radiance:
 								finalColor += LightUtils::GetRadiance(light, closestHit.point);
+								break;
+
+							case LightMode::RadianceAndObservedArea:
+								finalColor += LightUtils::GetRadiance(light, closestHit.point) * cosineLaw;
 
 								break;
 							case LightMode::BRDF:
@@ -145,3 +144,9 @@ void Renderer::CycleLightMode()
 
 	m_CurrentLightMode = static_cast<LightMode>(current);
 }
+
+//bool Renderer::IsLightOccluded(const Scene* scenePtr, const Vector3& lightOrigin, const Vector3& hitOrigin)
+//{
+//
+//}
+

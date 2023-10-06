@@ -86,7 +86,7 @@ namespace dae
 		{
 			//todo: W3
 			return BRDF::Lambert(m_DiffuseReflectance,m_DiffuseColor) + 
-				BRDF::Phong(m_SpecularReflectance,m_PhongExponent,-l,v,hitRecord.normal);
+				BRDF::Phong(m_SpecularReflectance,m_PhongExponent,l,-v,hitRecord.normal);
 		}
 
 	private:
@@ -109,26 +109,28 @@ namespace dae
 
 		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
 		{
-			//todo: W3
-			//assert(false && "Not Implemented Yet");
-
 			const Vector3 plusVL = v + l;
 			const Vector3 h{ plusVL / plusVL.Magnitude() };
 
-			const ColorRGB f0{ m_Metalness * m_Albedo };
+			const ColorRGB f0{ (m_Metalness <= 0.f) ? ColorRGB(0.04f, 0.04f, 0.04f) : m_Albedo};
 
-			ColorRGB F{BRDF::FresnelFunction_Schlick(h, v, f0)};
-			float D{ BRDF::NormalDistribution_GGX(hitRecord.normal, h, m_Roughness) };
-			float G{ BRDF::GeometryFunction_Smith(hitRecord.normal, v, l, m_Roughness) };
-
-			//ColorRGB specular{ (F * D * G) / (4.0f * Vector3::Dot(v,hitRecord.normal) * Vector3::Dot(l,hitRecord.normal)) };
-			//specular.MaxToOne();
+			ColorRGB f{BRDF::FresnelFunction_Schlick(h, v,f0)};
+			float d{ BRDF::NormalDistribution_GGX(hitRecord.normal, h, m_Roughness) };
+			float g{ BRDF::GeometryFunction_Smith(hitRecord.normal, v, l, m_Roughness) };
 
 
-			return
-			{
-				  F
-			};
+			ColorRGB combinedColor{ f * d * g };
+			ColorRGB specular{ combinedColor / (4.0f * Vector3::Dot(v,hitRecord.normal) * Vector3::Dot(l,hitRecord.normal)) };
+			specular.MaxToOne();
+
+			ColorRGB kd{};
+			if(m_Metalness <= 0.0f)
+				kd = ColorRGB{1,1,1} - f;
+			else
+				kd = ColorRGB{0,0,0};
+
+			const ColorRGB diffuse{ BRDF::Lambert(kd,m_Albedo) };
+			return diffuse + specular;
 
 		}
 

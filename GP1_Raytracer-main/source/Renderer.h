@@ -2,8 +2,11 @@
 
 #include <cstdint>
 
+#include "Vector3.h"
+
 struct SDL_Window;
 struct SDL_Surface;
+struct Vector3;
 
 namespace dae
 {
@@ -24,7 +27,12 @@ namespace dae
 		bool SaveBufferToImage() const;
 		void ToggleShadows();
 		void CycleLightMode();
+
 	private:
+
+		//static bool IsLightOccluded(const Scene* scenePtr, const Vector3& lightOrigin, const Vector3& hitOrigin);
+
+
 		SDL_Window* m_pWindow{};
 
 		SDL_Surface* m_pBuffer{};
@@ -37,6 +45,7 @@ namespace dae
 		{
 			ObservedArea,
 			Radiance,
+			RadianceAndObservedArea,
 			BRDF,
 			Combined,
 			COUNT

@@ -30,6 +30,15 @@ namespace dae {
 	{
 		HitRecord testHitRecord{};
 
+		for (const Plane& plane : m_PlaneGeometries)
+		{
+			// Apply test to tesHitRecord
+			GeometryUtils::HitTest_Plane(plane, ray, testHitRecord);
+
+			if (testHitRecord.t < closestHit.t)
+				closestHit = testHitRecord;
+		}
+
 		for (const Sphere& sphere : m_SphereGeometries)
 		{
 			// Apply test to tesHitRecord
@@ -38,21 +47,30 @@ namespace dae {
 			if (testHitRecord.t < closestHit.t)
 				closestHit = testHitRecord;
 		}
-
-		for (const Plane& plane: m_PlaneGeometries)
-		{
-			// Apply test to tesHitRecord
-			GeometryUtils::HitTest_Plane(plane, ray, testHitRecord);
-
-			if (testHitRecord.t < closestHit.t)
-				closestHit = testHitRecord;
-		}
 	}
 
 	bool Scene::DoesHit(const Ray& ray) const
 	{
-		//todo W3
-		assert(false && "No Implemented Yet!");
+		HitRecord testHitRecord{};
+
+		for (const Plane& plane : m_PlaneGeometries)
+		{
+			// Apply test to tesHitRecord
+			GeometryUtils::HitTest_Plane(plane, ray, testHitRecord);
+
+			if (testHitRecord.didHit)
+				return true;
+		}
+
+		for (const Sphere& sphere : m_SphereGeometries)
+		{
+			// Apply test to tesHitRecord
+			GeometryUtils::HitTest_Sphere(sphere, ray, testHitRecord);
+
+			if (testHitRecord.didHit)
+				return true;
+		}
+
 		return false;
 	}
 
@@ -233,16 +251,13 @@ namespace dae {
 
 
 
-
-
-
-		//m_Camera.targetOrigin = { 0.f, 3.f, -9.f };
+		//m_Camera.targetOrigin = { 0.f, 1.f, -5.f };
 		//m_Camera.fovAngle = 45.f;
 
 		////default: Material id0 >> SolidColor Material (RED)
 		//constexpr unsigned char matId_Solid_Red = 0;
-		//const unsigned char matId_Solid_Blue = AddMaterial(new Material_SolidColor{ colors::Blue });
-		//const unsigned char matId_Solid_Yellow = AddMaterial(new Material_SolidColor{ colors::Yellow });
+		//const unsigned char matId_Solid_Blue = AddMaterial(new Material_LambertPhong{ colors::Blue,1.0f,1.0f,60.0f });
+		//const unsigned char matId_Solid_Yellow = AddMaterial(new Material_Lambert{ colors::White, 1.f });
 
 		////Spheres
 		//AddSphere({ -.75f, 1.f, .0f }, 1.f, matId_Solid_Red);
@@ -252,7 +267,10 @@ namespace dae {
 		//AddPlane({ 0.f, 0.f, 0.f }, { 0.f, 1.f, 0.f }, matId_Solid_Yellow);
 
 		////Light
-		//AddPointLight({ 0.f, 5.f, 5.f }, 25.f, ColorRGB{ 1.f, .8f, .45f });
+		//AddPointLight({ 0.f, 5.f, 5.f }, 25.f, colors::White);
+
+
+		//AddPointLight({ 0.f, 2.5f, -5.f }, 25.f, colors::White);
 	}
 
 
