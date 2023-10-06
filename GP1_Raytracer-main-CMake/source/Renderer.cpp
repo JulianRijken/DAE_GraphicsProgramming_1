@@ -3,10 +3,11 @@
 #include "SDL_surface.h"
 
 //Project includes
-#include "Renderer.h"
 
 #include <iostream>
+#include <omp.h>
 
+#include "Renderer.h"
 #include "Misc/Camera.h"
 #include "Misc/Material.h"
 #include "Misc/Scene.h"
@@ -41,14 +42,16 @@ void Renderer::Render(Scene* scenePtr) const
 	Vector3 rayDirection{0,0,1};
 	Ray viewRay{camera.origin};
 
-
-	for (float pixelX{ 0.5f }; pixelX < widthFloat; ++pixelX)
+	#pragma omp parallel for schedule(dynamic)
+	for (int pixelX = 0; pixelX < m_Width; ++pixelX)
 	{
-		rayDirection.x = (pixelX * multiplierXValue - 1.0f) * fieldOfViewTimesAspect;
-
-		for (float pixelY{ 0.5f }; pixelY < heightFloat; ++pixelY)
+		for (int pixelY = 0; pixelY < m_Height; ++pixelY)
 		{
-			rayDirection.y = (1.0f - pixelY * multiplierYValue) * camera.fovValue;
+			float pixelXFloat = static_cast<float>(pixelX) + 0.5f;
+			float pixelYFloat = static_cast<float>(pixelY) + 0.5f;
+
+			rayDirection.x = (pixelXFloat * multiplierXValue - 1.0f) * fieldOfViewTimesAspect;
+			rayDirection.y = (1.0f - pixelYFloat * multiplierYValue) * camera.fovValue;
 
 			// Get view direction
 			viewRay.direction = cameraToWorld.TransformVector(rayDirection.Normalized());
@@ -110,10 +113,13 @@ void Renderer::Render(Scene* scenePtr) const
 
 			finalColor.MaxToOne();
 
-			m_pBufferPixels[static_cast<int>(pixelX) + (static_cast<int>(pixelY) * m_Width)] = SDL_MapRGB(m_pBuffer->format,
-				static_cast<uint8_t>(finalColor.r * 255),
-				static_cast<uint8_t>(finalColor.g * 255),
-				static_cast<uint8_t>(finalColor.b * 255));
+			#pragma omp critical
+			{
+				m_pBufferPixels[static_cast<int>(pixelX) + (static_cast<int>(pixelY) * m_Width)] = SDL_MapRGB(m_pBuffer->format,
+					static_cast<uint8_t>(finalColor.r * 255),
+					static_cast<uint8_t>(finalColor.g * 255),
+					static_cast<uint8_t>(finalColor.b * 255));
+			}
 		}
 	}
 

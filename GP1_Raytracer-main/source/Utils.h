@@ -140,6 +140,8 @@ namespace dae
 			{
 				return{ light.color * light.intensity };
 			}
+
+			return {};
 		}
 	}
 
