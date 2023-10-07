@@ -120,11 +120,10 @@ namespace dae
 			ColorRGB specular{ (f * d * g) / (4.0f * Vector3::Dot(v,hitRecord.normal) * Vector3::Dot(l,hitRecord.normal)) };
 			specular.MaxToOne();
 
-			const ColorRGB kd{ m_Metalness == 0.0f ? colors::White - f : ColorRGB{0,0,0} };
-			const ColorRGB diffuse{ BRDF::Lambert(kd,m_Albedo) };
+			const ColorRGB kd{ m_Metalness == 0.0f ? 1.0f - f : ColorRGB{0,0,0} };
+			const ColorRGB diffuse{ BRDF::Lambert(kd,m_Albedo)};
 
-			return  specular + diffuse;
-
+			return specular + diffuse;
 		}
 
 	private:

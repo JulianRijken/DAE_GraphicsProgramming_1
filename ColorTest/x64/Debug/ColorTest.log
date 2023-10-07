@@ -1,0 +1,3 @@
+﻿  main.cpp
+C:\Git\DAE\DAE_GraphicsProgramming_1\ColorTest\main.cpp(7,1): warning C4326: return type of 'main' should be 'int' instead of 'void'
+  ColorTest.vcxproj -> C:\Git\DAE\DAE_GraphicsProgramming_1\ColorTest\x64\Debug\ColorTest.exe
