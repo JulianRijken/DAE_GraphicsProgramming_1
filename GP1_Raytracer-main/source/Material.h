@@ -107,7 +107,7 @@ namespace dae
 
 		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
 		{
-			const Vector3 plusVL = v + l;
+			const Vector3 plusVL{ v + l };
 			const Vector3 h{ plusVL / plusVL.Magnitude() };
 
 			const ColorRGB f0{ m_Metalness == 0.0f ? ColorRGB(0.04f, 0.04f, 0.04f) : m_Albedo};
@@ -125,6 +125,7 @@ namespace dae
 
 			return specular + diffuse;
 		}
+
 
 	private:
 		ColorRGB m_Albedo{0.955f, 0.637f, 0.538f}; //Copper

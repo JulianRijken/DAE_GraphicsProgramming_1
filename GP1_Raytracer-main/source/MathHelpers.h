@@ -21,11 +21,11 @@ namespace dae
 
 	inline float Lerpf(float a, float b, float factor)
 	{
-		return ((1 - factor) * a) + (factor * b);
+		return (1 - factor) * a + factor * b;
 	}
 
 	inline bool AreEqual(float a, float b, float epsilon = FLT_EPSILON)
 	{
-		return abs(a - b) < epsilon;
+		return std::abs(a - b) < epsilon;
 	}
 }

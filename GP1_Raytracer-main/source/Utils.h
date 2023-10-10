@@ -25,7 +25,7 @@ namespace dae
 			if (discriminant < 0)
 				return false;
 
-			const float distance = (-b - sqrt(discriminant));
+			const float distance = -b - sqrt(discriminant);
 
 			if (distance < ray.min || distance > ray.max)
 				return false;
@@ -118,28 +118,17 @@ namespace dae
 		//Direction from target to light
 		inline Vector3 GetDirectionToLight(const Light& light, const Vector3 origin)
 		{
-			//todo W3
-			//assert(false && "No Implemented Yet!");
-
 			return { light.origin - origin};
 		}
 
 		inline ColorRGB GetRadiance(const Light& light, const Vector3& target)
 		{
-			//todo W3
-
 			if(light.type == LightType::Point)
-			{
-				const float radiusSquared{ Square((light.origin - target).Magnitude()) };
-				const float irradiance{ light.intensity / radiusSquared };
-
-				return{ light.color * irradiance };
-			}
+				return{ light.color * (light.intensity / Square((light.origin - target).Magnitude())) };
+			
 
 			if (light.type == LightType::Directional)
-			{
 				return{ light.color * light.intensity };
-			}
 
 			return {};
 		}

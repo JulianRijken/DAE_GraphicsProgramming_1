@@ -19,7 +19,7 @@ namespace dae {
 
 	float Vector3::Magnitude() const
 	{
-		return sqrtf(x * x + y * y + z * z);
+		return std::sqrtf(x * x + y * y + z * z);
 	}
 
 	float Vector3::SqrMagnitude() const

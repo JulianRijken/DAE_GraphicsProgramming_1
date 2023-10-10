@@ -53,20 +53,21 @@ void Renderer::Render(Scene* scenePtr) const
 
 			// Get view direction
 			viewRay.direction = cameraToWorld.TransformVector(rayDirection.Normalized());
-			Vector3 v{ viewRay.direction.Normalized() * -1.0f };
+			const Vector3 v{ viewRay.direction.Normalized() * -1.0f };
 
 			HitRecord closestHit{};
 			scenePtr->GetClosestHit(viewRay, closestHit);
 
 
 			ColorRGB finalColor{};
+			const Vector3 fromPoint{ closestHit.point + closestHit.normal * 0.001f };
+
 
 			if (closestHit.didHit)
 			{
 				for (const Light& light : lights)
 				{
 					// Setup light ray
-					const Vector3 fromPoint{ closestHit.point + closestHit.normal * 0.001f };
 					const Vector3 hitToLightDirection{ light.origin - fromPoint };
 					const float distance{ hitToLightDirection.Magnitude() };
 					Ray hitToLightRay{ fromPoint,hitToLightDirection.Normalized() };
@@ -74,8 +75,7 @@ void Renderer::Render(Scene* scenePtr) const
 
 					if (!(scenePtr->DoesHit(hitToLightRay) && m_ShadowsEnabled))
 					{
-						Vector3 l = (light.origin - closestHit.point).Normalized();
-
+						const Vector3 l = (light.origin - closestHit.point).Normalized();
 						const float cosineLaw = std::max(0.0f, Vector3::Dot(closestHit.normal, l));
 
 						switch (m_CurrentLightMode)
