@@ -5,6 +5,8 @@
 //Project includes
 #include "Renderer.h"
 
+#include <algorithm>
+#include <execution>
 #include <iostream>
 
 #include "Math.h"
@@ -22,13 +24,18 @@ Renderer::Renderer(SDL_Window * pWindow) :
 	//Initialize
 	SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
 	m_pBufferPixels = static_cast<uint32_t*>(m_pBuffer->pixels);
+
+	m_XVals.reserve(m_Width);
+	for (uint16_t x{}; x < m_Width; ++x)
+		m_XVals.push_back(x);
+	
 }
 
-void Renderer::Render(Scene* scenePtr) const
+void Renderer::Render(Scene* scenePtr)
 {
 	Camera& camera = scenePtr->GetCamera();
-	auto& materials = scenePtr->GetMaterials();
-	auto& lights = scenePtr->GetLights();
+	const auto& materials = scenePtr->GetMaterials();
+	const auto& lights = scenePtr->GetLights();
 
 	const float widthFloat{ static_cast<float>(m_Width) };
 	const float heightFloat{ static_cast<float>(m_Height) };
@@ -39,86 +46,88 @@ void Renderer::Render(Scene* scenePtr) const
 
 	const Matrix cameraToWorld{ camera.CalculateCameraToWorld() };
 
-	Vector3 rayDirection{0,0,1};
-	Ray viewRay{camera.origin};
-
-
-	for (float pixelX{ 0.5f }; pixelX < widthFloat; ++pixelX)
-	{
-		rayDirection.x = (pixelX * multiplierXValue - 1.0f) * fieldOfViewTimesAspect;
-
-		for (float pixelY{ 0.5f }; pixelY < heightFloat; ++pixelY)
+	// We run a for_each for each of the x pixels, this will be distributed over all cpu threads
+	std::for_each(std::execution::par, m_XVals.begin(), m_XVals.end(), [this, camera,multiplierXValue,multiplierYValue,fieldOfViewTimesAspect, cameraToWorld,scenePtr,lights,materials](const uint16_t pixelX)
 		{
-			rayDirection.y = (1.0f - pixelY * multiplierYValue) * camera.fovValue;
+			Ray viewRay{ camera.origin };
 
-			// Get view direction
-			viewRay.direction = cameraToWorld.TransformVector(rayDirection.Normalized());
-			const Vector3 v{ viewRay.direction.Normalized() * -1.0f };
-
-			HitRecord closestHit{};
-			scenePtr->GetClosestHit(viewRay, closestHit);
-
-
-			ColorRGB finalColor{};
-			const Vector3 fromPoint{ closestHit.point + closestHit.normal * 0.001f };
-
-
-			if (closestHit.didHit)
+			for (int pixelY{}; pixelY < m_Height; ++pixelY)
 			{
-				for (const Light& light : lights)
+				Vector3 rayDirection
 				{
-					// Setup light ray
-					const Vector3 hitToLightDirection{ light.origin - fromPoint };
-					const float distance{ hitToLightDirection.Magnitude() };
-					Ray hitToLightRay{ fromPoint,hitToLightDirection.Normalized() };
-					hitToLightRay.max = distance;
+					((static_cast<float>(pixelX) + 0.5f) * multiplierXValue - 1.0f) * fieldOfViewTimesAspect,
+					(1.0f - (static_cast<float>(pixelY) + 0.5f) * multiplierYValue) * camera.fovValue,
+					1
+				};
 
-					if (!(scenePtr->DoesHit(hitToLightRay) && m_ShadowsEnabled))
+				// Get view direction
+				viewRay.direction = cameraToWorld.TransformVector(rayDirection.Normalized());
+				const Vector3 v{ viewRay.direction * -1.0f };
+
+				HitRecord closestHit{};
+				scenePtr->GetClosestHit(viewRay, closestHit);
+
+
+				ColorRGB finalColor{};
+				const Vector3 fromPoint{ closestHit.point + closestHit.normal * SHADOW_NORMAL_OFFSET };
+
+
+				if (closestHit.didHit)
+				{
+					for (const Light& light : lights)
 					{
-						const Vector3 l = (light.origin - closestHit.point).Normalized();
-						const float cosineLaw = std::max(0.0f, Vector3::Dot(closestHit.normal, l));
+						// Setup light ray
+						const Vector3 hitToLightDirection{ light.origin - fromPoint };
+						const float distance{ hitToLightDirection.Magnitude() };
+						Ray hitToLightRay{ fromPoint,hitToLightDirection.Normalized() };
+						hitToLightRay.max = distance;
 
-						switch (m_CurrentLightMode)
+						if (!m_ShadowsEnabled || !scenePtr->DoesHit(hitToLightRay))
 						{
-							case LightMode::ObservedArea:
-								finalColor += ColorRGB(1, 1, 1) * cosineLaw;
+							const Vector3 l = (light.origin - closestHit.point).Normalized();
+							const float cosineLaw = std::max(0.0f, Vector3::Dot(closestHit.normal, l));
 
-								break;
-							case LightMode::Radiance:
-								finalColor += LightUtils::GetRadiance(light, closestHit.point);
-								break;
+							switch (m_CurrentLightMode)
+							{
+								case LightMode::ObservedArea:
+									finalColor += ColorRGB(1, 1, 1) * cosineLaw;
 
-							case LightMode::RadianceAndObservedArea:
-								finalColor += LightUtils::GetRadiance(light, closestHit.point) * cosineLaw;
+									break;
+								case LightMode::Radiance:
+									finalColor += LightUtils::GetRadiance(light, closestHit.point);
+									break;
 
-								break;
-							case LightMode::BRDF:
-								finalColor += materials[closestHit.materialIndex]->Shade(closestHit, l, v);
+								case LightMode::RadianceAndObservedArea:
+									finalColor += LightUtils::GetRadiance(light, closestHit.point) * cosineLaw;
 
-								break;
-							case LightMode::Combined:
-								finalColor += 
-									LightUtils::GetRadiance(light, closestHit.point) *
-									materials[closestHit.materialIndex]->Shade(closestHit, l, v) *
-									cosineLaw;
-								break;
+									break;
+								case LightMode::BRDF:
+									finalColor += materials[closestHit.materialIndex]->Shade(closestHit, l, v);
+
+									break;
+								case LightMode::Combined:
+									finalColor +=
+										LightUtils::GetRadiance(light, closestHit.point) *
+										materials[closestHit.materialIndex]->Shade(closestHit, l, v) *
+										cosineLaw;
+									break;
+							}
+
 						}
-						
 					}
+
 				}
 
+				finalColor.MaxToOne();
+
+				m_pBufferPixels[pixelX + pixelY * m_Width] = SDL_MapRGB(m_pBuffer->format,
+					static_cast<uint8_t>(finalColor.r * 255),
+					static_cast<uint8_t>(finalColor.g * 255),
+					static_cast<uint8_t>(finalColor.b * 255));
 			}
+		});
 
-			finalColor.MaxToOne();
-
-			m_pBufferPixels[static_cast<int>(pixelX) + (static_cast<int>(pixelY) * m_Width)] = SDL_MapRGB(m_pBuffer->format,
-				static_cast<uint8_t>(finalColor.r * 255),
-				static_cast<uint8_t>(finalColor.g * 255),
-				static_cast<uint8_t>(finalColor.b * 255));
-		}
-	}
-
-	//@END
+	
 	//Update SDL Surface
 	SDL_UpdateWindowSurface(m_pWindow);
 }

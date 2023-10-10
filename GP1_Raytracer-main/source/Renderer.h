@@ -1,12 +1,10 @@
 #pragma once
 
 #include <cstdint>
-
-#include "Vector3.h"
+#include <vector>
 
 struct SDL_Window;
 struct SDL_Surface;
-struct Vector3;
 
 namespace dae
 {
@@ -23,7 +21,7 @@ namespace dae
 		Renderer& operator=(const Renderer&) = delete;
 		Renderer& operator=(Renderer&&) noexcept = delete;
 
-		void Render(Scene* scenePtr) const;
+		void Render(Scene* scenePtr);
 		bool SaveBufferToImage() const;
 		void ToggleShadows();
 		void CycleLightMode();
@@ -38,6 +36,10 @@ namespace dae
 
 		int m_Width{};
 		int m_Height{};
+
+		const float SHADOW_NORMAL_OFFSET{ 0.001f };
+
+		std::vector<uint16_t> m_XVals;
 
 		enum class LightMode
 		{

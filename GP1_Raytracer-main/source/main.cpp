@@ -55,7 +55,7 @@ int main(int argc, char* args[])
 	pTimer->Start();
 
 	// Start Benchmark
-	// pTimer->StartBenchmark();
+	pTimer->StartBenchmark();
 
 	float printTimer = 0.f;
 	bool isLooping = true;
