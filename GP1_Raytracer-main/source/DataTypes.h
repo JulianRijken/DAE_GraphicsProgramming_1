@@ -123,20 +123,50 @@ namespace dae
 
 		void CalculateNormals()
 		{
-			assert(false && "No Implemented Yet!");
+			normals.clear(); // Clear any existing normals
+
+			// Loop through the triangles and calculate normals
+			for (size_t i = 0; i < indices.size(); i += 3)
+			{
+				const Vector3& v0 = positions[indices[i]];
+				const Vector3& v1 = positions[indices[i + 1]];
+				const Vector3& v2 = positions[indices[i + 2]];
+
+				// Calculate the normal for this triangle
+				Vector3 edge1 = v1 - v0;
+				Vector3 edge2 = v2 - v0;
+				Vector3 normal = Vector3::Cross(edge1, edge2).Normalized();
+
+				// Assign the same normal to all vertices of the triangle
+				normals.push_back(normal);
+				normals.push_back(normal);
+				normals.push_back(normal);
+			}
 		}
 
 		void UpdateTransforms()
 		{
-			assert(false && "No Implemented Yet!");
-			//Calculate Final Transform 
-			//const auto finalTransform = ...
+			// Calculate the final transformation matrix
+			Matrix finalTransform = scaleTransform * rotationTransform * translationTransform;
 
-			//Transform Positions (positions > transformedPositions)
-			//...
+			// Clear any existing transformed positions and normals
+			transformedPositions.clear();
+			transformedNormals.clear();
 
-			//Transform Normals (normals > transformedNormals)
-			//...
+			// Apply the final transform to each position and normal
+			for (const Vector3& position : positions)
+			{
+				// Apply the transformation to the position
+				Vector3 transformedPosition = finalTransform.TransformPoint(position);
+				transformedPositions.push_back(transformedPosition);
+			}
+
+			for (const Vector3& normal : normals)
+			{
+				// Apply the rotation part of the transformation to the normal
+				Vector3 transformedNormal = rotationTransform.TransformVector(normal);
+				transformedNormals.push_back(transformedNormal);
+			}
 		}
 	};
 #pragma endregion

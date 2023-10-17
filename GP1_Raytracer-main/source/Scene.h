@@ -1,5 +1,4 @@
 #pragma once
-#include <SDL_timer.h>
 #include <string>
 #include <vector>
 
@@ -85,6 +84,7 @@ namespace dae
 
 		std::vector<Plane> m_PlaneGeometries{};
 		std::vector<Sphere> m_SphereGeometries{};
+		std::vector<Triangle> m_Triangles{};
 		std::vector<TriangleMesh> m_TriangleMeshGeometries{};
 		std::vector<Light> m_Lights{};
 		std::vector<Material*> m_Materials{};
@@ -146,5 +146,24 @@ namespace dae
 		Scene_W3& operator=(Scene_W3&&) noexcept = delete;
 
 		void Initialize() override;
+	};
+
+	//+++++++++++++++++++++++++++++++++++++++++
+	//WEEK 4 Test Scene 4
+	class Scene_W4 final : public Scene
+	{
+	public:
+		Scene_W4() = default;
+		~Scene_W4() override = default;
+
+		Scene_W4(const Scene_W4&) = delete;
+		Scene_W4(Scene_W4&&) noexcept = delete;
+		Scene_W4& operator=(const Scene_W4&) = delete;
+		Scene_W4& operator=(Scene_W4&&) noexcept = delete;
+
+		void Initialize() override;
+
+
+		//std::vector<TriangleMesh*> m_Meshes;
 	};
 }

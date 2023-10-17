@@ -7,7 +7,6 @@
 
 #include <algorithm>
 #include <execution>
-#include <iostream>
 
 #include "Math.h"
 #include "Matrix.h"
