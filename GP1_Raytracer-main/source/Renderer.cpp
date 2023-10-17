@@ -15,6 +15,8 @@
 #include "Scene.h"
 #include "Utils.h"
 
+#define PERFORMANCE
+
 using namespace dae;
 
 Renderer::Renderer(SDL_Window * pWindow) :
@@ -25,9 +27,9 @@ Renderer::Renderer(SDL_Window * pWindow) :
 	SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
 	m_pBufferPixels = static_cast<uint32_t*>(m_pBuffer->pixels);
 
-	m_XVals.reserve(m_Width);
-	for (uint16_t x{}; x < m_Width; ++x)
-		m_XVals.push_back(x);
+	m_YVals.reserve(m_Height);
+	for (uint16_t y{}; y < m_Height; ++y)
+		m_YVals.push_back(y);
 	
 }
 
@@ -46,19 +48,17 @@ void Renderer::Render(Scene* scenePtr)
 
 	const Matrix cameraToWorld{ camera.CalculateCameraToWorld() };
 
-	// We run a for_each for each of the x pixels, this will be distributed over all cpu threads
-	std::for_each(std::execution::par, m_XVals.begin(), m_XVals.end(), [this, camera,multiplierXValue,multiplierYValue,fieldOfViewTimesAspect, cameraToWorld,scenePtr,lights,materials](const uint16_t pixelX)
+	// We run a for_each for each of the y pixels, this will be distributed over all cpu threads
+	std::for_each(std::execution::par, m_YVals.begin(), m_YVals.end(), [this, camera,multiplierXValue,multiplierYValue,fieldOfViewTimesAspect, cameraToWorld,scenePtr,lights,materials](const uint16_t pixelY)
 		{
 			Ray viewRay{ camera.origin };
+			Vector3 rayDirection{ 0,0,1 };
 
-			for (int pixelY{}; pixelY < m_Height; ++pixelY)
+			rayDirection.y = (1.0f - (static_cast<float>(pixelY) + 0.5f) * multiplierYValue) * camera.fovValue;
+
+			for (int pixelX{}; pixelX < m_Width; ++pixelX)
 			{
-				Vector3 rayDirection
-				{
-					((static_cast<float>(pixelX) + 0.5f) * multiplierXValue - 1.0f) * fieldOfViewTimesAspect,
-					(1.0f - (static_cast<float>(pixelY) + 0.5f) * multiplierYValue) * camera.fovValue,
-					1
-				};
+				rayDirection.x = ((static_cast<float>(pixelX) + 0.5f) * multiplierXValue - 1.0f) * fieldOfViewTimesAspect;
 
 				// Get view direction
 				viewRay.direction = cameraToWorld.TransformVector(rayDirection.Normalized());
@@ -66,7 +66,6 @@ void Renderer::Render(Scene* scenePtr)
 
 				HitRecord closestHit{};
 				scenePtr->GetClosestHit(viewRay, closestHit);
-
 
 				ColorRGB finalColor{};
 				const Vector3 fromPoint{ closestHit.point + closestHit.normal * SHADOW_NORMAL_OFFSET };
@@ -87,31 +86,40 @@ void Renderer::Render(Scene* scenePtr)
 							const Vector3 l = (light.origin - closestHit.point).Normalized();
 							const float cosineLaw = std::max(0.0f, Vector3::Dot(closestHit.normal, l));
 
+						#ifdef PERFORMANCE
+
+							finalColor +=
+								LightUtils::GetRadiance(light, closestHit.point) *
+								materials[closestHit.materialIndex]->Shade(closestHit, l, v) *
+								cosineLaw;
+						#else
 							switch (m_CurrentLightMode)
 							{
-								case LightMode::ObservedArea:
-									finalColor += ColorRGB(1, 1, 1) * cosineLaw;
+							case LightMode::ObservedArea:
+								finalColor += ColorRGB(1, 1, 1) * cosineLaw;
 
-									break;
-								case LightMode::Radiance:
-									finalColor += LightUtils::GetRadiance(light, closestHit.point);
-									break;
+								break;
+							case LightMode::Radiance:
+								finalColor += LightUtils::GetRadiance(light, closestHit.point);
+								break;
 
-								case LightMode::RadianceAndObservedArea:
-									finalColor += LightUtils::GetRadiance(light, closestHit.point) * cosineLaw;
+							case LightMode::RadianceAndObservedArea:
+								finalColor += LightUtils::GetRadiance(light, closestHit.point) * cosineLaw;
 
-									break;
-								case LightMode::BRDF:
-									finalColor += materials[closestHit.materialIndex]->Shade(closestHit, l, v);
+								break;
+							case LightMode::BRDF:
+								finalColor += materials[closestHit.materialIndex]->Shade(closestHit, l, v);
 
-									break;
-								case LightMode::Combined:
-									finalColor +=
-										LightUtils::GetRadiance(light, closestHit.point) *
-										materials[closestHit.materialIndex]->Shade(closestHit, l, v) *
-										cosineLaw;
-									break;
+								break;
+							case LightMode::Combined:
+								finalColor +=
+									LightUtils::GetRadiance(light, closestHit.point) *
+									materials[closestHit.materialIndex]->Shade(closestHit, l, v) *
+									cosineLaw;
+								break;
 							}
+						#endif
+
 
 						}
 					}

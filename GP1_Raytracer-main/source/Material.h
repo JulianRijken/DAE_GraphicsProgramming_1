@@ -116,14 +116,13 @@ namespace dae
 			const float d{ BRDF::NormalDistribution_GGX(hitRecord.normal, h, m_Roughness) };
 			const float g{ BRDF::GeometryFunction_Smith(hitRecord.normal, v, l, m_Roughness) };
 
-
 			ColorRGB specular{ (f * d * g) / (4.0f * Vector3::Dot(v,hitRecord.normal) * Vector3::Dot(l,hitRecord.normal)) };
 			specular.MaxToOne();
 
-			const ColorRGB kd{ m_Metalness == 0.0f ? 1.0f - f : ColorRGB{0,0,0} };
+			const ColorRGB kd{ m_Metalness == 0.0f ? 1.0f - specular : colors::Black };
 			const ColorRGB diffuse{ BRDF::Lambert(kd,m_Albedo)};
 
-			return specular + diffuse;
+			return diffuse + specular;
 		}
 
 

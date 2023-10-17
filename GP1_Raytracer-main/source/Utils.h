@@ -25,7 +25,7 @@ namespace dae
 			if (discriminant < 0)
 				return false;
 
-			const float distance = -b - sqrt(discriminant);
+			const float distance = -b - std::sqrt(discriminant);
 
 			if (distance < ray.min || distance > ray.max)
 				return false;

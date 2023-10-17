@@ -39,7 +39,7 @@ namespace dae
 
 		const float SHADOW_NORMAL_OFFSET{ 0.001f };
 
-		std::vector<uint16_t> m_XVals;
+		std::vector<uint16_t> m_YVals;
 
 		enum class LightMode
 		{
