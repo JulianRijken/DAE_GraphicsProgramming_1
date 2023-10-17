@@ -51,7 +51,7 @@ namespace dae
 		Vector3 normal{};
 
 		TriangleCullMode cullMode{};
-		unsigned char materialIndex{};
+		unsigned char materialIndex{ 0 };
 	};
 
 	struct TriangleMesh
@@ -76,7 +76,7 @@ namespace dae
 		std::vector<Vector3> positions{};
 		std::vector<Vector3> normals{};
 		std::vector<int> indices{};
-		unsigned char materialIndex{};
+		unsigned char materialIndex{ 0 };
 
 		TriangleCullMode cullMode{TriangleCullMode::BackFaceCulling};
 

@@ -27,7 +27,7 @@ Renderer::Renderer(SDL_Window * pWindow) :
 	m_pBufferPixels = static_cast<uint32_t*>(m_pBuffer->pixels);
 
 	m_YVals.reserve(m_Height);
-	for (uint16_t y{}; y < m_Height; ++y)
+	for (uint16_t y{}; y < m_Height; ++(++y))
 		m_YVals.push_back(y);
 	
 }
@@ -55,7 +55,7 @@ void Renderer::Render(Scene* scenePtr)
 
 			rayDirection.y = (1.0f - (static_cast<float>(pixelY) + 0.5f) * multiplierYValue) * camera.fovValue;
 
-			for (int pixelX{}; pixelX < m_Width; ++pixelX)
+			for (int pixelX{}; pixelX < m_Width; ++(++pixelX))
 			{
 				rayDirection.x = ((static_cast<float>(pixelX) + 0.5f) * multiplierXValue - 1.0f) * fieldOfViewTimesAspect;
 

@@ -390,6 +390,7 @@ namespace dae {
 		sceneName = "Week 4";
 		m_Camera.targetOrigin = { 0.f, 1.f, -5.f };
 		m_Camera.fovAngle = 45.f;
+		
 
 
 
@@ -441,25 +442,45 @@ namespace dae {
 		//m_Meshes[2]->UpdateTransforms();
 
 
+		const auto matCT_GrayRoughMetal = AddMaterial(new Material_CookTorrence({ .972f, .960f, .915f }, 1.f, 1.f));
+		const auto matCT_GrayMediumMetal = AddMaterial(new Material_CookTorrence({ .972f, .960f, .915f }, 1.f, .6f));
+		const auto matCT_GraySmoothMetal = AddMaterial(new Material_CookTorrence({ .972f, .960f, .915f }, 1.f, .1f));
+		const auto matCT_GrayRoughPlastic = AddMaterial(new Material_CookTorrence({ .75f, .75f, .75f }, .0f, 1.f));
+		const auto matCT_GrayMediumPlastic = AddMaterial(new Material_CookTorrence({ .75f, .75f, .75f }, .0f, .6f));
+		const auto matCT_GraySmoothPlastic = AddMaterial(new Material_CookTorrence({ .75f, .75f, .75f }, .0f, .1f));
+
 		//OBJ
 		//===
-		TriangleMesh* m_TestMeshPtr = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White);
-		Utils::ParseOBJ("Resources/lowpoly_bunny.obj",
-			//Utils::ParseOBJ("Resources/simple_object.obj",
+		m_TestMeshPtr = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matCT_GrayMediumPlastic);
+		Utils::ParseOBJ("Resources/Car1.obj",
 			m_TestMeshPtr->positions,
 			m_TestMeshPtr->normals,
 			m_TestMeshPtr->indices);
 
 		//No need to Calculate the normals, these are calculated inside the ParseOBJ function
+
+		m_TestMeshPtr->Translate({ -0.1f,0.0f,0.0f });
+		m_TestMeshPtr->RotateY(120 * TO_RADIANS);
+		m_TestMeshPtr->Scale({ 1.2f,1.2f,1.2f });
+
 		m_TestMeshPtr->UpdateTransforms();
 
-		//m_Meshes[0]->Scale({ .7f,.7f,.7f });
-		//m_Meshes[0]->Translate({ .0f,1.f,0.f });
 
 
 		AddPointLight(Vector3{ 0.f, 5.f, 5.f }, 50.f, ColorRGB{ 1.f, .61f, .45f }); //Backlight
 		AddPointLight(Vector3{ -2.5f, 5.f, -5.f }, 70.f, ColorRGB{ 1.f, .8f, .45f }); //Front Light Left
 		AddPointLight(Vector3{ 2.5f, 2.5f, -5.f }, 50.f, ColorRGB{ .34f, .47f, .68f });
+	}
+
+	void Scene_W4::Update(dae::Timer* pTimer)
+	{
+		Scene::Update(pTimer);
+
+		rotation += TO_RADIANS * pTimer->GetElapsed() * 5.0f;
+		m_TestMeshPtr->RotateY(rotation);
+		m_TestMeshPtr->UpdateTransforms();
+
+
 	}
 #pragma endregion
 

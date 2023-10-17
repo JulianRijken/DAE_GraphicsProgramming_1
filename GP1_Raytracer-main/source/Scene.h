@@ -162,7 +162,10 @@ namespace dae
 		Scene_W4& operator=(Scene_W4&&) noexcept = delete;
 
 		void Initialize() override;
+		void Update(dae::Timer* pTimer) override;
 
+		TriangleMesh* m_TestMeshPtr;
+		float rotation;
 
 		//std::vector<TriangleMesh*> m_Meshes;
 	};
