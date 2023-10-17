@@ -64,8 +64,25 @@ namespace dae
 
 		void SetFOV(float _fovDegrees)
 		{
-			fovAngle =  std::min(180.0f, std::max(0.0f, _fovDegrees));
-			fovValue = tanf((fovAngle * PI / 180.0f) / 2.0f);
+			fovAngle = std::min(180.0f, std::max(0.0f, _fovDegrees));
+			fovValue = tanf((fovAngle * TO_RADIANS) / 2.0f);
+		}
+
+		void SetPosition(Vector3 postion)
+		{
+			targetOrigin = postion;
+			origin = postion;
+		}
+
+		void SetRotation(float pitch, float yaw)
+		{
+			pitch *= TO_RADIANS;
+			yaw *= TO_RADIANS;
+
+			targetCameraPitch = pitch;
+			cameraPitch = pitch;
+			targetCameraYaw = yaw;
+			cameraYaw = yaw;
 		}
 
 		void HandleCameraMovement(const float deltaTime)
@@ -76,8 +93,8 @@ namespace dae
 
 			if ((mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0)
 			{
-				targetCameraPitch -= mouseX * 0.001f;
-				targetCameraYaw -= mouseY * 0.001f;
+				targetCameraPitch -= mouseY * 0.001f;
+				targetCameraYaw -= mouseX * 0.001f;
 			}
 
 			cameraPitch = Jul::Lerp(cameraPitch, targetCameraPitch, deltaTime / cameraRotateSmoothing);
@@ -85,9 +102,9 @@ namespace dae
 
 			const Matrix pitchYawRotation
 			{
-				Vector3{cosf(cameraPitch), 0, sinf(cameraPitch)},
-				Vector3{sinf(cameraPitch) * sinf(cameraYaw), cosf(cameraYaw), -sinf(cameraYaw) * cosf(cameraPitch)},
-				Vector3{-cosf(cameraYaw) * sinf(cameraPitch), sinf(cameraYaw), cosf(cameraYaw) * cosf(cameraPitch)},
+				Vector3{cosf(cameraYaw), 0, sinf(cameraYaw)},
+				Vector3{sinf(cameraYaw) * sinf(cameraPitch), cosf(cameraPitch), -sinf(cameraPitch) * cosf(cameraYaw)},
+				Vector3{-cosf(cameraPitch) * sinf(cameraYaw), sinf(cameraPitch), cosf(cameraPitch) * cosf(cameraYaw)},
 				Vector3::Zero
 			};
 

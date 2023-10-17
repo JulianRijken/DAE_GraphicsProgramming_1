@@ -164,9 +164,7 @@ namespace dae
 		void Initialize() override;
 		void Update(dae::Timer* pTimer) override;
 
-		TriangleMesh* m_TestMeshPtr;
 		float rotation;
-
-		//std::vector<TriangleMesh*> m_Meshes;
+		std::vector<TriangleMesh*> m_Meshes;
 	};
 }

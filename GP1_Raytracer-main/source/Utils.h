@@ -30,17 +30,17 @@ namespace dae
 
 			const float distance = -b - std::sqrt(discriminant);
 
-			if (distance < ray.min || distance > ray.max)
+			if (distance > ray.max || distance < ray.min)
 				return false;
 
-			//if (not ignoreHitRecord)
-			//{
+			if (!ignoreHitRecord)
+			{
 				hitRecord.t = distance;
 				hitRecord.point = ray.origin + ray.direction * hitRecord.t;
 				hitRecord.normal = (hitRecord.point - sphere.origin) / sphere.radius;
 				hitRecord.didHit = true;
 				hitRecord.materialIndex = sphere.materialIndex;
-			//}
+			}
 
 			return true;
 		}
@@ -64,17 +64,17 @@ namespace dae
 			const float distance = Vector3::Dot(plane.origin - ray.origin, plane.normal) / normalDot;
 
 			// Check if the intersection point is behind the ray's origin
-			if (distance < ray.min || distance > ray.max)
+			if (distance > ray.max || distance < ray.min)
 				return false;
 
-			//if (not ignoreHitRecord)
-			//{
+			if (!ignoreHitRecord)
+			{
 				hitRecord.t = distance;
 				hitRecord.point = ray.origin + ray.direction * distance;
 				hitRecord.normal = plane.normal;
 				hitRecord.didHit = true;
 				hitRecord.materialIndex = plane.materialIndex;
-			//}
+			}
 
 			return true;
 		}
@@ -128,12 +128,15 @@ namespace dae
 			p = P - triangle.v2;
 			if (Vector3::Dot(Vector3::Cross(e, p), triangle.normal) < 0.0f)
 				return false;
-			
-			hitRecord.t = t;
-			hitRecord.point = ray.origin + ray.direction * t;
-			hitRecord.normal = triangle.normal;
-			hitRecord.didHit = true;
-			hitRecord.materialIndex = triangle.materialIndex;
+
+			if (!ignoreHitRecord)
+			{
+				hitRecord.t = t;
+				hitRecord.point = ray.origin + ray.direction * t;
+				hitRecord.normal = triangle.normal;
+				hitRecord.didHit = true;
+				hitRecord.materialIndex = triangle.materialIndex;
+			}
 
 			return true;
 		}
@@ -148,7 +151,7 @@ namespace dae
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
 			bool hitAnything = false;
-			float closestHitDistance = std::numeric_limits<float>::max();
+			float closestHitDistance = FLT_MAX;
 
 			for (size_t i = 0; i < mesh.indices.size(); i += 3)
 			{
@@ -162,10 +165,11 @@ namespace dae
 
 				const Vector3 edge1 = v1 - v0;
 				const Vector3 edge2 = v2 - v0;
-				const Vector3 h = Vector3::Cross(ray.direction, edge2);
 
+				const Vector3 h = Vector3::Cross(ray.direction, edge2);
 				const float a = Vector3::Dot(edge1, h);
 
+				// Handle culling
 				if (mesh.cullMode == TriangleCullMode::BackFaceCulling)
 				{
 					if (a < -EPSILON)
@@ -178,78 +182,49 @@ namespace dae
 				}
 
 
-
+				// Check if inside of triangle
 				const float f = 1.0f / a;
 				const Vector3 s = ray.origin - v0;
 				const float u = f * Vector3::Dot(s, h);
 
-				if (u >= 0.0f && u <= 1.0f)
+				// Check for u inside triangle
+				if (u < 0.0f || u > 1.0f)
+					continue;
+
+				const Vector3 q = Vector3::Cross(s, edge1);
+				const float v = f * Vector3::Dot(ray.direction, q);
+
+				// Check for v inside triangle
+				if (v < 0.0f || u + v > 1.0f)
+					continue;
+
+
+				// Get distance
+				const float distance = f * Vector3::Dot(edge2, q);
+
+				// If hit is in ray bounds
+				if(distance > ray.max || distance < ray.min)
+					continue;
+
+				// Check if this is the closes hit
+				if (distance < closestHitDistance)
 				{
-					const Vector3 q = Vector3::Cross(s, edge1);
-					const float v = f * Vector3::Dot(ray.direction, q);
+					closestHitDistance = distance;
+					hitAnything = true;
 
-					if (v >= 0.0f && u + v <= 1.0f)
+					if (!ignoreHitRecord)
 					{
-						const float t = f * Vector3::Dot(edge2, q);
-
-						if (t > ray.min && t < ray.max && t < closestHitDistance)
-						{
-							closestHitDistance = t;
-
-							hitRecord.t = t;
-							hitRecord.point = ray.origin + ray.direction * t;
-							hitRecord.normal = Vector3::Cross(edge1, edge2).Normalized();
-							hitRecord.didHit = true;
-							hitRecord.materialIndex = mesh.materialIndex;
-
-							hitAnything = true;
-						}
+						hitRecord.t = distance;
+						hitRecord.point = ray.origin + ray.direction * distance;
+						hitRecord.normal = Vector3::Cross(edge1, edge2).Normalized();
+						hitRecord.didHit = true;
+						hitRecord.materialIndex = mesh.materialIndex;
 					}
 				}
-
 			}
 
 			return hitAnything;
 		}
-
-
-
-		//	const Vector3 edge1 = v1 - v0;
-//	const Vector3 edge2 = v2 - v0;
-//	const Vector3 h = Vector3::Cross(ray.direction, edge2);
-
-//	const float a = Vector3::Dot(edge1, h);
-
-//	if (a > -EPSILON || a < EPSILON)
-//	{
-//		const float f = 1.0f / a;
-//		const Vector3 s = ray.origin - v0;
-//		const float u = f * Vector3::Dot(s, h);
-
-//		if (u >= 0.0f && u <= 1.0f)
-//		{
-//			const Vector3 q = Vector3::Cross(s, edge1);
-//			const float v = f * Vector3::Dot(ray.direction, q);
-
-//			if (v >= 0.0f && u + v <= 1.0f)
-//			{
-//				const float t = f * Vector3::Dot(edge2, q);
-
-//				if (t > ray.min && t < ray.max && t < closestHitDistance)
-//				{
-//					closestHitDistance = t;
-
-//					hitRecord.t = t;
-//					hitRecord.point = ray.origin + ray.direction * t;
-//					hitRecord.normal = Vector3::Cross(edge1, edge2).Normalized();
-//					hitRecord.didHit = true;
-//					hitRecord.materialIndex = mesh.materialIndex;
-
-//					hitAnything = true;
-//				}
-//			}
-//		}
-//	}
 
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray)
 		{
