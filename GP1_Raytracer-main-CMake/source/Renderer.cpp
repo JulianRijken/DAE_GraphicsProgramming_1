@@ -3,15 +3,18 @@
 #include "SDL_surface.h"
 
 //Project includes
-
-#include <iostream>
-#include <omp.h>
-
 #include "Renderer.h"
-#include "Misc/Camera.h"
+
+#include <algorithm>
+#include <execution>
+
+#include "Math.h"
+#include "Math/Matrix.h"
 #include "Misc/Material.h"
 #include "Misc/Scene.h"
+#include "Misc/Utils.h"
 
+#define MULTI
 
 using namespace dae;
 
@@ -22,13 +25,18 @@ Renderer::Renderer(SDL_Window * pWindow) :
 	//Initialize
 	SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
 	m_pBufferPixels = static_cast<uint32_t*>(m_pBuffer->pixels);
+
+	m_YVals.reserve(m_Height);
+	for (uint16_t y{}; y < m_Height; ++y)
+		m_YVals.push_back(y);
+	
 }
 
-void Renderer::Render(Scene* scenePtr) const
+void Renderer::Render(Scene* scenePtr)
 {
 	Camera& camera = scenePtr->GetCamera();
-	auto& materials = scenePtr->GetMaterials();
-	auto& lights = scenePtr->GetLights();
+	const auto& materials = scenePtr->GetMaterials();
+	const auto& lights = scenePtr->GetLights();
 
 	const float widthFloat{ static_cast<float>(m_Width) };
 	const float heightFloat{ static_cast<float>(m_Height) };
@@ -39,73 +47,79 @@ void Renderer::Render(Scene* scenePtr) const
 
 	const Matrix cameraToWorld{ camera.CalculateCameraToWorld() };
 
-	Vector3 rayDirection{0,0,1};
-	Ray viewRay{camera.origin};
-
-	#pragma omp parallel for schedule(dynamic)
-	for (int pixelX = 0; pixelX < m_Width; ++pixelX)
-	{
-		for (int pixelY = 0; pixelY < m_Height; ++pixelY)
+#ifdef MULTI
+	// We run a for_each for each of the y pixels, this will be distributed over all cpu threads
+	std::for_each( MULTI std::execution::par, m_YVals.begin(), m_YVals.end(), [this, camera, multiplierXValue, multiplierYValue, fieldOfViewTimesAspect, cameraToWorld, scenePtr, lights, materials](const uint16_t pixelY)
 		{
-			float pixelXFloat = static_cast<float>(pixelX) + 0.5f;
-			float pixelYFloat = static_cast<float>(pixelY) + 0.5f;
+#else
+	for (int pixelY{}; pixelY < m_Height; ++pixelY)
+	{
+#endif
 
-			rayDirection.x = (pixelXFloat * multiplierXValue - 1.0f) * fieldOfViewTimesAspect;
-			rayDirection.y = (1.0f - pixelYFloat * multiplierYValue) * camera.fovValue;
+
+		Ray viewRay{ camera.origin };
+		Vector3 rayDirection{ 0,0,1 };
+
+		rayDirection.y = (1.0f - (static_cast<float>(pixelY) + 0.5f) * multiplierYValue) * camera.fovValue;
+
+		for (int pixelX{}; pixelX < m_Width; ++pixelX)
+		{
+			rayDirection.x = ((static_cast<float>(pixelX) + 0.5f) * multiplierXValue - 1.0f) * fieldOfViewTimesAspect;
 
 			// Get view direction
 			viewRay.direction = cameraToWorld.TransformVector(rayDirection.Normalized());
-			Vector3 v{ viewRay.direction.Normalized() * -1.0f };
+			const Vector3 v{ viewRay.direction * -1.0f };
 
 			HitRecord closestHit{};
 			scenePtr->GetClosestHit(viewRay, closestHit);
 
-
 			ColorRGB finalColor{};
+			const Vector3 hitPointWithOffset{ closestHit.point + closestHit.normal * SHADOW_NORMAL_OFFSET };
+
 
 			if (closestHit.didHit)
 			{
 				for (const Light& light : lights)
 				{
 					// Setup light ray
-					const Vector3 fromPoint{ closestHit.point + closestHit.normal * 0.001f };
-					const Vector3 hitToLightDirection{ light.origin - fromPoint };
-					const float distance{ hitToLightDirection.Magnitude() };
-					Ray hitToLightRay{ fromPoint,hitToLightDirection.Normalized() };
-					hitToLightRay.max = distance;
 
-					if (!(scenePtr->DoesHit(hitToLightRay) && m_ShadowsEnabled))
+					//== Light to hit 
+					const Vector3 lightToHitDirection{ hitPointWithOffset - light.origin };
+					const float lightToHitDistance{ lightToHitDirection.Magnitude() };
+					const Vector3 l = lightToHitDirection / lightToHitDistance;
+
+					const Ray hitToLightRay{ light.origin, l,0.0f,lightToHitDistance };
+
+					if (m_ShadowsEnabled && scenePtr->DoesHit(hitToLightRay))
+						continue;
+
+					const float cosineLaw = std::max(0.0f, Vector3::Dot(closestHit.normal, -l));
+
+
+					switch (m_CurrentLightMode)
 					{
-						Vector3 l = (light.origin - closestHit.point).Normalized();
+					case LightMode::ObservedArea:
+						finalColor += ColorRGB(1, 1, 1) * cosineLaw;
 
-						const float cosineLaw = std::max(0.0f, Vector3::Dot(closestHit.normal, l));
+						break;
+					case LightMode::Radiance:
+						finalColor += LightUtils::GetRadiance(light, closestHit.point);
+						break;
 
-						switch (m_CurrentLightMode)
-						{
-							case LightMode::ObservedArea:
-								finalColor += ColorRGB(1, 1, 1) * cosineLaw;
+					case LightMode::RadianceAndObservedArea:
+						finalColor += LightUtils::GetRadiance(light, closestHit.point) * cosineLaw;
 
-								break;
-							case LightMode::Radiance:
-								finalColor += LightUtils::GetRadiance(light, closestHit.point);
-								break;
+						break;
+					case LightMode::BRDF:
+						finalColor += materials[closestHit.materialIndex]->Shade(closestHit, -l, v);
 
-							case LightMode::RadianceAndObservedArea:
-								finalColor += LightUtils::GetRadiance(light, closestHit.point) * cosineLaw;
-
-								break;
-							case LightMode::BRDF:
-								finalColor += materials[closestHit.materialIndex]->Shade(closestHit, l, v);
-
-								break;
-							case LightMode::Combined:
-								finalColor += 
-									LightUtils::GetRadiance(light, closestHit.point) *
-									materials[closestHit.materialIndex]->Shade(closestHit, l, v) *
-									cosineLaw;
-								break;
-						}
-						
+						break;
+					case LightMode::Combined:
+						finalColor +=
+							LightUtils::GetRadiance(light, closestHit.point) *
+							materials[closestHit.materialIndex]->Shade(closestHit, -l, v) *
+							cosineLaw;
+						break;
 					}
 				}
 
@@ -113,17 +127,20 @@ void Renderer::Render(Scene* scenePtr) const
 
 			finalColor.MaxToOne();
 
-			#pragma omp critical
-			{
-				m_pBufferPixels[static_cast<int>(pixelX) + (static_cast<int>(pixelY) * m_Width)] = SDL_MapRGB(m_pBuffer->format,
-					static_cast<uint8_t>(finalColor.r * 255),
-					static_cast<uint8_t>(finalColor.g * 255),
-					static_cast<uint8_t>(finalColor.b * 255));
-			}
+			m_pBufferPixels[pixelX + pixelY * m_Width] = SDL_MapRGB(m_pBuffer->format,
+				static_cast<uint8_t>(finalColor.r * 255),
+				static_cast<uint8_t>(finalColor.g * 255),
+				static_cast<uint8_t>(finalColor.b * 255));
 		}
-	}
 
-	//@END
+
+#ifdef MULTI
+	});
+#else
+			}
+#endif
+
+	
 	//Update SDL Surface
 	SDL_UpdateWindowSurface(m_pWindow);
 }

@@ -1,14 +1,16 @@
 //External includes
+//#include "vld.h"
 #include "SDL.h"
+#include "SDL_surface.h"
 #undef main
 
 //Standard includes
 #include <iostream>
 
 //Project includes
+#include "Misc/Timer.h"
 #include "Renderer.h"
 #include "Misc/Scene.h"
-#include "Misc/Timer.h"
 
 using namespace dae;
 
@@ -46,14 +48,14 @@ int main(int argc, char* args[])
 	const auto pTimer = new Timer();
 	const auto pRenderer = new Renderer(pWindow);
 
-	const auto pScene = new Scene_W3();
+	const auto pScene = new Scene_W4();
 	pScene->Initialize();
 
 	//Start loop
 	pTimer->Start();
 
 	// Start Benchmark
-	// pTimer->StartBenchmark();
+	//pTimer->StartBenchmark();
 
 	float printTimer = 0.f;
 	bool isLooping = true;

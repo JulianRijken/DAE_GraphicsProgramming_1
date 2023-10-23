@@ -139,15 +139,13 @@ namespace dae
 
 				// Assign the same normal to all vertices of the triangle
 				normals.push_back(normal);
-				normals.push_back(normal);
-				normals.push_back(normal);
 			}
 		}
 
 		void UpdateTransforms()
 		{
 			// Calculate the final transformation matrix
-			Matrix finalTransform = scaleTransform * rotationTransform * translationTransform;
+			const Matrix finalTransform = scaleTransform * rotationTransform * translationTransform;
 
 			// Clear any existing transformed positions and normals
 			transformedPositions.clear();

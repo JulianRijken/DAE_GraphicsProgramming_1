@@ -1,13 +1,16 @@
 #pragma once
 #include <cassert>
 #include <fstream>
+#include <iostream>
 
-#include "Math/Math.h"
+#include "Math.h"
 #include "Misc/DataTypes.h"
-#include "Math/ColorRGB.h"
 
 namespace dae
 {
+	constexpr float EPSILON = 0.001f;
+
+
 	namespace GeometryUtils
 	{
 #pragma region Sphere HitTest
@@ -25,12 +28,12 @@ namespace dae
 			if (discriminant < 0)
 				return false;
 
-			const float distance = (-b - sqrt(discriminant));
+			const float distance = -b - std::sqrt(discriminant);
 
-			if (distance < ray.min || distance > ray.max)
+			if (distance > ray.max || distance < ray.min)
 				return false;
 
-			if (not ignoreHitRecord)
+			if (!ignoreHitRecord)
 			{
 				hitRecord.t = distance;
 				hitRecord.point = ray.origin + ray.direction * hitRecord.t;
@@ -61,10 +64,10 @@ namespace dae
 			const float distance = Vector3::Dot(plane.origin - ray.origin, plane.normal) / normalDot;
 
 			// Check if the intersection point is behind the ray's origin
-			if (distance < ray.min || distance > ray.max)
+			if (distance > ray.max || distance < ray.min)
 				return false;
 
-			if (not ignoreHitRecord)
+			if (!ignoreHitRecord)
 			{
 				hitRecord.t = distance;
 				hitRecord.point = ray.origin + ray.direction * distance;
@@ -86,9 +89,56 @@ namespace dae
 		//TRIANGLE HIT-TESTS
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//todo W5
-			assert(false && "No Implemented Yet!");
-			return false;
+			const Vector3 L{ triangle.v0 - ray.origin };
+
+			if (triangle.cullMode == TriangleCullMode::BackFaceCulling)
+			{
+				if (Vector3::Dot(triangle.normal,ray.direction) > -EPSILON)
+					return false; 
+			}
+			else if (triangle.cullMode == TriangleCullMode::FrontFaceCulling)
+			{
+				if (Vector3::Dot(triangle.normal, ray.direction) < EPSILON)
+					return false; 
+			}
+
+			const float t{ Vector3::Dot(L,triangle.normal) / Vector3::Dot(ray.direction,triangle.normal) };
+
+			if (t < ray.min || t > ray.max)
+				return false;
+
+			const Vector3 P{ ray.origin + ray.direction * t };
+
+			Vector3 e{};
+			Vector3 p{};
+
+			e = triangle.v1 - triangle.v0;
+			p = P - triangle.v0;
+			if (Vector3::Dot(Vector3::Cross(e, p),  triangle.normal) < 0.0f)
+				return false;
+
+
+			e = triangle.v2 - triangle.v1;
+			p = P - triangle.v1;
+			if (Vector3::Dot(Vector3::Cross(e, p), triangle.normal) < 0.0f)
+				return false;
+
+
+			e = triangle.v0 - triangle.v2;
+			p = P - triangle.v2;
+			if (Vector3::Dot(Vector3::Cross(e, p), triangle.normal) < 0.0f)
+				return false;
+
+			if (!ignoreHitRecord)
+			{
+				hitRecord.t = t;
+				hitRecord.point = ray.origin + ray.direction * t;
+				hitRecord.normal = triangle.normal;
+				hitRecord.didHit = true;
+				hitRecord.materialIndex = triangle.materialIndex;
+			}
+
+			return true;
 		}
 
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray)
@@ -100,9 +150,80 @@ namespace dae
 #pragma region TriangeMesh HitTest
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//todo W5
-			assert(false && "No Implemented Yet!");
-			return false;
+			bool hitAnything = false;
+			float closestHitDistance = FLT_MAX;
+
+			for (size_t i = 0; i < mesh.indices.size(); i += 3)
+			{
+				const int i0 = mesh.indices[i];
+				const int i1 = mesh.indices[i + 1];
+				const int i2 = mesh.indices[i + 2];
+
+				const Vector3& v0 = mesh.transformedPositions[i0];
+				const Vector3& v1 = mesh.transformedPositions[i1];
+				const Vector3& v2 = mesh.transformedPositions[i2];
+
+				const Vector3 edge1 = v1 - v0;
+				const Vector3 edge2 = v2 - v0;
+
+				const Vector3 h = Vector3::Cross(ray.direction, edge2);
+				const float a = Vector3::Dot(edge1, h);
+
+				// Handle culling
+				if (mesh.cullMode == TriangleCullMode::BackFaceCulling)
+				{
+					if (a < -EPSILON)
+						continue;
+				}
+				else if (mesh.cullMode == TriangleCullMode::FrontFaceCulling)
+				{
+					if (a > -EPSILON)
+						continue;
+				}
+
+
+				// Check if inside of triangle
+				const float f = 1.0f / a;
+				const Vector3 s = ray.origin - v0;
+				const float u = f * Vector3::Dot(s, h);
+
+				// Check for u inside triangle
+				if (u < 0.0f || u > 1.0f)
+					continue;
+
+				const Vector3 q = Vector3::Cross(s, edge1);
+				const float v = f * Vector3::Dot(ray.direction, q);
+
+				// Check for v inside triangle
+				if (v < 0.0f || u + v > 1.0f)
+					continue;
+
+
+				// Get distance
+				const float distance = f * Vector3::Dot(edge2, q);
+
+				// If hit is in ray bounds
+				if(distance > ray.max || distance < ray.min)
+					continue;
+
+				// Check if this is the closes hit
+				if (distance < closestHitDistance)
+				{
+					closestHitDistance = distance;
+					hitAnything = true;
+
+					if (!ignoreHitRecord)
+					{
+						hitRecord.t = distance;
+						hitRecord.point = ray.origin + ray.direction * distance;
+						hitRecord.normal = Vector3::Cross(edge1, edge2).Normalized();
+						hitRecord.didHit = true;
+						hitRecord.materialIndex = mesh.materialIndex;
+					}
+				}
+			}
+
+			return hitAnything;
 		}
 
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray)
@@ -118,26 +239,17 @@ namespace dae
 		//Direction from target to light
 		inline Vector3 GetDirectionToLight(const Light& light, const Vector3 origin)
 		{
-			//todo W3
-			//assert(false && "No Implemented Yet!");
-
 			return { light.origin - origin};
 		}
 
 		inline ColorRGB GetRadiance(const Light& light, const Vector3& target)
 		{
 			if(light.type == LightType::Point)
-			{
-				const float radiusSquared{ Square((light.origin - target).Magnitude()) };
-				const float irradiance{ light.intensity / radiusSquared };
-
-				return{ light.color * irradiance };
-			}
+				return{ light.color * (light.intensity / Square((light.origin - target).Magnitude())) };
+			
 
 			if (light.type == LightType::Directional)
-			{
 				return{ light.color * light.intensity };
-			}
 
 			return {};
 		}

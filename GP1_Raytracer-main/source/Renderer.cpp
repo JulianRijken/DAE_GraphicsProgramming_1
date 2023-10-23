@@ -49,7 +49,7 @@ void Renderer::Render(Scene* scenePtr)
 
 #ifdef MULTI
 	// We run a for_each for each of the y pixels, this will be distributed over all cpu threads
-	std::for_each( MULTI std::execution::par, m_YVals.begin(), m_YVals.end(), [this, camera, multiplierXValue, multiplierYValue, fieldOfViewTimesAspect, cameraToWorld, scenePtr, lights, materials](const uint16_t pixelY)
+	std::for_each(std::execution::par, m_YVals.begin(), m_YVals.end(), [this, camera, multiplierXValue, multiplierYValue, fieldOfViewTimesAspect, cameraToWorld, scenePtr, lights, materials](const uint16_t pixelY)
 		{
 #else
 	for (int pixelY{}; pixelY < m_Height; ++pixelY)

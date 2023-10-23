@@ -153,15 +153,13 @@ namespace dae
 			bool hitAnything = false;
 			float closestHitDistance = FLT_MAX;
 
-			for (size_t i = 0; i < mesh.indices.size(); i += 3)
-			{
-				const int i0 = mesh.indices[i];
-				const int i1 = mesh.indices[i + 1];
-				const int i2 = mesh.indices[i + 2];
+			int triangleIndex{0};
 
-				const Vector3& v0 = mesh.transformedPositions[i0];
-				const Vector3& v1 = mesh.transformedPositions[i1];
-				const Vector3& v2 = mesh.transformedPositions[i2];
+			for (size_t i{0}; i < mesh.indices.size(); i += 3, triangleIndex++)
+			{
+				const Vector3& v0 = mesh.transformedPositions[mesh.indices[i]];
+				const Vector3& v1 = mesh.transformedPositions[mesh.indices[i + 1]];
+				const Vector3& v2 = mesh.transformedPositions[mesh.indices[i + 2]];
 
 				const Vector3 edge1 = v1 - v0;
 				const Vector3 edge2 = v2 - v0;
@@ -217,6 +215,7 @@ namespace dae
 						hitRecord.t = distance;
 						hitRecord.point = ray.origin + ray.direction * distance;
 						hitRecord.normal = Vector3::Cross(edge1, edge2).Normalized();
+						//WHY IS THIS SLOWER //hitRecord.normal = mesh.transformedNormals[triangleIndex];
 						hitRecord.didHit = true;
 						hitRecord.materialIndex = mesh.materialIndex;
 					}

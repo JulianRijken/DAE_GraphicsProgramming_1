@@ -464,17 +464,19 @@ namespace dae {
 		// Mesh
 		m_Meshes.resize(1);
 
-		m_Meshes[0] = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matCT_GrayMediumPlastic);
+		m_Meshes[0] = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White);
 		Utils::ParseOBJ("Resources/Car1.obj",
 			m_Meshes[0]->positions,
 			m_Meshes[0]->normals,
 			m_Meshes[0]->indices);
 
-		m_Meshes[0]->RotateY(140 * TO_RADIANS);
+
+		m_Meshes[0]->CalculateNormals();
+
 		m_Meshes[0]->Translate({-0.1f,0,0});
+		m_Meshes[0]->RotateY(140 * TO_RADIANS);
 
 		m_Meshes[0]->UpdateTransforms();
-
 
 		// Lights
 		AddPointLight(Vector3{ 0.f, 5.f, 5.f }, 50.f, ColorRGB{ 1.f, .61f, .45f }); //Backlight

@@ -1,8 +1,6 @@
 #pragma once
 #include <cassert>
-
-#include "Math/MathHelpers.h"
-#include "Math/ColorRGB.h"
+#include "Math.h"
 
 namespace dae
 {
@@ -49,7 +47,7 @@ namespace dae
 
 			const Vector3 reflectedRay = Vector3::Reflect(l, n);
 			const float cosAlpha{ std::max(Vector3::Dot(reflectedRay,v),0.0f) };
-			const float specularIntensity{ ks * powf(cosAlpha,exp) };
+			const float specularIntensity{ ks * std::pow(cosAlpha,exp) };
 			return { specularIntensity * colors::White };
 		}
 
@@ -62,7 +60,8 @@ namespace dae
 		 */
 		static ColorRGB FresnelFunction_Schlick(const Vector3& h, const Vector3& v, const ColorRGB& f0)
 		{
-			return f0 + (1.0f - f0) * powf(1.0f - std::max(0.0f, Vector3::Dot(h,v)),5);
+			const float a{ 1.0f - std::max(0.0f, Vector3::Dot(h,v)) };
+			return f0 + (1.0f - f0) * (a * a * a * a * a);
 		}
 
 		/**

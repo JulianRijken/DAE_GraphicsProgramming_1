@@ -61,10 +61,10 @@ else()
     add_compile_options(-march=native -flto -Wl,-flto)
 endif()
 
-find_package(OpenMP)
-if (OpenMP_FOUND)
-    target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_CXX)
-endif()
+#find_package(OpenMP)
+#if (OpenMP_FOUND)
+#    target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_CXX)
+#endif()
 
 # include directories
 include_directories(source)
