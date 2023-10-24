@@ -148,8 +148,38 @@ namespace dae
 		}
 #pragma endregion
 #pragma region TriangeMesh HitTest
+
+		inline bool AABB_TriangleMesh(const TriangleMesh& mesh, const Ray& ray)
+		{
+			// X
+			float tx1 = (mesh.transformedMinAABB.x - ray.origin.x) / ray.direction.x;
+			float tx2 = (mesh.transformedMaxAABB.x - ray.origin.x) / ray.direction.x;
+
+			float tmin = std::min(tx1, tx2);
+			float tmax = std::max(tx1, tx2);
+
+			// Y
+			float ty1 = (mesh.transformedMinAABB.y - ray.origin.y) / ray.direction.y;
+			float ty2 = (mesh.transformedMaxAABB.y - ray.origin.y) / ray.direction.y;
+
+			tmin = std::max(tmin, std::min(ty1, ty2));
+			tmax = std::min(tmax, std::max(ty1, ty2));
+
+			// Z
+			float tz1 = (mesh.transformedMinAABB.z - ray.origin.z) / ray.direction.z;
+			float tz2 = (mesh.transformedMaxAABB.z - ray.origin.z) / ray.direction.z;
+
+			tmin = std::max(tmin, std::min(tz1, tz2));
+			tmax = std::min(tmax, std::max(tz1, tz2));
+
+			return tmax > 0 && tmax >= tmin;
+		}
+
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
+			if (!AABB_TriangleMesh(mesh, ray))
+				return false;
+
 			bool hitAnything = false;
 			float closestHitDistance = FLT_MAX;
 
@@ -215,7 +245,7 @@ namespace dae
 						hitRecord.t = distance;
 						hitRecord.point = ray.origin + ray.direction * distance;
 						hitRecord.normal = Vector3::Cross(edge1, edge2).Normalized();
-						//WHY IS THIS SLOWER //hitRecord.normal = mesh.transformedNormals[triangleIndex];
+						//hitRecord.normal = mesh.transformedNormals[triangleIndex];
 						hitRecord.didHit = true;
 						hitRecord.materialIndex = mesh.materialIndex;
 					}
@@ -259,7 +289,7 @@ namespace dae
 		//Just parses vertices and indices
 #pragma warning(push)
 #pragma warning(disable : 4505) //Warning unreferenced local function
-		static bool ParseOBJ(const std::string& filename, std::vector<Vector3>& positions, std::vector<Vector3>& normals, std::vector<int>& indices)
+		static bool ParseOBJ(const std::string& filename, std::vector<Vector3>& positions,/* std::vector<Vector3>& normals,*/ std::vector<int>& indices)
 		{
 			std::ifstream file(filename);
 			if (!file)
@@ -299,30 +329,30 @@ namespace dae
 					break;
 			}
 
-			//Precompute normals
-			for (uint64_t index = 0; index < indices.size(); index += 3)
-			{
-				uint32_t i0 = indices[index];
-				uint32_t i1 = indices[index + 1];
-				uint32_t i2 = indices[index + 2];
+			////Precompute normals
+			//for (uint64_t index = 0; index < indices.size(); index += 3)
+			//{
+			//	uint32_t i0 = indices[index];
+			//	uint32_t i1 = indices[index + 1];
+			//	uint32_t i2 = indices[index + 2];
 
-				Vector3 edgeV0V1 = positions[i1] - positions[i0];
-				Vector3 edgeV0V2 = positions[i2] - positions[i0];
-				Vector3 normal = Vector3::Cross(edgeV0V1, edgeV0V2);
+			//	Vector3 edgeV0V1 = positions[i1] - positions[i0];
+			//	Vector3 edgeV0V2 = positions[i2] - positions[i0];
+			//	Vector3 normal = Vector3::Cross(edgeV0V1, edgeV0V2);
 
-				if(isnan(normal.x))
-				{
-					int k = 0;
-				}
+			//	if(isnan(normal.x))
+			//	{
+			//		int k = 0;
+			//	}
 
-				normal.Normalize();
-				if (isnan(normal.x))
-				{
-					int k = 0;
-				}
+			//	normal.Normalize();
+			//	if (isnan(normal.x))
+			//	{
+			//		int k = 0;
+			//	}
 
-				normals.push_back(normal);
-			}
+			//	normals.push_back(normal);
+			//}
 
 			return true;
 		}
