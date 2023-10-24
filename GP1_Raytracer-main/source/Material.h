@@ -18,7 +18,7 @@ namespace dae
 		Material& operator=(const Material&) = delete;
 		Material& operator=(Material&&) noexcept = delete;
 
-		float reflectStrenght{ 0.0f };
+		float m_globalRoughness{ 1.0f };
 
 		/**
 		 * \brief Function used to calculate the correct color for the specific material and its parameters
@@ -105,6 +105,8 @@ namespace dae
 		Material_CookTorrence(const ColorRGB& albedo, float metalness, float roughness):
 			m_Albedo(albedo), m_Metalness(metalness), m_Roughness(roughness)
 		{
+			// Rough estimation should be checked by flor ;) 
+			m_globalRoughness = std::max(roughness,(1.0f - metalness));
 		}
 
 		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
@@ -124,9 +126,9 @@ namespace dae
 			const ColorRGB kd{ m_Metalness == 0.0f ? 1.0f - specular : colors::Black };
 			const ColorRGB diffuse{ BRDF::Lambert(kd,m_Albedo)};
 
-			return diffuse + specular;
+			//m_globalRoughness = 
+			return specular + diffuse;
 		}
-
 
 	private:
 		ColorRGB m_Albedo{0.955f, 0.637f, 0.538f}; //Copper

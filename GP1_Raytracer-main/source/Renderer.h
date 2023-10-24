@@ -6,9 +6,12 @@
 struct SDL_Window;
 struct SDL_Surface;
 
+constexpr int maxBounces{ 2 };
+
 namespace dae
 {
 	class Scene;
+	struct ColorRGB;
 
 	class Renderer final
 	{
@@ -53,6 +56,5 @@ namespace dae
 
 		LightMode m_CurrentLightMode{ LightMode::Combined };
 		bool m_ShadowsEnabled{ false };
-
 	};
 }

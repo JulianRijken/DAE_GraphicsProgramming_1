@@ -100,71 +100,53 @@ namespace dae
 		unsigned char AddMaterial(Material* pMaterial);
 	};
 
-	//+++++++++++++++++++++++++++++++++++++++++
-	//WEEK 1 Test Scene
-	class Scene_W1 final : public Scene
+	class Scene_Bunny final : public Scene
 	{
 	public:
-		Scene_W1() = default;
-		~Scene_W1() override = default;
+		Scene_Bunny() = default;
+		~Scene_Bunny() override = default;
 
-		Scene_W1(const Scene_W1&) = delete;
-		Scene_W1(Scene_W1&&) noexcept = delete;
-		Scene_W1& operator=(const Scene_W1&) = delete;
-		Scene_W1& operator=(Scene_W1&&) noexcept = delete;
-
-		void Initialize() override;
-	};
-
-	//+++++++++++++++++++++++++++++++++++++++++
-	//WEEK 2 Test Scene 2
-	class Scene_W2 final : public Scene
-    {
-    public:
-        Scene_W2() = default;
-        ~Scene_W2() override = default;
-
-        Scene_W2(const Scene_W2&) = delete;
-        Scene_W2(Scene_W2&&) noexcept = delete;
-        Scene_W2& operator=(const Scene_W2&) = delete;
-        Scene_W2& operator=(Scene_W2&&) noexcept = delete;
-
-        void Initialize() override;
-    };
-
-	//+++++++++++++++++++++++++++++++++++++++++
-	//WEEK 3 Test Scene 3
-	class Scene_W3 final : public Scene
-	{
-	public:
-		Scene_W3() = default;
-		~Scene_W3() override = default;
-
-		Scene_W3(const Scene_W3&) = delete;
-		Scene_W3(Scene_W3&&) noexcept = delete;
-		Scene_W3& operator=(const Scene_W3&) = delete;
-		Scene_W3& operator=(Scene_W3&&) noexcept = delete;
-
-		void Initialize() override;
-	};
-
-	//+++++++++++++++++++++++++++++++++++++++++
-	//WEEK 4 Test Scene 4
-	class Scene_W4 final : public Scene
-	{
-	public:
-		Scene_W4() = default;
-		~Scene_W4() override = default;
-
-		Scene_W4(const Scene_W4&) = delete;
-		Scene_W4(Scene_W4&&) noexcept = delete;
-		Scene_W4& operator=(const Scene_W4&) = delete;
-		Scene_W4& operator=(Scene_W4&&) noexcept = delete;
+		Scene_Bunny(const Scene_Bunny&) = delete;
+		Scene_Bunny(Scene_Bunny&&) noexcept = delete;
+		Scene_Bunny& operator=(const Scene_Bunny&) = delete;
+		Scene_Bunny& operator=(Scene_Bunny&&) noexcept = delete;
 
 		void Initialize() override;
 		void Update(dae::Timer* pTimer) override;
 
-		float rotation;
+		std::vector<TriangleMesh*> m_Meshes;
+	};
+
+	class Scene_Car final : public Scene
+    {
+    public:
+        Scene_Car() = default;
+        ~Scene_Car() override = default;
+
+        Scene_Car(const Scene_Car&) = delete;
+        Scene_Car(Scene_Car&&) noexcept = delete;
+        Scene_Car& operator=(const Scene_Car&) = delete;
+        Scene_Car& operator=(Scene_Car&&) noexcept = delete;
+
+        void Initialize() override;
+
+		std::vector<TriangleMesh*> m_Meshes;
+    };
+
+	class Scene_Raytracer final : public Scene
+	{
+	public:
+		Scene_Raytracer() = default;
+		~Scene_Raytracer() override = default;
+
+		Scene_Raytracer(const Scene_Raytracer&) = delete;
+		Scene_Raytracer(Scene_Raytracer&&) noexcept = delete;
+		Scene_Raytracer& operator=(const Scene_Raytracer&) = delete;
+		Scene_Raytracer& operator=(Scene_Raytracer&&) noexcept = delete;
+
+		void Initialize() override;
+		void Update(dae::Timer* pTimer) override;
+
 		std::vector<TriangleMesh*> m_Meshes;
 	};
 }

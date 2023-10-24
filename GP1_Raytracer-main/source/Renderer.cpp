@@ -15,6 +15,8 @@
 #include "Utils.h"
 
 #define MULTI
+//#define SWITCH
+#define REFLECT
 
 using namespace dae;
 
@@ -29,8 +31,10 @@ Renderer::Renderer(SDL_Window * pWindow) :
 	m_YVals.reserve(m_Height);
 	for (uint16_t y{}; y < m_Height; ++y)
 		m_YVals.push_back(y);
-	
 }
+
+
+
 
 void Renderer::Render(Scene* scenePtr)
 {
@@ -44,10 +48,6 @@ void Renderer::Render(Scene* scenePtr)
 	const float multiplierYValue{ 2.0f / heightFloat };
 	const float aspectRatio = widthFloat / heightFloat;
 	const float fieldOfViewTimesAspect{ aspectRatio * camera.fovValue };
-
-	constexpr int bounceCount{ 2 };
-
-
 
 	const Matrix cameraToWorld{ camera.CalculateCameraToWorld() };
 
@@ -67,6 +67,8 @@ void Renderer::Render(Scene* scenePtr)
 		{
 			rayDirection.x = ((static_cast<float>(pixelX) + 0.5f) * multiplierXValue - 1.0f) * fieldOfViewTimesAspect;
 
+			//=====================FOR EVERY PIXEL===============================
+
 			ColorRGB finalColor{};
 
 			// Setup view ray
@@ -76,25 +78,27 @@ void Renderer::Render(Scene* scenePtr)
 				cameraToWorld.TransformVector(rayDirection.Normalized())
 			};
 
-			for (int bounceIndex = 0; bounceIndex <= bounceCount; ++bounceIndex)
+#ifdef REFLECT
+			float colorLeft{ 1.0f };
+
+			for (int bounceIndex = 0; bounceIndex <= maxBounces; ++bounceIndex)
 			{
+				//=====================FOR EVERY BOUNCE===============================
+				if(colorLeft < EPSILON)
+					break;
+#endif
 				HitRecord closestHit{};
 				scenePtr->GetClosestHit(viewRay, closestHit);
 
 				Material* hitMaterial{ materials[closestHit.materialIndex] };
-				float reflectStrength{ hitMaterial->reflectStrenght };
 
-				// Don't bounce if strength is lower or zero
-				if (hitMaterial->reflectStrenght <= 0)
-				{
-					bounceIndex = bounceCount;
-					reflectStrength = 1.0f;
-				}
+#ifdef REFLECT
+				// Get the current amount of color picked up 
+				const float currentColor = colorLeft * hitMaterial->m_globalRoughness;
 
-				//reflectStrength *= 1.0f / (bounceIndex + 1);
-				reflectStrength *= -(float)bounceIndex / (float)bounceCount + 1;
-
-
+				// Remove the current color from color left
+				colorLeft -= currentColor;
+#endif
 				const Vector3 v{ -viewRay.direction };
 				const Vector3 hitPointWithOffset{ closestHit.point + closestHit.normal * SHADOW_NORMAL_OFFSET };
 
@@ -102,7 +106,6 @@ void Renderer::Render(Scene* scenePtr)
 				{
 					for (const Light& light : lights)
 					{
-						//== Light to hit 
 						const Vector3 lightToHitDirection{ hitPointWithOffset - light.origin };
 						const float lightToHitDistance{ lightToHitDirection.Magnitude() };
 						const Vector3 l = lightToHitDirection / lightToHitDistance;
@@ -114,6 +117,7 @@ void Renderer::Render(Scene* scenePtr)
 
 						const float cosineLaw = std::max(0.0f, Vector3::Dot(closestHit.normal, -l));
 
+#ifdef SWITCH
 						switch (m_CurrentLightMode)
 						{
 						case LightMode::ObservedArea:
@@ -133,21 +137,34 @@ void Renderer::Render(Scene* scenePtr)
 
 							break;
 						case LightMode::Combined:
-							finalColor +=
-								(LightUtils::GetRadiance(light, closestHit.point) *
+#endif
+							finalColor += LightUtils::GetRadiance(light, closestHit.point) *
 								hitMaterial->Shade(closestHit, -l, v) *
-								cosineLaw) * reflectStrength;
+								cosineLaw
+#ifdef REFLECT
+							* currentColor; 
+#else
+							; 
+#endif
+#ifdef SWITCH
+
 							break;
 						}
+#endif
+
 					}
 				}
 
-				if (bounceIndex < bounceCount)
-				{
-					viewRay.direction = Vector3::Reflect(viewRay.direction, closestHit.normal);
-					viewRay.origin = closestHit.point;
-				}
+
+#ifdef REFLECT
+
+				// Bounce ray 
+				viewRay.direction = Vector3::Reflect(viewRay.direction, closestHit.normal);
+				viewRay.origin = closestHit.point;
+
+				//=====================FOR EVERY BOUNCE===============================
 			}
+#endif
 
 
 			finalColor.MaxToOne();
@@ -156,8 +173,10 @@ void Renderer::Render(Scene* scenePtr)
 				static_cast<uint8_t>(finalColor.r * 255),
 				static_cast<uint8_t>(finalColor.g * 255),
 				static_cast<uint8_t>(finalColor.b * 255));
-		}
 
+
+			//=====================FOR EVERY PIXEL===============================
+		}
 
 #ifdef MULTI
 	});
