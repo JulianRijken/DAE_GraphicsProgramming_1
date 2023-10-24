@@ -293,12 +293,11 @@ namespace dae {
 	{
 
 //#define CAR
-//#define BUNNY
-#define MIRROR
+#define BUNNY
 
 #ifdef CAR
 
-		sceneName = "Week 4";
+		sceneName = "Car";
 		m_Camera.SetPosition({ 0.f, 1.9f, -7.f });
 		m_Camera.SetFOV(25.f);
 		m_Camera.SetRotation(-10.0f,0.0f);
@@ -309,14 +308,12 @@ namespace dae {
 		const auto matLambert_White = AddMaterial(new Material_Lambert(colors::White, 1.f));
 
 		// Walls
-		AddPlane(Vector3{ 0.f, 0.f, 10.f }, Vector3{ 0.f, 0.f, -1.f }, matLambert_GrayBlue); //BACK
+		//AddPlane(Vector3{ 0.f, 0.f, 10.f }, Vector3{ 0.f, 0.f, -1.f }, matLambert_GrayBlue); //BACK
 		AddPlane(Vector3{ 0.f, 0.f, 0.f }, Vector3{ 0.f, 1.f, 0.f }, matLambert_GrayBlue); //BOTTOM
-		//AddPlane(Vector3{ 0.f, 10.f, 0.f }, Vector3{ 0.f, -1.f, 0.f }, matLambert_GrayBlue); //TOP
-		//AddPlane(Vector3{ 5.f, 0.f, 0.f }, Vector3{ -1.f, 0.f, 0.f }, matLambert_GrayBlue); //RIGHT
-		//AddPlane(Vector3{ -5.f, 0.f, 0.f }, Vector3{ 1.f, 0.f, 0.f }, matLambert_GrayBlue); //LEFT
+		AddPlane(Vector3{ 0.f, 10.f, 0.f }, Vector3{ 0.f, -1.f, 0.f }, matLambert_GrayBlue); //TOP
+		AddPlane(Vector3{ 5.f, 0.f, 0.f }, Vector3{ -1.f, 0.f, 0.f }, matLambert_GrayBlue); //RIGHT
+		AddPlane(Vector3{ -5.f, 0.f, 0.f }, Vector3{ 1.f, 0.f, 0.f }, matLambert_GrayBlue); //LEFT
 
-
-		// Mesh
 		m_Meshes.resize(1);
 
 		m_Meshes[0] = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White);
@@ -324,14 +321,11 @@ namespace dae {
 			m_Meshes[0]->positions,
 			m_Meshes[0]->indices);
 
-		// Mesh Calculates normals itself its faster some how
-		m_Meshes[0]->UpdateAABB();
-
-		m_Meshes[0]->Translate({-0.1f,0,0});
+		m_Meshes[0]->Translate({ -0.1f,0,0 });
 		m_Meshes[0]->RotateY(140 * TO_RADIANS);
 
+		m_Meshes[0]->UpdateAABB();
 		m_Meshes[0]->UpdateTransforms();
-
 
 		// Lights
 		AddPointLight(Vector3{ 0.f, 5.f, 5.f }, 50.f, ColorRGB{ 1.f, .61f, .45f }); //Backlight
@@ -351,42 +345,7 @@ namespace dae {
 		const auto matCT_GrayMediumPlastic = AddMaterial(new Material_CookTorrence({ 0.80f, 0.80f, 0.80f }, .0f, .6f));
 		const auto matLambert_White = AddMaterial(new Material_Lambert(colors::White, 1.f));
 
-		// Walls
-		AddPlane(Vector3{ 0.f, 0.f, 10.f }, Vector3{ 0.f, 0.f, -1.f }, matLambert_GrayBlue); //BACK
-		AddPlane(Vector3{ 0.f, 0.f, 0.f }, Vector3{ 0.f, 1.f, 0.f }, matLambert_GrayBlue); //BOTTOM
-		AddPlane(Vector3{ 0.f, 10.f, 0.f }, Vector3{ 0.f, -1.f, 0.f }, matLambert_GrayBlue); //TOP
-		AddPlane(Vector3{ 5.f, 0.f, 0.f }, Vector3{ -1.f, 0.f, 0.f }, matLambert_GrayBlue); //RIGHT
-		AddPlane(Vector3{ -5.f, 0.f, 0.f }, Vector3{ 1.f, 0.f, 0.f }, matLambert_GrayBlue); //LEFT
-
-		m_Meshes.resize(1);
-
-		m_Meshes[0] = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White);
-		Utils::ParseOBJ("Resources/lowpoly_bunny2.obj",
-			m_Meshes[0]->positions,
-			m_Meshes[0]->indices);
-
-		m_Meshes[0]->Scale({ 2, 2, 2 });
-
-		m_Meshes[0]->UpdateAABB();
-		m_Meshes[0]->UpdateTransforms();
-
-		// Lights
-		AddPointLight(Vector3{ 0.f, 5.f, 5.f }, 50.f, ColorRGB{ 1.f, .61f, .45f }); //Backlight
-		AddPointLight(Vector3{ -2.5f, 5.f, -5.f }, 70.f, ColorRGB{ 1.f, .8f, .45f }); //Front Light Left
-		AddPointLight(Vector3{ 2.5f, 2.5f, -5.f }, 50.f, ColorRGB{ .34f, .47f, .68f });
-
-#endif
-#ifdef MIRROR
-
-		sceneName = "Bunny";
-		m_Camera.SetPosition({ 0,3,-9 });
-		m_Camera.SetFOV(45.f);
-		//m_Camera.SetRotation(-10.0f, 0.0f);
-
-		// Materials
-		const auto matLambert_GrayBlue = AddMaterial(new Material_Lambert({ .49f, 0.57f, 0.57f }, 1.f));
-		const auto matCT_GrayMediumPlastic = AddMaterial(new Material_CookTorrence({ 0.80f, 0.80f, 0.80f }, .0f, .6f));
-		const auto matLambert_White = AddMaterial(new Material_Lambert(colors::White, 1.f));
+		GetMaterials()[matLambert_GrayBlue]->reflectStrenght = 0.3f;
 
 		// Walls
 		AddPlane(Vector3{ 0.f, 0.f, 10.f }, Vector3{ 0.f, 0.f, -1.f }, matLambert_GrayBlue); //BACK
@@ -413,7 +372,6 @@ namespace dae {
 		AddPointLight(Vector3{ 2.5f, 2.5f, -5.f }, 50.f, ColorRGB{ .34f, .47f, .68f });
 
 #endif
-
 	}
 
 	void Scene_W4::Update(dae::Timer* pTimer)

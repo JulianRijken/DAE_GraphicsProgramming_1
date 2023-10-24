@@ -45,6 +45,10 @@ void Renderer::Render(Scene* scenePtr)
 	const float aspectRatio = widthFloat / heightFloat;
 	const float fieldOfViewTimesAspect{ aspectRatio * camera.fovValue };
 
+	constexpr int bounceCount{ 2 };
+
+
+
 	const Matrix cameraToWorld{ camera.CalculateCameraToWorld() };
 
 #ifdef MULTI
@@ -55,9 +59,6 @@ void Renderer::Render(Scene* scenePtr)
 	for (int pixelY{}; pixelY < m_Height; ++pixelY)
 	{
 #endif
-
-
-		Ray viewRay{ camera.origin };
 		Vector3 rayDirection{ 0,0,1 };
 
 		rayDirection.y = (1.0f - (static_cast<float>(pixelY) + 0.5f) * multiplierYValue) * camera.fovValue;
@@ -66,64 +67,88 @@ void Renderer::Render(Scene* scenePtr)
 		{
 			rayDirection.x = ((static_cast<float>(pixelX) + 0.5f) * multiplierXValue - 1.0f) * fieldOfViewTimesAspect;
 
-			// Get view direction
-			viewRay.direction = cameraToWorld.TransformVector(rayDirection.Normalized());
-			const Vector3 v{ viewRay.direction * -1.0f };
-
-			HitRecord closestHit{};
-			scenePtr->GetClosestHit(viewRay, closestHit);
-
 			ColorRGB finalColor{};
-			const Vector3 hitPointWithOffset{ closestHit.point + closestHit.normal * SHADOW_NORMAL_OFFSET };
 
-
-			if (closestHit.didHit)
+			// Setup view ray
+			Ray viewRay
 			{
-				for (const Light& light : lights)
+				camera.origin,
+				cameraToWorld.TransformVector(rayDirection.Normalized())
+			};
+
+			for (int bounceIndex = 0; bounceIndex <= bounceCount; ++bounceIndex)
+			{
+				HitRecord closestHit{};
+				scenePtr->GetClosestHit(viewRay, closestHit);
+
+				Material* hitMaterial{ materials[closestHit.materialIndex] };
+				float reflectStrength{ hitMaterial->reflectStrenght };
+
+				// Don't bounce if strength is lower or zero
+				if (hitMaterial->reflectStrenght <= 0)
 				{
-					// Setup light ray
+					bounceIndex = bounceCount;
+					reflectStrength = 1.0f;
+				}
 
-					//== Light to hit 
-					const Vector3 lightToHitDirection{ hitPointWithOffset - light.origin };
-					const float lightToHitDistance{ lightToHitDirection.Magnitude() };
-					const Vector3 l = lightToHitDirection / lightToHitDistance;
-
-					const Ray hitToLightRay{ light.origin, l,0.0f,lightToHitDistance };
-
-					if (m_ShadowsEnabled && scenePtr->DoesHit(hitToLightRay))
-						continue;
-
-					const float cosineLaw = std::max(0.0f, Vector3::Dot(closestHit.normal, -l));
+				//reflectStrength *= 1.0f / (bounceIndex + 1);
+				reflectStrength *= -(float)bounceIndex / (float)bounceCount + 1;
 
 
-					switch (m_CurrentLightMode)
+				const Vector3 v{ -viewRay.direction };
+				const Vector3 hitPointWithOffset{ closestHit.point + closestHit.normal * SHADOW_NORMAL_OFFSET };
+
+				if (closestHit.didHit)
+				{
+					for (const Light& light : lights)
 					{
-					case LightMode::ObservedArea:
-						finalColor += ColorRGB(1, 1, 1) * cosineLaw;
+						//== Light to hit 
+						const Vector3 lightToHitDirection{ hitPointWithOffset - light.origin };
+						const float lightToHitDistance{ lightToHitDirection.Magnitude() };
+						const Vector3 l = lightToHitDirection / lightToHitDistance;
 
-						break;
-					case LightMode::Radiance:
-						finalColor += LightUtils::GetRadiance(light, closestHit.point);
-						break;
+						const Ray hitToLightRay{ light.origin, l,0.0f,lightToHitDistance };
 
-					case LightMode::RadianceAndObservedArea:
-						finalColor += LightUtils::GetRadiance(light, closestHit.point) * cosineLaw;
+						if (m_ShadowsEnabled && scenePtr->DoesHit(hitToLightRay))
+							continue;
 
-						break;
-					case LightMode::BRDF:
-						finalColor += materials[closestHit.materialIndex]->Shade(closestHit, -l, v);
+						const float cosineLaw = std::max(0.0f, Vector3::Dot(closestHit.normal, -l));
 
-						break;
-					case LightMode::Combined:
-						finalColor +=
-							LightUtils::GetRadiance(light, closestHit.point) *
-							materials[closestHit.materialIndex]->Shade(closestHit, -l, v) *
-							cosineLaw;
-						break;
+						switch (m_CurrentLightMode)
+						{
+						case LightMode::ObservedArea:
+							finalColor += ColorRGB(1, 1, 1) * cosineLaw;
+
+							break;
+						case LightMode::Radiance:
+							finalColor += LightUtils::GetRadiance(light, closestHit.point);
+							break;
+
+						case LightMode::RadianceAndObservedArea:
+							finalColor += LightUtils::GetRadiance(light, closestHit.point) * cosineLaw;
+
+							break;
+						case LightMode::BRDF:
+							finalColor += hitMaterial->Shade(closestHit, -l, v);
+
+							break;
+						case LightMode::Combined:
+							finalColor +=
+								(LightUtils::GetRadiance(light, closestHit.point) *
+								hitMaterial->Shade(closestHit, -l, v) *
+								cosineLaw) * reflectStrength;
+							break;
+						}
 					}
 				}
 
+				if (bounceIndex < bounceCount)
+				{
+					viewRay.direction = Vector3::Reflect(viewRay.direction, closestHit.normal);
+					viewRay.origin = closestHit.point;
+				}
 			}
+
 
 			finalColor.MaxToOne();
 
@@ -165,3 +190,4 @@ void Renderer::CycleLightMode()
 
 	m_CurrentLightMode = static_cast<LightMode>(current);
 }
+	

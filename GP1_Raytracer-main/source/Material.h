@@ -18,6 +18,8 @@ namespace dae
 		Material& operator=(const Material&) = delete;
 		Material& operator=(Material&&) noexcept = delete;
 
+		float reflectStrenght{ 0.0f };
+
 		/**
 		 * \brief Function used to calculate the correct color for the specific material and its parameters
 		 * \param hitRecord current hitrecord
