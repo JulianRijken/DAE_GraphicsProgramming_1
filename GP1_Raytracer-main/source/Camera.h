@@ -43,6 +43,10 @@ namespace dae
 		float cameraYaw{0.f};
 
 
+		inline static constexpr float KEY_MOVE_SPEED{20.0f};
+		inline static constexpr float MOUSE_MOVE_SPEED{0.1f};
+		inline static constexpr float ROTATE_SPEED{0.001f};
+
 		Matrix CalculateCameraToWorld()
 		{
 			right = Vector3::Cross(Vector3::UnitY, forward).Normalized();
@@ -87,15 +91,54 @@ namespace dae
 
 		void HandleCameraMovement(const float deltaTime)
 		{
+			Vector3 localInputVector{};
+			Vector3 worldInputVector{};
+
 			//Mouse Input
 			int mouseX{}, mouseY{};
 			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
 
-			if ((mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0)
+			//Keyboard Input
+			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
+
+			const bool isRightMouseDown{ (mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0 };
+			const bool isLeftMouseDown{ (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0 };
+
+			if(isLeftMouseDown && isRightMouseDown)
 			{
-				targetCameraPitch -= mouseY * 0.001f;
-				targetCameraYaw -= mouseX * 0.001f;
+				localInputVector.y -= mouseY * MOUSE_MOVE_SPEED;
 			}
+			else if(isLeftMouseDown)
+			{
+				localInputVector.z -= mouseY  * MOUSE_MOVE_SPEED;
+				targetCameraYaw -= mouseX * ROTATE_SPEED;
+			}
+			else if (isRightMouseDown)
+			{
+				targetCameraPitch -= mouseY * ROTATE_SPEED;
+				targetCameraYaw -= mouseX  * ROTATE_SPEED;
+			}
+
+			if (pKeyboardState[SDL_SCANCODE_A] || pKeyboardState[SDL_SCANCODE_LEFT])
+				localInputVector.x -= 1;
+
+			if (pKeyboardState[SDL_SCANCODE_D] || pKeyboardState[SDL_SCANCODE_RIGHT])
+				localInputVector.x += 1;
+
+			if (pKeyboardState[SDL_SCANCODE_W] || pKeyboardState[SDL_SCANCODE_UP])
+				localInputVector.z += 1;
+
+			if (pKeyboardState[SDL_SCANCODE_S] || pKeyboardState[SDL_SCANCODE_DOWN])
+				localInputVector.z -= 1;
+
+			if (pKeyboardState[SDL_SCANCODE_Q] || pKeyboardState[SDL_SCANCODE_LSHIFT])
+				worldInputVector.y -= 1;
+
+			if (pKeyboardState[SDL_SCANCODE_E] || pKeyboardState[SDL_SCANCODE_LCTRL])
+				worldInputVector.y += 1;
+
+
+			// Apply input vector and rotation
 
 			cameraPitch = Jul::Lerp(cameraPitch, targetCameraPitch, deltaTime / cameraRotateSmoothing);
 			cameraYaw = Jul::Lerp(cameraYaw, targetCameraYaw, deltaTime / cameraRotateSmoothing);
@@ -111,36 +154,9 @@ namespace dae
 			forward = Vector3::UnitZ;
 			forward = pitchYawRotation.TransformVector(forward);
 
-
-			//Keyboard Input
-			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
-
-			Vector3 inputVector{};
-
-			if (pKeyboardState[SDL_SCANCODE_A])
-				inputVector.x -= 1;
-
-			if (pKeyboardState[SDL_SCANCODE_D])
-				inputVector.x += 1;
-
-			if (pKeyboardState[SDL_SCANCODE_W])
-				inputVector.z += 1;
-
-			if (pKeyboardState[SDL_SCANCODE_S])
-				inputVector.z -= 1;
-
-
-			if (pKeyboardState[SDL_SCANCODE_Q])
-				inputVector.y -= 1;
-
-			if (pKeyboardState[SDL_SCANCODE_E])
-				inputVector.y += 1;
-
-
-			inputVector = pitchYawRotation.TransformVector(inputVector);
-			targetOrigin += inputVector * deltaTime * 20.0f;
+			localInputVector = pitchYawRotation.TransformVector(localInputVector);
+			targetOrigin += (localInputVector + worldInputVector) * deltaTime * KEY_MOVE_SPEED;
 			origin = Jul::Lerp(origin, targetOrigin, deltaTime / cameraMoveSmoothing);
-
 		}
 
 		void Update(Timer* pTimer)

@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <execution>
+#include <format>
 
 #include "Math.h"
 #include "Matrix.h"
@@ -15,7 +16,7 @@
 #include "Utils.h"
 
 #define MULTI
-//#define SWITCH
+#define SWITCH
 #define REFLECT
 
 using namespace dae;
@@ -117,9 +118,20 @@ void Renderer::Render(Scene* scenePtr)
 
 						const float cosineLaw = std::max(0.0f, Vector3::Dot(closestHit.normal, -l));
 
-#ifdef SWITCH
+
 						switch (m_CurrentLightMode)
 						{
+						case LightMode::Combined:
+
+							finalColor += LightUtils::GetRadiance(light, closestHit.point) *
+								hitMaterial->Shade(closestHit, -l, v) *
+								cosineLaw
+#ifdef REFLECT
+								* currentColor;
+#else
+								;
+#endif
+							break;
 						case LightMode::ObservedArea:
 							finalColor += ColorRGB(1, 1, 1) * cosineLaw;
 
@@ -127,35 +139,15 @@ void Renderer::Render(Scene* scenePtr)
 						case LightMode::Radiance:
 							finalColor += LightUtils::GetRadiance(light, closestHit.point);
 							break;
-
-						case LightMode::RadianceAndObservedArea:
-							finalColor += LightUtils::GetRadiance(light, closestHit.point) * cosineLaw;
-
-							break;
 						case LightMode::BRDF:
 							finalColor += hitMaterial->Shade(closestHit, -l, v);
 
 							break;
-						case LightMode::Combined:
-#endif
-							finalColor += LightUtils::GetRadiance(light, closestHit.point) *
-								hitMaterial->Shade(closestHit, -l, v) *
-								cosineLaw
-#ifdef REFLECT
-							* currentColor; 
-#else
-							; 
-#endif
-#ifdef SWITCH
 
-							break;
 						}
-#endif
 
 					}
 				}
-
-
 #ifdef REFLECT
 
 				// Bounce ray 
@@ -208,5 +200,9 @@ void Renderer::CycleLightMode()
 		current = 0;
 
 	m_CurrentLightMode = static_cast<LightMode>(current);
+
+	std::cout << std::endl;
+	std::cout << std::format("Current light mode {}", LIGHT_MODE_NAMES.at((int)m_CurrentLightMode)) << std::endl;
+	std::cout << std::endl;
 }
 	

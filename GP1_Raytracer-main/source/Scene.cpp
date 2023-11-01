@@ -159,15 +159,15 @@ namespace dae {
 		// Materials
 		const auto matLambert_GrayBlue = AddMaterial(new Material_Lambert({ .49f, 0.57f, 0.57f }, 1.f));
 		const auto matLambert_White = AddMaterial(new Material_Lambert(colors::White, 1.0f));
-		const auto matCT_GraySmoothMetal = AddMaterial(new Material_CookTorrence({ .972f, .960f, .915f }, 1.0f, 0.5f));
+		//const auto matCT_GraySmoothMetal = AddMaterial(new Material_CookTorrence({ .972f, .960f, .915f }, 1.0f, 0.5f));
 
 		GetMaterials()[matLambert_GrayBlue]->m_globalRoughness = 0.75f;
 		GetMaterials()[matLambert_White]->m_globalRoughness = 1.0f;
-		GetMaterials()[matCT_GraySmoothMetal]->m_globalRoughness = 0.5f;
+		//GetMaterials()[matCT_GraySmoothMetal]->m_globalRoughness = 0.5f;
 
 		// Walls
 		AddPlane(Vector3{ 0.f, 0.f, 10.f }, Vector3{ 0.f, 0.f, -1.f }, matLambert_GrayBlue); //BACK
-		AddPlane(Vector3{ 0.f, 0.f, -10.f }, Vector3{ 0.f, 0.f, 1.f }, matLambert_GrayBlue); //FRONT
+		//AddPlane(Vector3{ 0.f, 0.f, -10.f }, Vector3{ 0.f, 0.f, 1.f }, matLambert_GrayBlue); //FRONT
 		AddPlane(Vector3{ 0.f, 0.f, 0.f }, Vector3{ 0.f, 1.f, 0.f }, matLambert_GrayBlue); //BOTTOM
 		AddPlane(Vector3{ 0.f, 10.f, 0.f }, Vector3{ 0.f, -1.f, 0.f }, matLambert_GrayBlue); //TOP
 		AddPlane(Vector3{ 5.f, 0.f, 0.f }, Vector3{ -1.f, 0.f, 0.f }, matLambert_GrayBlue); //RIGHT
@@ -175,7 +175,7 @@ namespace dae {
 
 		m_Meshes.resize(1);
 
-		m_Meshes[0] = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matCT_GraySmoothMetal);
+		m_Meshes[0] = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White);
 		Utils::ParseOBJ("Resources/lowpoly_bunny2.obj",
 			m_Meshes[0]->positions,
 			m_Meshes[0]->indices);
@@ -186,8 +186,7 @@ namespace dae {
 		m_Meshes[0]->UpdateTransforms();
 
 
-
-		AddSphere(Vector3{ 2.9f, 1.0f, 0.5f }, 1.0f, matCT_GraySmoothMetal);
+		//AddSphere(Vector3{ 2.9f, 1.0f, 0.5f }, 1.0f, matCT_GraySmoothMetal);
 
 
 		// Lights
@@ -199,9 +198,10 @@ namespace dae {
 	{
 		Scene::Update(pTimer);
 
+		const float yawAngle{ (std::cos(pTimer->GetTotal()) + 1.0f) / 2.0f * PI_2 };
 		for (TriangleMesh* triangleMesh : m_Meshes)
 		{
-			triangleMesh->RotateY(TO_RADIANS * pTimer->GetTotal() * 25.0f);
+			triangleMesh->RotateY(yawAngle);
 			triangleMesh->UpdateTransforms();
 		}
 	}
@@ -334,9 +334,10 @@ namespace dae {
 	{
 		Scene::Update(pTimer);
 
+		const float yawAngle{ (std::cos(pTimer->GetTotal()) + 1.0f) / 2.0f * PI_2 };
 		for (TriangleMesh* triangleMesh : m_Meshes)
 		{
-			triangleMesh->RotateY(TO_RADIANS * pTimer->GetTotal() * 55.0f);
+			triangleMesh->RotateY(yawAngle);
 			triangleMesh->UpdateTransforms();
 		}
 

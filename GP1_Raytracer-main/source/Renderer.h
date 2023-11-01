@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <map>
+#include <string>
 #include <vector>
 
 struct SDL_Window;
@@ -46,12 +48,19 @@ namespace dae
 
 		enum class LightMode
 		{
+			Combined,
 			ObservedArea,
 			Radiance,
-			RadianceAndObservedArea,
 			BRDF,
-			Combined,
 			COUNT
+		};
+
+		inline static const std::map<int,std::string> LIGHT_MODE_NAMES
+		{
+			{static_cast<int>(LightMode::Combined),"Combined"},
+			{static_cast<int>(LightMode::ObservedArea),"ObservedArea"},
+			{static_cast<int>(LightMode::Radiance),"Radiance"},
+			{static_cast<int>(LightMode::BRDF),"BRDF"},
 		};
 
 		LightMode m_CurrentLightMode{ LightMode::Combined };

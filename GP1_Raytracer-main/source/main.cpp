@@ -48,14 +48,13 @@ int main(int argc, char* args[])
 	const auto pTimer = new Timer();
 	const auto pRenderer = new Renderer(pWindow);
 
-	const auto pScene = new Scene_Raytracer();
+	//const auto pScene = new Scene_Raytracer();
+	//const auto pScene = new Scene_Bunny();
+	const auto pScene = new Scene_Car();
 	pScene->Initialize();
 
 	//Start loop
 	pTimer->Start();
-
-	// Start Benchmark
-	//pTimer->StartBenchmark();
 
 	float printTimer = 0.f;
 	bool isLooping = true;
@@ -83,6 +82,10 @@ int main(int argc, char* args[])
 
 				if (e.key.keysym.scancode == SDL_SCANCODE_F3)
 					pRenderer->CycleLightMode();
+
+				if (e.key.keysym.scancode == SDL_SCANCODE_F6)
+					pTimer->StartBenchmark();
+
 
 				break;
 			case SDL_MOUSEWHEEL:
