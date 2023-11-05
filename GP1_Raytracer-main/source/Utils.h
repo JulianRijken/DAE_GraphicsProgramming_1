@@ -197,6 +197,7 @@ namespace dae
 				const Vector3 h = Vector3::Cross(ray.direction, edge2);
 				const float a = Vector3::Dot(edge1, h);
 
+
 				// Handle culling
 				if (mesh.cullMode == TriangleCullMode::BackFaceCulling)
 				{

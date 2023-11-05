@@ -149,4 +149,21 @@ namespace dae
 
 		std::vector<TriangleMesh*> m_Meshes;
 	};
+
+	class Scene_Testing final : public Scene
+	{
+	public:
+		Scene_Testing() = default;
+		~Scene_Testing() override = default;
+
+		Scene_Testing(const Scene_Testing&) = delete;
+		Scene_Testing(Scene_Testing&&) noexcept = delete;
+		Scene_Testing& operator=(const Scene_Testing&) = delete;
+		Scene_Testing& operator=(Scene_Testing&&) noexcept = delete;
+
+		void Initialize() override;
+		void Update(dae::Timer* pTimer) override;
+
+		std::vector<TriangleMesh*> m_Meshes;
+	};
 }

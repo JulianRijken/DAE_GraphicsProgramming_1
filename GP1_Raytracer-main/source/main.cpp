@@ -50,7 +50,8 @@ int main(int argc, char* args[])
 
 	//const auto pScene = new Scene_Raytracer();
 	//const auto pScene = new Scene_Bunny();
-	const auto pScene = new Scene_Car();
+	//const auto pScene = new Scene_Car();
+	const auto pScene = new Scene_Testing();
 	pScene->Initialize();
 
 	//Start loop
