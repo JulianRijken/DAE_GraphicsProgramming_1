@@ -8,7 +8,7 @@
 struct SDL_Window;
 struct SDL_Surface;
 
-constexpr int maxBounces{ 6 };
+constexpr int maxBounces{ 3 };
 
 namespace dae
 {

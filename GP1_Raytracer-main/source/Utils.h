@@ -249,6 +249,11 @@ namespace dae
 						//hitRecord.normal = mesh.transformedNormals[triangleIndex];
 						hitRecord.didHit = true;
 						hitRecord.materialIndex = mesh.materialIndex;
+
+						//if (not mesh.uvs.empty())
+						//{
+						//	hitRecord.uvCords = { interpolatedU, interpolatedV, 0.0f };
+						//}
 					}
 				}
 			}
@@ -290,7 +295,8 @@ namespace dae
 		//Just parses vertices and indices
 #pragma warning(push)
 #pragma warning(disable : 4505) //Warning unreferenced local function
-		static bool ParseOBJ(const std::string& filename, std::vector<Vector3>& positions,/* std::vector<Vector3>& normals,*/ std::vector<int>& indices)
+
+		static bool ParseOBJ(const std::string& filename, std::vector<Vector3>& positions,/* std::vector<Vector3>& normals,*/ std::vector<int>& indices, std::vector<float>& uv)
 		{
 			std::ifstream file(filename);
 			if (!file)
@@ -322,6 +328,15 @@ namespace dae
 					indices.push_back((int)i0 - 1);
 					indices.push_back((int)i1 - 1);
 					indices.push_back((int)i2 - 1);
+				}
+				else if (sCommand == "vt")
+				{
+					float u, v;
+					file >> u >> v;
+
+					uv.push_back(u);
+					uv.push_back(v);
+					uv.push_back(0); // w = 0 maybe used for multiple maps idk lol
 				}
 				//read till end of line and ignore all remaining chars
 				file.ignore(1000, '\n');
@@ -356,6 +371,12 @@ namespace dae
 			//}
 
 			return true;
+		}
+
+		static bool ParseOBJ(const std::string& filename, std::vector<Vector3>& positions,/* std::vector<Vector3>& normals,*/ std::vector<int>& indices)
+		{
+			std::vector<float> uv{}; // just throw away uv
+			return  ParseOBJ(filename, positions, indices, uv);
 		}
 #pragma warning(pop)
 	}

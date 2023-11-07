@@ -72,6 +72,7 @@ namespace dae
 		std::vector<Vector3> positions{};
 		//std::vector<Vector3> normals{};
 		std::vector<int> indices{};
+		std::vector <float> uvs{};
 		unsigned char materialIndex{ 0 };
 
 		TriangleCullMode cullMode{TriangleCullMode::BackFaceCulling};
@@ -226,6 +227,7 @@ namespace dae
 			transformedMinAABB = tMinAABB;
 			transformedMaxAABB = tMaxAABB;
 		}
+
 	};
 
 	inline TriangleMesh::TriangleMesh(std::vector<Vector3> _positions, std::vector<int> _indices,
@@ -270,6 +272,7 @@ namespace dae
 
 		bool didHit{ false };
 		unsigned char materialIndex{ 0 };
+		Vector3 uvCords{};
 	};
 #pragma endregion
 }

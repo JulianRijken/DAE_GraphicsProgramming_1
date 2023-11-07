@@ -224,6 +224,9 @@ namespace dae {
 		const auto matCT_GraySmoothMetal = AddMaterial(new Material_CookTorrence({ .972f, .960f, .915f }, 1.0f, 0.4f));
 		GetMaterials()[matCT_GraySmoothMetal]->m_globalRoughness = 0.5f;
 
+		//const auto matShell = AddMaterial(new Material_ShellTexturing());
+
+
 		// Walls
 		AddPlane(Vector3{ 0.f, 0.f, 10.f }, Vector3{ 0.f, 0.f, -1.f }, matLambert_GrayBlue); //BACK
 		AddPlane(Vector3{ 0.f, 0.f, -10.f }, Vector3{ 0.f, 0.f, 1.f }, matLambert_GrayBlue); //FRONT
@@ -235,9 +238,10 @@ namespace dae {
 		m_Meshes.resize(1);
 
 		m_Meshes[0] = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White);
-		Utils::ParseOBJ("Resources/Car1.obj",
+		Utils::ParseOBJ("Resources/Car2.obj",
 			m_Meshes[0]->positions,
-			m_Meshes[0]->indices);
+			m_Meshes[0]->indices,
+			m_Meshes[0]->uvs);
 
 		m_Meshes[0]->Translate({ -0.1f,0,0 });
 		m_Meshes[0]->RotateY(140 * TO_RADIANS);
@@ -387,28 +391,24 @@ namespace dae {
 		//AddSphere(Vector3{ 1.75f, 5.f, 0.f }, .75f, matCT_GraySmoothMetal);
 
 
-		//m_Meshes.resize(3);
+		const auto matUV = AddMaterial(new Material_ShellTexturing());
 
-		//const Triangle baseTriangle = { Vector3(-.75f, 1.5f, 0.f), Vector3(.75f, 0.f, 0.f), Vector3(-.75f, 0.f, 0.f) };
 
-		//m_Meshes[0] = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White);
-		//m_Meshes[0]->AppendTriangle(baseTriangle, true);
-		//m_Meshes[0]->Translate({ -1.75f,4.5f,0.f });
-		//m_Meshes[0]->UpdateAABB();
-		//m_Meshes[0]->UpdateTransforms();
+		m_Meshes.resize(1);
 
-		//m_Meshes[1] = AddTriangleMesh(TriangleCullMode::FrontFaceCulling, matLambert_White);
-		//m_Meshes[1]->AppendTriangle(baseTriangle, true);
-		//m_Meshes[1]->Translate({ 0.f,4.5f,0.f });
-		//m_Meshes[1]->UpdateAABB();
-		//m_Meshes[1]->UpdateTransforms();
 
-		//m_Meshes[2] = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
-		//m_Meshes[2]->AppendTriangle(baseTriangle, true);
-		//m_Meshes[2]->Translate({ 1.75f,4.5f,0.f });
-		//m_Meshes[2]->UpdateAABB();
-		//m_Meshes[2]->UpdateTransforms();
 
+		m_Meshes[0] = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matUV);
+		Utils::ParseOBJ("Resources/simple_quad.obj",
+			m_Meshes[0]->positions,
+			m_Meshes[0]->indices,
+			m_Meshes[0]->uvs);
+
+		m_Meshes[0]->Scale({ 2, 2, 2 });
+		m_Meshes[0]->Translate({ 0, 2, 0 });
+
+		m_Meshes[0]->UpdateAABB();
+		m_Meshes[0]->UpdateTransforms();
 
 
 
@@ -424,10 +424,10 @@ namespace dae {
 
 
 
-		const auto matLambert_Black = AddMaterial(new Material_Lambert({ 0.0f, 0.0f, 0.0f }, 1.f));
-		GetMaterials()[matLambert_Black]->m_globalRoughness = 1.0f;
+		//const auto matLambert_Black = AddMaterial(new Material_Lambert({ 0.0f, 0.0f, 0.0f }, 1.f));
+		//GetMaterials()[matLambert_Black]->m_globalRoughness = 1.0f;
 
-		AddSphere(Vector3{ 1.75f, 3.f, 0.0f }, .75f, matLambert_Black);
+		//AddSphere(Vector3{ 1.75f, 3.f, 0.0f }, .75f, matLambert_Black);
 
 		//AddSphere(Vector3{ 0,0,0 }, 0.5f, matCT_GraySmoothPlastic);
 
@@ -439,12 +439,12 @@ namespace dae {
 	{
 		Scene::Update(pTimer);
 
-		const float yawAngle{ (std::cos(pTimer->GetTotal()) + 1.0f) / 2.0f * PI_2 };
-		for (TriangleMesh* triangleMesh : m_Meshes)
-		{
-			triangleMesh->RotateY(yawAngle);
-			triangleMesh->UpdateTransforms();
-		}
+		//const float yawAngle{ (std::cos(pTimer->GetTotal()) + 1.0f) / 2.0f * PI_2 };
+		//for (TriangleMesh* triangleMesh : m_Meshes)
+		//{
+		//	triangleMesh->RotateY(yawAngle);
+		//	triangleMesh->UpdateTransforms();
+		//}
 
 		//m_SphereGeometries[6].origin = m_Camera.origin;
 	}

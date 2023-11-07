@@ -50,6 +50,21 @@ namespace dae
 		ColorRGB m_Color{colors::White};
 	};
 #pragma endregion
+#pragma region Material Shell Texturing
+	//SOLID COLOR
+	//===========
+	class Material_ShellTexturing final : public Material
+	{
+	public:
+
+		ColorRGB Shade(const HitRecord& hitRecord, const Vector3& l, const Vector3& v) override
+		{
+			return {hitRecord.uvCords.x,hitRecord.uvCords.y,hitRecord.uvCords.z};
+		}
+
+	};
+#pragma endregion
+
 
 #pragma region Material LAMBERT
 	//LAMBERT
