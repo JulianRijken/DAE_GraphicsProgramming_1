@@ -209,20 +209,20 @@ namespace dae {
 	void Scene_Car::Initialize()
 	{
 		sceneName = "Car";
-		m_Camera.SetPosition({ 0.f, 1.9f, -7.f });
-		m_Camera.SetFOV(25.f);
+		//m_Camera.SetPosition({ 0.f, 1.9f, -7.f });
+		//m_Camera.SetFOV(25.f);
+		//m_Camera.SetRotation(-10.0f, 0.0f);
+
+		m_Camera.SetPosition({ 0.f, 1.9f, -20.f });
+		m_Camera.SetFOV(15.f);
 		m_Camera.SetRotation(-10.0f, 0.0f);
 
 		// Materials
 		const auto matLambert_GrayBlue = AddMaterial(new Material_Lambert({ .49f, 0.57f, 0.57f }, 1.f));
 		GetMaterials()[matLambert_GrayBlue]->m_globalRoughness = 0.80f;
 
-		const auto matCT_GrayMediumPlastic = AddMaterial(new Material_CookTorrence({ 0.80f, 0.80f, 0.80f }, .0f, .6f));
-		const auto matLambert_White = AddMaterial(new Material_Lambert(colors::White, 1.f));
-		GetMaterials()[matLambert_White]->m_globalRoughness = 0.0f;
-
-		const auto matCT_GraySmoothMetal = AddMaterial(new Material_CookTorrence({ .972f, .960f, .915f }, 1.0f, 0.4f));
-		GetMaterials()[matCT_GraySmoothMetal]->m_globalRoughness = 0.5f;
+		const auto test = AddMaterial(new Material_CookTorrence({ .972f, .960f, .915f }, 1.f, 0.7f));
+		GetMaterials()[test]->m_globalRoughness = 0.7f;
 
 		// Walls
 		AddPlane(Vector3{ 0.f, 0.f, 10.f }, Vector3{ 0.f, 0.f, -1.f }, matLambert_GrayBlue); //BACK
@@ -234,13 +234,14 @@ namespace dae {
 
 		m_Meshes.resize(1);
 
-		m_Meshes[0] = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White);
+		m_Meshes[0] = AddTriangleMesh(TriangleCullMode::BackFaceCulling, test);
 		Utils::ParseOBJ("Resources/Car1.obj",
 			m_Meshes[0]->positions,
 			m_Meshes[0]->indices);
 
-		m_Meshes[0]->Translate({ -0.1f,0,0 });
+		m_Meshes[0]->Translate({ -0.11f,0,-0.6f });
 		m_Meshes[0]->RotateY(140 * TO_RADIANS);
+		m_Meshes[0]->Scale({0.95f,0.95f,0.95f});
 
 		m_Meshes[0]->UpdateAABB();
 		m_Meshes[0]->UpdateTransforms();
