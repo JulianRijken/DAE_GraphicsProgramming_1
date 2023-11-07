@@ -33,7 +33,7 @@ int main(int argc, char* args[])
 	const uint32_t height = 480;
 
 	SDL_Window* pWindow = SDL_CreateWindow(
-		"RayTracer - Julian Rijken",
+		"RayTracer - Julian Rijken 2DAE09",
 		SDL_WINDOWPOS_UNDEFINED,
 		SDL_WINDOWPOS_UNDEFINED,
 		width, height, 0);
@@ -50,8 +50,8 @@ int main(int argc, char* args[])
 
 	//const auto pScene = new Scene_Raytracer();
 	//const auto pScene = new Scene_Bunny();
-	const auto pScene = new Scene_Car();
-	//const auto pScene = new Scene_Testing();
+	//const auto pScene = new Scene_Car();
+	const auto pScene = new Scene_Testing();
 	pScene->Initialize();
 
 	//Start loop
@@ -59,7 +59,7 @@ int main(int argc, char* args[])
 
 	float printTimer = 0.f;
 	bool isLooping = true;
-	bool takeScreenshot = false;
+	bool takeScreenshots = false;
 	while (isLooping)
 	{
 		//--------- Get input events ---------
@@ -73,7 +73,7 @@ int main(int argc, char* args[])
 				break;
 			case SDL_KEYDOWN:
 				if(e.key.keysym.scancode == SDL_SCANCODE_X)
-					takeScreenshot = true;
+					takeScreenshots = true;
 
 				if (e.key.keysym.scancode == SDL_SCANCODE_ESCAPE)
 					SDL_SetRelativeMouseMode(SDL_FALSE);
@@ -115,13 +115,13 @@ int main(int argc, char* args[])
 		}
 
 		//Save screenshot after full render
-		if (takeScreenshot)
+		if (takeScreenshots)
 		{
 			if (!pRenderer->SaveBufferToImage())
 				std::cout << "Screenshot saved!" << std::endl;
 			else
 				std::cout << "Something went wrong. Screenshot not saved!" << std::endl;
-			takeScreenshot = false;
+			takeScreenshots = false;
 		}
 	}
 	pTimer->Stop();

@@ -157,6 +157,10 @@ namespace dae
 			localInputVector = pitchYawRotation.TransformVector(localInputVector);
 			targetOrigin += (localInputVector + worldInputVector) * deltaTime * KEY_MOVE_SPEED;
 			origin = Jul::Lerp(origin, targetOrigin, deltaTime / cameraMoveSmoothing);
+
+			//std::cout << "x: " << origin.x << "y: " << origin.y << "z: " << origin.z << std::endl;
+			//std::cout << "Pitch: " << cameraPitch << "Yaw: " << cameraYaw << std::endl;
+			//std::cout << "Fov: " << fovAngle << std::endl;
 		}
 
 		void Update(Timer* pTimer)

@@ -152,27 +152,27 @@ namespace dae
 		inline bool AABB_TriangleMesh(const TriangleMesh& mesh, const Ray& ray)
 		{
 			// X
-			float tx1 = (mesh.transformedMinAABB.x - ray.origin.x) / ray.direction.x;
-			float tx2 = (mesh.transformedMaxAABB.x - ray.origin.x) / ray.direction.x;
+			const float tx1 = (mesh.transformedMinAABB.x - ray.origin.x) / ray.direction.x;
+			const float tx2 = (mesh.transformedMaxAABB.x - ray.origin.x) / ray.direction.x;
 
-			float tmin = std::min(tx1, tx2);
-			float tmax = std::max(tx1, tx2);
+			float tMin = std::min(tx1, tx2);
+			float tMax = std::max(tx1, tx2);
 
 			// Y
-			float ty1 = (mesh.transformedMinAABB.y - ray.origin.y) / ray.direction.y;
-			float ty2 = (mesh.transformedMaxAABB.y - ray.origin.y) / ray.direction.y;
+			const float ty1 = (mesh.transformedMinAABB.y - ray.origin.y) / ray.direction.y;
+			const float ty2 = (mesh.transformedMaxAABB.y - ray.origin.y) / ray.direction.y;
 
-			tmin = std::max(tmin, std::min(ty1, ty2));
-			tmax = std::min(tmax, std::max(ty1, ty2));
+			tMin = std::max(tMin, std::min(ty1, ty2));
+			tMax = std::min(tMax, std::max(ty1, ty2));
 
 			// Z
-			float tz1 = (mesh.transformedMinAABB.z - ray.origin.z) / ray.direction.z;
-			float tz2 = (mesh.transformedMaxAABB.z - ray.origin.z) / ray.direction.z;
+			const float tz1 = (mesh.transformedMinAABB.z - ray.origin.z) / ray.direction.z;
+			const float tz2 = (mesh.transformedMaxAABB.z - ray.origin.z) / ray.direction.z;
 
-			tmin = std::max(tmin, std::min(tz1, tz2));
-			tmax = std::min(tmax, std::max(tz1, tz2));
+			tMin = std::max(tMin, std::min(tz1, tz2));
+			tMax = std::min(tMax, std::max(tz1, tz2));
 
-			return tmax > 0 && tmax >= tmin;
+			return tMax > 0 && tMax >= tMin;
 		}
 
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
@@ -245,8 +245,11 @@ namespace dae
 					{
 						hitRecord.t = distance;
 						hitRecord.point = ray.origin + ray.direction * distance;
-						hitRecord.normal = Vector3::Cross(edge1, edge2).Normalized();
+
+						// Some how calculating them here is faster... idk just rol with it. (for those reading you saw nothing)
+						hitRecord.normal = Vector3::Cross(edge1, edge2).Normalized(); 
 						//hitRecord.normal = mesh.transformedNormals[triangleIndex];
+
 						hitRecord.didHit = true;
 						hitRecord.materialIndex = mesh.materialIndex;
 					}

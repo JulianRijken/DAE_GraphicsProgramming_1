@@ -18,6 +18,7 @@
 #define MULTI
 #define SWITCH
 #define REFLECT
+//#define INTERLACED
 
 using namespace dae;
 
@@ -52,6 +53,12 @@ void Renderer::Render(Scene* scenePtr)
 
 	const Matrix cameraToWorld{ camera.CalculateCameraToWorld() };
 
+#ifdef INTERLACED
+		interlaceState++;
+		if (interlaceState >= interlaceSpace)
+			interlaceState = 0;
+#endif
+
 #ifdef MULTI
 	// We run a for_each for each of the y pixels, this will be distributed over all cpu threads
 	std::for_each(std::execution::par, m_YVals.begin(), m_YVals.end(), [this, camera, multiplierXValue, multiplierYValue, fieldOfViewTimesAspect, cameraToWorld, scenePtr, lights, materials](const uint16_t pixelY)
@@ -64,8 +71,14 @@ void Renderer::Render(Scene* scenePtr)
 
 		rayDirection.y = (1.0f - (static_cast<float>(pixelY) + 0.5f) * multiplierYValue) * camera.fovValue;
 
-		for (int pixelX{}; pixelX < m_Width; ++pixelX)
+#ifdef INTERLACED
+
+		for (int pixelX{ interlaceState }; pixelX < m_Width; pixelX += interlaceSpace)
 		{
+#else
+		for (int pixelX{0}; pixelX < m_Width; pixelX++)
+		{
+#endif
 			rayDirection.x = ((static_cast<float>(pixelX) + 0.5f) * multiplierXValue - 1.0f) * fieldOfViewTimesAspect;
 
 			//=====================FOR EVERY PIXEL===============================

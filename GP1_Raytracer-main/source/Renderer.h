@@ -8,7 +8,7 @@
 struct SDL_Window;
 struct SDL_Surface;
 
-constexpr int maxBounces{ 6 };
+constexpr int maxBounces{ 5 };
 
 namespace dae
 {
@@ -64,6 +64,9 @@ namespace dae
 		};
 
 		LightMode m_CurrentLightMode{ LightMode::Combined };
-		bool m_ShadowsEnabled{ false };
+		bool m_ShadowsEnabled{ true };
+		int interlaceState{};
+		int interlaceSpace{2};
+
 	};
 }
