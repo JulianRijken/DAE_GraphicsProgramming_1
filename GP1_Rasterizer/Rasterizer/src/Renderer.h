@@ -28,7 +28,7 @@ namespace dae
 		Renderer& operator=(Renderer&&) noexcept = delete;
 
 		void Update(const Timer& timer);
-		void Render();
+		void Render() const;
 
 		bool SaveBufferToImage() const;
 
@@ -41,7 +41,6 @@ namespace dae
 		SDL_Surface* m_FrontBufferPtr{ nullptr };
 		SDL_Surface* m_BackBufferPtr{ nullptr };
 		uint32_t* m_BackBufferPixelsPtr{};
-
 		float* m_pDepthBufferPixels{};
 
 		Camera m_Camera{};
