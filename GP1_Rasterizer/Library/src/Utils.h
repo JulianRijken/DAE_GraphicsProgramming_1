@@ -4,7 +4,7 @@
 #include "Maths.h"
 #include "DataTypes.h"
 
-#define DISABLE_OBJ
+//#define DISABLE_OBJ
 
 namespace dae
 {

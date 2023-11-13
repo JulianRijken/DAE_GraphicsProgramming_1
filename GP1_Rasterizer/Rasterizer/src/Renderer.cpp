@@ -28,7 +28,9 @@ Renderer::Renderer(SDL_Window* pWindow) :
 	m_pDepthBufferPixels = new float[m_ScreenWidth * m_ScreenHeight];
 
 	//Initialize Camera
-	m_Camera.Initialize(60.f, { 0.0f,0.0f,-10.f });
+	m_Camera.Initialize(60.f, { 0.0f,0.0f,-4.f });
+
+	Utils::ParseOBJ("Resources/Diorama2.obj", m_TestMesh.vertices, m_TestMesh.indices);
 }
 
 Renderer::~Renderer()
@@ -46,30 +48,50 @@ void Renderer::Render() const
 	//Lock BackBuffer
 	SDL_LockSurface(m_BackBufferPtr);
 
-	const std::vector<Vertex> verticesWorld
-	{
-		// Triangle 0
-		{{ 0.0f,  2.0f, 0.0f},{1,0,0}},
-		{{ 1.5f, -1.0f, 0.0f},{0,1,0}},
-		{{-1.5f, -1.0f, 0.0f},{0,0,1}},
+	//const std::vector<Vertex> verticesWorld
+	//{
+	//	// Triangle 0
+	//	{{ 0.0f,  2.0f, 0.0f},{1,0,0}},
+	//	{{ 1.5f, -1.0f, 0.0f},{0,1,0}},
+	//	{{-1.5f, -1.0f, 0.0f},{0,0,1}},
 
-		// Triangle 1
-		{{ 0.0f,  4.0f, 2.0f},{1,0,0}},
-		{{ 3.0f, -2.0f, 2.0f},{0,1,0}},
-		{{-3.0f, -2.0f, 2.0f},{0,0,1}},
-	};
+	//	// Triangle 1
+	//	{{ 0.0f,  4.0f, 2.0f},{1,0,0}},
+	//	{{ 3.0f, -2.0f, 2.0f},{0,1,0}},
+	//	{{-3.0f, -2.0f, 2.0f},{0,0,1}},
+	//};
 
 	std::vector<Vertex> verticesScreen{};
-	World_to_Screen(verticesWorld, verticesScreen);
+	World_to_Screen(m_TestMesh.vertices, verticesScreen);
 
-	// Clear screen and depth buffer
-	// I do this here now because I don't loop all the pixels on the screen anymore
-	for (int i{}; i < m_ScreenWidth * m_ScreenHeight; i++)
+	int vertexIndex{ 0 };
+	for (Vertex& vertex : verticesScreen)
 	{
-		// Clear depth buffer 
-		m_pDepthBufferPixels[i] = std::numeric_limits<float>::max();
-		m_BackBufferPixelsPtr[i] = 0;
+		if (vertexIndex == 0)
+			vertex.color = colors::Red;
+
+		if (vertexIndex == 1)
+			vertex.color = colors::Green;
+
+		if (vertexIndex == 2)
+			vertex.color = colors::Blue;
+
+		vertexIndex++;
+		vertexIndex %= 3;
 	}
+
+	std::ranges::reverse(verticesScreen);
+
+	//// Clear depth buffer 
+	//for (int i{}; i < m_ScreenWidth * m_ScreenHeight; i++)
+	//	m_pDepthBufferPixels[i] = std::numeric_limits<float>::max();
+
+	std::fill_n(m_pDepthBufferPixels, m_ScreenWidth * m_ScreenHeight, std::numeric_limits<float>::max());
+
+
+
+	// Clear screen buffer
+	SDL_FillRect(m_BackBufferPtr, nullptr, SDL_MapRGB(m_BackBufferPtr->format, 100, 100, 100));
 
 
 	//RENDER LOGIC FOR EACH TRIANGLE
@@ -96,18 +118,19 @@ void Renderer::Render() const
 		{
 			for (int pixelY{ minY }; pixelY < maxY; ++pixelY)
 			{
-				const Vector2 pixelCenter{ static_cast<float>(pixelX) + 0.5f,static_cast<float>(pixelY) + 0.5f };
+				//const Vector2 pixelCenter{ static_cast<float>(pixelX) + 0.5f,static_cast<float>(pixelY) + 0.5f };
+				const Vector2 pixelCenter{ (float)pixelX + 1.0f, (float)pixelY + 1.0f };
 
 				const float signedArea0{ Vector2::Cross(pixelCenter - triangle.vertex1.position.GetXY(), triangle.vertex2.position.GetXY() - triangle.vertex1.position.GetXY()) };
-				if (signedArea0 > 0.0f)
+				if (signedArea0 > 0)
 					continue;
 
 				const float signedArea1{ Vector2::Cross(pixelCenter - triangle.vertex2.position.GetXY(), triangle.vertex0.position.GetXY() - triangle.vertex2.position.GetXY()) };
-				if (signedArea1 > 0.0f)
+				if (signedArea1 > 0)
 					continue;
 
 				const float signedArea2{ Vector2::Cross(pixelCenter - triangle.vertex0.position.GetXY(), triangle.vertex1.position.GetXY() - triangle.vertex0.position.GetXY()) };
-				if (signedArea2 > 0.0f)
+				if (signedArea2 > 0)
 					continue;
 
 				const float totalArea = signedArea0 + signedArea1 + signedArea2;
@@ -126,28 +149,36 @@ void Renderer::Render() const
 
 				m_pDepthBufferPixels[pixelIndex] = pixelDepth;
 
-				const ColorRGB finalPixelColor =
+				ColorRGB finalPixelColor =
 					triangle.vertex0.color * signedArea0 * totalAreaInv +
 					triangle.vertex1.color * signedArea1 * totalAreaInv +
 					triangle.vertex2.color * signedArea2 * totalAreaInv;
 
+				finalPixelColor = colors::White;
+
+				finalPixelColor *= 1.0f - std::clamp(m_pDepthBufferPixels[pixelIndex] / 40.0f,0.0f,1.0f);
+
 				//Update Color in Buffer
 				//finalPixelColor.MaxToOne();
 
-				//m_BackBufferPixelsPtr[pixelIndex] = SDL_MapRGB(m_BackBufferPtr->format,
-				//	static_cast<uint8_t>((m_pDepthBufferPixels[pixelIndex] / std::numeric_limits<float>::max()) * 5.0f * 255),
-				//	static_cast<uint8_t>((m_pDepthBufferPixels[pixelIndex] / std::numeric_limits<float>::max()) * 5.0f * 255),
-				//	static_cast<uint8_t>((m_pDepthBufferPixels[pixelIndex] / std::numeric_limits<float>::max()) * 5.0f * 255));
 
 				//m_BackBufferPixelsPtr[pixelIndex] = SDL_MapRGB(m_BackBufferPtr->format,
-				//	static_cast<uint8_t>(std::clamp(m_pDepthBufferPixels[pixelIndex] / 10.0f,0.0f,1.0f) * 255),
-				//	static_cast<uint8_t>(std::clamp(m_pDepthBufferPixels[pixelIndex] / 10.0f,0.0f,1.0f) * 255),
-				//	static_cast<uint8_t>(std::clamp(m_pDepthBufferPixels[pixelIndex] / 10.0f,0.0f,1.0f) * 255));
+				//	static_cast<uint8_t>(std::clamp(m_pDepthBufferPixels[pixelIndex] / 30.0f,0.0f,1.0f) * 255),
+				//	static_cast<uint8_t>(std::clamp(m_pDepthBufferPixels[pixelIndex] / 30.0f,0.0f,1.0f) * 255),
+				//	static_cast<uint8_t>(std::clamp(m_pDepthBufferPixels[pixelIndex] / 30.0f,0.0f,1.0f) * 255));
 
 				m_BackBufferPixelsPtr[pixelIndex] = SDL_MapRGB(m_BackBufferPtr->format,
 					static_cast<uint8_t>(finalPixelColor.r * 255),
 					static_cast<uint8_t>(finalPixelColor.g * 255),
 					static_cast<uint8_t>(finalPixelColor.b * 255));
+
+
+				//// WHITE
+				//m_BackBufferPixelsPtr[pixelIndex] = SDL_MapRGB(m_BackBufferPtr->format,
+				//	static_cast<uint8_t>(255),
+				//	static_cast<uint8_t>(255),
+				//	static_cast<uint8_t>(255));
+
 			}
 		}
 	}

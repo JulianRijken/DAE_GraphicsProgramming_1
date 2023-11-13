@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "Camera.h"
+#include "DataTypes.h"
 
 struct SDL_Window;
 struct SDL_Surface;
@@ -11,10 +12,10 @@ struct SDL_Surface;
 namespace dae
 {
 	class Texture;
-	struct Mesh;
+	//struct Mesh;
 	struct Vertex;
 	class Timer;
-	class Scene;
+	//class Scene;
 
 	class Renderer final
 	{
@@ -44,6 +45,8 @@ namespace dae
 		float* m_pDepthBufferPixels{};
 
 		Camera m_Camera{};
+
+		Mesh m_TestMesh;
 
 		int m_ScreenWidth{};
 		int m_ScreenHeight{};
