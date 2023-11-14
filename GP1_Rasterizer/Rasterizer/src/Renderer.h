@@ -46,7 +46,9 @@ namespace dae
 
 		Camera m_Camera{};
 
-		Mesh m_TestMesh;
+		//Mesh m_TestMesh;
+
+		std::vector<Mesh> m_WorldMeshes{};
 
 		int m_ScreenWidth{};
 		int m_ScreenHeight{};

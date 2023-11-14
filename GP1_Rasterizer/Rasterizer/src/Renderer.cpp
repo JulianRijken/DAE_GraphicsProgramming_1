@@ -28,9 +28,64 @@ Renderer::Renderer(SDL_Window* pWindow) :
 	m_pDepthBufferPixels = new float[m_ScreenWidth * m_ScreenHeight];
 
 	//Initialize Camera
-	m_Camera.Initialize(60.f, { 0.0f,0.0f,-4.f });
+	m_Camera.Initialize(60.f, { 0.0f,0.0f,-10.f });
 
-	Utils::ParseOBJ("Resources/Diorama2.obj", m_TestMesh.vertices, m_TestMesh.indices);
+	Mesh testMeshList
+	{
+		{
+			Vertex{{-3,  3, -2}},
+			Vertex{{ 0,  3, -2}},
+			Vertex{{ 3,  3, -2}},
+			Vertex{{-3,  0, -2}},
+			Vertex{{ 0,  0, -2}},
+			Vertex{{ 3,  0, -2}},
+			Vertex{{-3, -3, -2}},
+			Vertex{{ 0, -3, -2}},
+			Vertex{{ 3, -3, -2}}
+		},
+		{
+			3, 0, 1,    1, 4, 3,    4, 1, 2,
+			2, 5, 4,    6, 3, 4,    4, 7, 6,
+			7, 4, 5,    5, 8, 7
+		},
+		PrimitiveTopology::TriangleList
+	};
+
+	Mesh testMeshStrip
+	{
+		{
+			Vertex{{-3,  3, -2}},
+			Vertex{{ 0,  3, -2}},
+			Vertex{{ 3,  3, -2}},
+			Vertex{{-3,  0, -2}},
+			Vertex{{ 0,  0, -2}},
+			Vertex{{ 3,  0, -2}},
+			Vertex{{-3, -3, -2}},
+			Vertex{{ 0, -3, -2}},
+			Vertex{{ 3, -3, -2}}
+		},
+		{
+			3, 0, 4, 1, 5, 2, 2, 6, 6, 3, 7, 4, 8, 5
+		},
+		PrimitiveTopology::TriangleStrip
+	};
+
+	Mesh testMeshParse{};
+	Utils::ParseOBJ("Resources/tuktuk.obj", testMeshParse.vertices, testMeshParse.indices);
+	testMeshParse.primitiveTopology = PrimitiveTopology::TriangleList;
+
+	//Utils::ParseOBJ("Resources/simple_quad.obj", testMeshParse.vertices, testMeshParse.indices);
+
+
+
+	m_WorldMeshes.clear();
+	m_WorldMeshes.resize(1);
+	m_WorldMeshes[0] = testMeshStrip;
+
+	std::cout << "Mesh Vertices: " << m_WorldMeshes[0].vertices.size() << std::endl;
+	std::cout << "Mesh Indices: " << m_WorldMeshes[0].indices.size() << std::endl;
+
+
 }
 
 Renderer::~Renderer()
@@ -48,22 +103,14 @@ void Renderer::Render() const
 	//Lock BackBuffer
 	SDL_LockSurface(m_BackBufferPtr);
 
-	//const std::vector<Vertex> verticesWorld
-	//{
-	//	// Triangle 0
-	//	{{ 0.0f,  2.0f, 0.0f},{1,0,0}},
-	//	{{ 1.5f, -1.0f, 0.0f},{0,1,0}},
-	//	{{-1.5f, -1.0f, 0.0f},{0,0,1}},
 
-	//	// Triangle 1
-	//	{{ 0.0f,  4.0f, 2.0f},{1,0,0}},
-	//	{{ 3.0f, -2.0f, 2.0f},{0,1,0}},
-	//	{{-3.0f, -2.0f, 2.0f},{0,0,1}},
-	//};
 
+	// Convert world to screen
 	std::vector<Vertex> verticesScreen{};
-	World_to_Screen(m_TestMesh.vertices, verticesScreen);
+	World_to_Screen(m_WorldMeshes[0].vertices, verticesScreen);
 
+
+	// Color world vertex
 	int vertexIndex{ 0 };
 	for (Vertex& vertex : verticesScreen)
 	{
@@ -80,34 +127,63 @@ void Renderer::Render() const
 		vertexIndex %= 3;
 	}
 
-	std::ranges::reverse(verticesScreen);
+	//std::ranges::reverse(verticesScreen);
 
-	//// Clear depth buffer 
-	//for (int i{}; i < m_ScreenWidth * m_ScreenHeight; i++)
-	//	m_pDepthBufferPixels[i] = std::numeric_limits<float>::max();
 
+
+
+	// Clear depth buffer
 	std::fill_n(m_pDepthBufferPixels, m_ScreenWidth * m_ScreenHeight, std::numeric_limits<float>::max());
-
-
 
 	// Clear screen buffer
 	SDL_FillRect(m_BackBufferPtr, nullptr, SDL_MapRGB(m_BackBufferPtr->format, 100, 100, 100));
 
+	int triangleIndex{};
 
 	//RENDER LOGIC FOR EACH TRIANGLE
-	for (int i{}; i < static_cast<int>(verticesScreen.size()); i += 3)
+	for (int i{}; i < static_cast<int>(m_WorldMeshes[0].indices.size() - 2); i++)
 	{
-		Triangle triangle
-		{
-			verticesScreen[i],
-			verticesScreen[i + 1],
-			verticesScreen[i + 2]
-		};
+		triangleIndex++;
 
-		int minX = static_cast<int>(std::min(triangle.vertex0.position.x,std::min(triangle.vertex1.position.x, triangle.vertex2.position.x)));
-		int maxX = static_cast<int>(std::max(triangle.vertex0.position.x,std::max(triangle.vertex1.position.x, triangle.vertex2.position.x)));
-		int minY = static_cast<int>(std::min(triangle.vertex0.position.y,std::min(triangle.vertex1.position.y, triangle.vertex2.position.y)));
-		int maxY = static_cast<int>(std::max(triangle.vertex0.position.y,std::max(triangle.vertex1.position.y, triangle.vertex2.position.y)));
+		Triangle triangle{};
+		if (m_WorldMeshes[0].primitiveTopology == PrimitiveTopology::TriangleList)
+		{
+			
+			triangle = 
+			{
+				verticesScreen[m_WorldMeshes[0].indices[i]],
+				verticesScreen[m_WorldMeshes[0].indices[i + 1]],
+				verticesScreen[m_WorldMeshes[0].indices[i + 2]]
+			};
+		}
+		else
+		{
+			if (i % 2 == 0)
+			{
+
+				triangle =
+				{
+					verticesScreen[m_WorldMeshes[0].indices[i]],
+					verticesScreen[m_WorldMeshes[0].indices[i + 1]],
+					verticesScreen[m_WorldMeshes[0].indices[i + 2]]
+				};
+			}
+			else
+			{
+				triangle =
+				{
+					verticesScreen[m_WorldMeshes[0].indices[i]],
+					verticesScreen[m_WorldMeshes[0].indices[i + 2]],
+					verticesScreen[m_WorldMeshes[0].indices[i + 1]]
+				};
+			}
+
+		}
+
+		int minX = static_cast<int>(std::min(triangle.vertex0.position.x,std::min(triangle.vertex1.position.x, triangle.vertex2.position.x))) - 1;
+		int maxX = static_cast<int>(std::max(triangle.vertex0.position.x,std::max(triangle.vertex1.position.x, triangle.vertex2.position.x))) + 1;
+		int minY = static_cast<int>(std::min(triangle.vertex0.position.y,std::min(triangle.vertex1.position.y, triangle.vertex2.position.y))) - 1;
+		int maxY = static_cast<int>(std::max(triangle.vertex0.position.y,std::max(triangle.vertex1.position.y, triangle.vertex2.position.y))) + 1;
 
 		minX = std::ranges::clamp(minX, 0,m_ScreenWidth);
 		maxX = std::ranges::clamp(maxX, 0,m_ScreenWidth);
@@ -118,8 +194,8 @@ void Renderer::Render() const
 		{
 			for (int pixelY{ minY }; pixelY < maxY; ++pixelY)
 			{
-				//const Vector2 pixelCenter{ static_cast<float>(pixelX) + 0.5f,static_cast<float>(pixelY) + 0.5f };
-				const Vector2 pixelCenter{ (float)pixelX + 1.0f, (float)pixelY + 1.0f };
+				const Vector2 pixelCenter{ static_cast<float>(pixelX) + 0.5f,static_cast<float>(pixelY) + 0.5f };
+				//const Vector2 pixelCenter{ static_cast<float>(pixelX) + 1.0f, static_cast<float>(pixelY) + 1.0f }; // Fixes lines
 
 				const float signedArea0{ Vector2::Cross(pixelCenter - triangle.vertex1.position.GetXY(), triangle.vertex2.position.GetXY() - triangle.vertex1.position.GetXY()) };
 				if (signedArea0 > 0)
@@ -144,6 +220,7 @@ void Renderer::Render() const
 
 				const int pixelIndex{ pixelX + pixelY * m_ScreenWidth };
 
+				// Depth check
 				if (pixelDepth > m_pDepthBufferPixels[pixelIndex])
 					continue;
 
@@ -154,9 +231,9 @@ void Renderer::Render() const
 					triangle.vertex1.color * signedArea1 * totalAreaInv +
 					triangle.vertex2.color * signedArea2 * totalAreaInv;
 
-				finalPixelColor = colors::White;
+				//finalPixelColor = colors::White;
 
-				finalPixelColor *= 1.0f - std::clamp(m_pDepthBufferPixels[pixelIndex] / 40.0f,0.0f,1.0f);
+				//finalPixelColor *= 1.0f - std::clamp(m_pDepthBufferPixels[pixelIndex] / 40.0f,0.0f,1.0f);
 
 				//Update Color in Buffer
 				//finalPixelColor.MaxToOne();
