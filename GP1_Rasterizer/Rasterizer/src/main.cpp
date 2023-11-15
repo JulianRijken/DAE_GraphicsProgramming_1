@@ -28,8 +28,11 @@ int main(int argc, char* args[])
 	//Create window + surfaces
 	SDL_Init(SDL_INIT_VIDEO);
 
-	const uint32_t width = 640;
-	const uint32_t height = 480;
+	//const uint32_t width = 640;
+	//const uint32_t height = 480;
+
+	const uint32_t width = 1280;
+	const uint32_t height = 720;
 
 	SDL_Window* pWindow = SDL_CreateWindow(
 		"Rasterizer - Julian Rijken",
@@ -39,8 +42,6 @@ int main(int argc, char* args[])
 
 	if (!pWindow)
 		return 1;
-
-	SDL_SetRelativeMouseMode(SDL_TRUE);
 
 
 	//Initialize "framework"
@@ -71,6 +72,8 @@ int main(int argc, char* args[])
 					takeScreenshot = true;
 				if(e.key.keysym.scancode == SDL_SCANCODE_F6)
 					timer.StartBenchmark();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F3)
+					renderer.CycleDebugMode();
 				break;
 			}
 		}

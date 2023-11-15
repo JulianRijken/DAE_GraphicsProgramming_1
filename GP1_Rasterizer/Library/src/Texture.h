@@ -18,7 +18,7 @@ namespace dae
 	private:
 		Texture(SDL_Surface* pSurface);
 
-		SDL_Surface* m_pSurface{ nullptr };
-		uint32_t* m_pSurfacePixels{ nullptr };
+		SDL_Surface* m_SurfacePtr{ nullptr };
+		uint32_t* m_SurfacePixelsPtr{ nullptr };
 	};
 }

@@ -6,16 +6,23 @@
 #include "Camera.h"
 #include "DataTypes.h"
 
+namespace dae
+{
+	class Texture;
+}
+
 struct SDL_Window;
 struct SDL_Surface;
 
 namespace dae
 {
-	class Texture;
-	//struct Mesh;
-	struct Vertex;
-	class Timer;
-	//class Scene;
+	enum class DebugRenderMode
+	{
+		FinalColor,
+		BiometricCoordinate,
+		DepthBuffer
+	};
+
 
 	class Renderer final
 	{
@@ -31,11 +38,18 @@ namespace dae
 		void Update(const Timer& timer);
 		void Render() const;
 
+		void CycleDebugMode();
+
 		bool SaveBufferToImage() const;
 
 	private:
 
 		void World_to_Screen(const std::vector<Vertex>& verticesIn, std::vector<Vertex>& verticesOut) const;
+
+		inline void RenderMesh(const Mesh& mesh) const;
+		inline void RenderTriangle(const Triangle& triangle) const;
+
+		void MakeMeshes();
 
 		SDL_Window* m_WindowPtr{};
 
@@ -45,8 +59,11 @@ namespace dae
 		float* m_pDepthBufferPixels{};
 
 		Camera m_Camera{};
+		DebugRenderMode m_RenderMode{};
 
-		//Mesh m_TestMesh;
+		Texture* m_texture1{};
+		Texture* m_texture1Opacity{};
+		Texture* m_texture2{};
 
 		std::vector<Mesh> m_WorldMeshes{};
 

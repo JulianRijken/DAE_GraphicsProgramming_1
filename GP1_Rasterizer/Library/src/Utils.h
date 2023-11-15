@@ -4,24 +4,13 @@
 #include "Maths.h"
 #include "DataTypes.h"
 
-//#define DISABLE_OBJ
 
 namespace dae
 {
 	namespace Utils
 	{
-		//Just parses vertices and indices
-#pragma warning(push)
-#pragma warning(disable : 4505) //Warning unreferenced local function
 		static bool ParseOBJ(const std::string& filename, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices, bool flipAxisAndWinding = true)
 		{
-#ifdef DISABLE_OBJ
-
-			//TODO: Enable the code below after uncommenting all the vertex attributes of DataTypes::Vertex
-			// >> Comment/Remove '#define DISABLE_OBJ'
-			assert(false && "OBJ PARSER not enabled! Check the comments in Utils::ParseOBJ");
-
-#else
 
 			std::ifstream file(filename);
 			if (!file)
@@ -34,16 +23,37 @@ namespace dae
 			vertices.clear();
 			indices.clear();
 
+			// TEMP
+			int materialIndex{};
+
+
 			std::string sCommand;
 			// start a while iteration ending when the end of file is reached (ios::eof)
 			while (!file.eof())
 			{
 				//read the first word of the string, use the >> operator (istream::operator>>) 
 				file >> sCommand;
+
+
 				//use conditional statements to process the different commands	
 				if (sCommand == "#")
 				{
 					// Ignore Comment
+				}
+				if (sCommand == "usemtl")
+				{
+					std::string name;
+					file >> name;
+
+					if(name == "CarTexture")
+					{
+						materialIndex = 0;
+					}
+
+					if (name == "lambert11")
+					{
+						materialIndex = 1;
+					}
 				}
 				else if (sCommand == "v")
 				{
@@ -95,6 +105,8 @@ namespace dae
 								// Optional texture coordinate
 								file >> iTexCoord;
 								vertex.uv = UVs[iTexCoord - 1];
+
+								vertex.materialIndex = materialIndex;
 							}
 
 							if ('/' == file.peek())
@@ -155,21 +167,19 @@ namespace dae
 			}
 
 			//Fix the tangents per vertex now because we accumulated
-			for (auto& v : vertices)
+			for (Vertex& vertex : vertices)
 			{
-				v.tangent = Vector3::Reject(v.tangent, v.normal).Normalized();
+				vertex.tangent = Vector3::Reject(vertex.tangent, vertex.normal).Normalized();
 
 				if(flipAxisAndWinding)
 				{
-					v.position.z *= -1.f;
-					v.normal.z *= -1.f;
-					v.tangent.z *= -1.f;
+					vertex.position.z *= -1.f;
+					vertex.normal.z *= -1.f;
+					vertex.tangent.z *= -1.f;
 				}
-
 			}
 
 			return true;
-#endif
 		}
 #pragma warning(pop)
 	}

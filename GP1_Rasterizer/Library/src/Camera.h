@@ -134,6 +134,7 @@ namespace dae
 
 			m_Forward = Vector3::UnitZ; // Because we transform the point we need to reset it first
 			m_Forward = pitchYawRotation.TransformVector(m_Forward);
+
 			m_Right = Vector3::Cross(Vector3::UnitY, m_Forward).Normalized();
 			m_Up = Vector3::Cross(m_Forward, m_Right).Normalized();
 
