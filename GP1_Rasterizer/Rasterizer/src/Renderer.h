@@ -1,13 +1,14 @@
 #pragma once
-
-#include <cstdint>
+#include <map>
+#include <string>
 #include <vector>
+#include <DataTypes.h>
 
-#include "Camera.h"
-#include "DataTypes.h"
 
 namespace dae
 {
+	struct Camera;
+	class Timer;
 	class Texture;
 }
 
@@ -19,15 +20,31 @@ namespace dae
 	enum class DebugRenderMode
 	{
 		FinalColor,
+		Color,
+		Opacity,
+		UVColor,
 		BiometricCoordinate,
-		DepthBuffer
+		DepthBuffer,
+		MaterialIndex,
+		COUNT
+	};
+
+	const std::map<DebugRenderMode, std::string> RENDER_MODE_NAMES
+	{
+		{DebugRenderMode::FinalColor,"Final Color"},
+		{DebugRenderMode::Color,"Color"},
+		{DebugRenderMode::Opacity,"Opacity"},
+		{DebugRenderMode::UVColor,"UV Color"},
+		{DebugRenderMode::BiometricCoordinate,"Biometric Coordinates"},
+		{DebugRenderMode::DepthBuffer,"Depth Buffer"},
+		{DebugRenderMode::MaterialIndex,"Material Index"},
 	};
 
 
 	class Renderer final
 	{
 	public:
-		Renderer(SDL_Window* pWindow);
+		Renderer(Camera* camera, SDL_Window* pWindow);
 		~Renderer();
 
 		Renderer(const Renderer&) = delete;
@@ -35,10 +52,10 @@ namespace dae
 		Renderer& operator=(const Renderer&) = delete;
 		Renderer& operator=(Renderer&&) noexcept = delete;
 
-		void Update(const Timer& timer);
 		void Render() const;
 
-		void CycleDebugMode();
+		void CycleDebugMode(bool up);
+		void SetRenderMode(DebugRenderMode mode);
 
 		bool SaveBufferToImage() const;
 
@@ -47,9 +64,9 @@ namespace dae
 		void World_to_Screen(const std::vector<Vertex>& verticesIn, std::vector<Vertex>& verticesOut) const;
 
 		inline void RenderMesh(const Mesh& mesh) const;
-		inline void RenderTriangle(const Triangle& triangle) const;
+		inline void RenderTriangle(const Triangle& triangle, const std::vector<Material*>& materialPtrs) const;
 
-		void MakeMeshes();
+		void InitializeObjects();
 
 		SDL_Window* m_WindowPtr{};
 
@@ -58,18 +75,14 @@ namespace dae
 		uint32_t* m_BackBufferPixelsPtr{};
 		float* m_pDepthBufferPixels{};
 
-		Camera m_Camera{};
-		DebugRenderMode m_RenderMode{};
-
-		Texture* m_texture1{};
-		Texture* m_texture1Opacity{};
-		Texture* m_texture2{};
+		Camera* m_CameraPtr;
+		DebugRenderMode m_RenderMode{DebugRenderMode::FinalColor};
 
 		std::vector<Mesh> m_WorldMeshes{};
+		std::vector<Material*> m_Materials{};
 
 		int m_ScreenWidth{};
 		int m_ScreenHeight{};
 		float m_AspectRatio{};
-
 	};
 }

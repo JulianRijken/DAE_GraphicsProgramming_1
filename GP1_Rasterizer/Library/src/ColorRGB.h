@@ -117,6 +117,12 @@ namespace dae
 		return { lhs - rhs.r, lhs - rhs.g, lhs - rhs.b };
 	}
 
+	inline bool operator==(const ColorRGB& lhs, const ColorRGB& rhs)
+	{
+		return lhs.r == rhs.r and lhs.g == rhs.g and lhs.b == rhs.b;
+	}
+
+
 
 	namespace colors
 	{

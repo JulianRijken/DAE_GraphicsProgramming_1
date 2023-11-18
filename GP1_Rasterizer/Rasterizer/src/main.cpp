@@ -6,8 +6,10 @@
 
 //Standard includes
 #include <iostream>
+#include <algorithm>
 
 //Project includes
+#include "Camera.h"
 #include "Timer.h"
 #include "Renderer.h"
 
@@ -46,7 +48,8 @@ int main(int argc, char* args[])
 
 	//Initialize "framework"
 	Timer timer{}; 
-	Renderer renderer{ pWindow };
+	Camera camera{ {0,2.5f,-6.0f},60.0f };
+	Renderer renderer{&camera, pWindow};
 
 	//Start loop
 	timer.Start();
@@ -72,14 +75,36 @@ int main(int argc, char* args[])
 					takeScreenshot = true;
 				if(e.key.keysym.scancode == SDL_SCANCODE_F6)
 					timer.StartBenchmark();
-				if (e.key.keysym.scancode == SDL_SCANCODE_F3)
-					renderer.CycleDebugMode();
+
+				if (e.key.keysym.scancode == SDL_SCANCODE_1)
+					renderer.SetRenderMode(DebugRenderMode::FinalColor);
+				if (e.key.keysym.scancode == SDL_SCANCODE_2)
+					renderer.SetRenderMode(DebugRenderMode::Color);
+				if (e.key.keysym.scancode == SDL_SCANCODE_3)
+					renderer.SetRenderMode(DebugRenderMode::Opacity);
+				if (e.key.keysym.scancode == SDL_SCANCODE_4)
+					renderer.SetRenderMode(DebugRenderMode::UVColor);
+				if (e.key.keysym.scancode == SDL_SCANCODE_5)
+					renderer.SetRenderMode(DebugRenderMode::BiometricCoordinate);
+				if (e.key.keysym.scancode == SDL_SCANCODE_6)
+					renderer.SetRenderMode(DebugRenderMode::DepthBuffer);
+				if (e.key.keysym.scancode == SDL_SCANCODE_7)
+					renderer.SetRenderMode(DebugRenderMode::MaterialIndex);
 				break;
+
+			case SDL_MOUSEWHEEL:
+				if (e.wheel.y > 0)
+					camera.ChangeFovAngle(-5.0f);
+				if (e.wheel.y < 0)
+					camera.ChangeFovAngle(5.0f);
+				break;
+
 			}
 		}
 
 		//--------- Update ---------
-		renderer.Update(timer);
+		//renderer.Update(timer);
+		camera.Update(timer);
 
 		//--------- Render ---------
 		renderer.Render();

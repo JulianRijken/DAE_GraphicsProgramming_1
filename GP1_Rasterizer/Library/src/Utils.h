@@ -24,7 +24,7 @@ namespace dae
 			indices.clear();
 
 			// TEMP
-			int materialIndex{};
+			int materialIndex{0};
 
 
 			std::string sCommand;
