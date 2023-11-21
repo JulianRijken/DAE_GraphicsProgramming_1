@@ -112,25 +112,25 @@ void Renderer::InitializeObjects()
 	//};
 
 
-	//Mesh testMeshStrip{};
-	//testMeshStrip.primitiveTopology = PrimitiveTopology::TriangleStrip;
-	//testMeshStrip.materialPtrs.push_back(m_Materials[0]);
-	//testMeshStrip.vertices =
-	//{
-	//	Vertex{{-3,  3, -2},{0.0f,0.0f}},
-	//	Vertex{{ 0,  3, -2},{0.5f,0.0f}},
-	//	Vertex{{ 3,  3, -2},{1.0f,0.0f}},
-	//	Vertex{{-3,  0, -2},{0.0f,0.5f}},
-	//	Vertex{{ 0,  0, -2},{0.5f,0.5f}},
-	//	Vertex{{ 3,  0, -2},{1.0f,0.5f}},
-	//	Vertex{{-3, -3, -2},{0.0f,1.0f}},
-	//	Vertex{{ 0, -3, -2},{0.5f,1.0f}},
-	//	Vertex{{ 3, -3, -2},{1.0f,1.0f}}
-	//};
-	//testMeshStrip.indices =
-	//{
-	//	3, 0, 4, 1, 5, 2, 2, 6, 6, 3, 7, 4, 8, 5
-	//};
+	Mesh testMeshStrip{};
+	testMeshStrip.primitiveTopology = PrimitiveTopology::TriangleStrip;
+	testMeshStrip.materialPtrs.push_back(m_Materials[0]);
+	testMeshStrip.vertices =
+	{
+		Vertex{{-3,  3, -2},{0.0f,0.0f}},
+		Vertex{{ 0,  3, -2},{0.5f,0.0f}},
+		Vertex{{ 3,  3, -2},{1.0f,0.0f}},
+		Vertex{{-3,  0, -2},{0.0f,0.5f}},
+		Vertex{{ 0,  0, -2},{0.5f,0.5f}},
+		Vertex{{ 3,  0, -2},{1.0f,0.5f}},
+		Vertex{{-3, -3, -2},{0.0f,1.0f}},
+		Vertex{{ 0, -3, -2},{0.5f,1.0f}},
+		Vertex{{ 3, -3, -2},{1.0f,1.0f}}
+	};
+	testMeshStrip.indices =
+	{
+		3, 0, 4, 1, 5, 2, 2, 6, 6, 3, 7, 4, 8, 5
+	};
 
 
 
@@ -139,8 +139,8 @@ void Renderer::InitializeObjects()
 	carMesh.primitiveTopology = PrimitiveTopology::TriangleList;
 	carMesh.materialPtrs.push_back(m_Materials[1]);
 	carMesh.materialPtrs.push_back(m_Materials[2]);
-	carMesh.Rotate(35 * TO_RADIANS);
-	carMesh.Translate({ -2, 0, 0 });
+	//carMesh.Rotate(35 * TO_RADIANS);
+	//carMesh.Translate({ -2, 0, 0 });
 
 
 	Mesh tuktuk{};
@@ -165,9 +165,9 @@ void Renderer::InitializeObjects()
 	// Setup meshes
 	//m_WorldMeshes.push_back(testMeshList);
 	//m_WorldMeshes.push_back(testMeshStrip);
-	m_WorldMeshes.push_back(diorama);
+	//m_WorldMeshes.push_back(diorama);
 	m_WorldMeshes.push_back(carMesh);
-	m_WorldMeshes.push_back(tuktuk);
+	//m_WorldMeshes.push_back(tuktuk);
 }
 
 
@@ -224,27 +224,67 @@ void Renderer::World_to_Screen(const std::vector<Vertex>& verticesIn, std::vecto
 {
 	verticesOut.resize(verticesIn.size());
 
+
+	Matrix projectionMatrix
+	{
+		Vector4{1.0f / m_AspectRatio * m_CameraPtr->m_FovValue,0,0,0},
+		Vector4{0,1.0f / m_CameraPtr->m_FovValue,0,0},
+		Vector4{0,0,m_CameraPtr->m_FarClippingPlane / (m_CameraPtr->m_FarClippingPlane - m_CameraPtr->m_NearClippingPlane),1},
+		Vector4{0,0,-(m_CameraPtr->m_FarClippingPlane - m_CameraPtr->m_NearClippingPlane) / (m_CameraPtr->m_FarClippingPlane - m_CameraPtr->m_NearClippingPlane),0},
+	};
+
+	Matrix worldViewProjectionMatrix = /*World matrix * */ m_CameraPtr->m_InvViewMatrix * projectionMatrix;
+
+
 	for (int i{}; i < static_cast<int>(verticesIn.size()); i++)
 	{
-		// Vertex in world space
-		Vertex newVertex{ verticesIn[i] };
+		constexpr bool useOldMethod = false;
+		if (useOldMethod)
+		{
 
-		// Convert from World to View/Camera space
-		newVertex.position = m_CameraPtr->m_InvViewMatrix.TransformPoint(newVertex.position);
+			// Vertex in world space
+			Vertex newVertex{ verticesIn[i] };
 
-		// Apply perspective divide
-		newVertex.position.x = newVertex.position.x / newVertex.position.z;
-		newVertex.position.y = newVertex.position.y / newVertex.position.z;
+			// Convert from World to View/Camera space
+			newVertex.position = m_CameraPtr->m_InvViewMatrix.TransformPoint(newVertex.position);
 
-		// Apply FOV and Aspect
-		newVertex.position.x = newVertex.position.x / (m_AspectRatio * m_CameraPtr->m_FovValue);
-		newVertex.position.y = newVertex.position.y / m_CameraPtr->m_FovValue;
+			// Apply perspective divide
+			newVertex.position.x = newVertex.position.x / newVertex.position.z;
+			newVertex.position.y = newVertex.position.y / newVertex.position.z;
 
-		// Convert from NDC to screen
-		newVertex.position.x = (newVertex.position.x + 1.0f) / 2.0f * static_cast<float>(m_ScreenWidth);
-		newVertex.position.y = (1.0f - newVertex.position.y) / 2.0f * static_cast<float>(m_ScreenHeight);
 
-		verticesOut[i] = newVertex;
+			// Apply FOV and Aspect
+			newVertex.position.x = newVertex.position.x / (m_AspectRatio * m_CameraPtr->m_FovValue);
+			newVertex.position.y = newVertex.position.y / m_CameraPtr->m_FovValue;
+
+			// Convert from NDC to screen
+			newVertex.position.x = (newVertex.position.x + 1.0f) / 2.0f * static_cast<float>(m_ScreenWidth);
+			newVertex.position.y = (1.0f - newVertex.position.y) / 2.0f * static_cast<float>(m_ScreenHeight);
+
+			verticesOut[i] = newVertex;
+		}
+		else
+		{
+			Vertex_Out newVertex;
+
+			// USE W AS THE NEW DEPTH
+			newVertex.position = worldViewProjectionMatrix.TransformPoint( verticesIn[i].position);
+
+
+
+			// USE W AS THE NEW DEPTH
+			// Apply perspective divide  
+			newVertex.position.x = newVertex.position.x / newVertex.position.w;
+			newVertex.position.y = newVertex.position.y / newVertex.position.w;
+
+
+			// Convert from NDC to screen
+			newVertex.position.x = (newVertex.position.x + 1.0f) / 2.0f * static_cast<float>(m_ScreenWidth);
+			newVertex.position.y = (1.0f - newVertex.position.y) / 2.0f * static_cast<float>(m_ScreenHeight);
+
+
+			verticesOut[i] = newVertex;
+		}
 	}
 }
 
@@ -343,6 +383,10 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 	minY = std::ranges::clamp(minY, 0, m_ScreenHeight);
 	maxY = std::ranges::clamp(maxY, 0, m_ScreenHeight);
 
+	//// Get total area before
+	//const float totalArea = (maxX - minX) * (maxY - minY) / 2.0f;
+	//const float totalAreaInv = 1.0f / totalArea;
+
 	// Looping all pixels within the bounding box
 	// This is done for optimization
 	for (int pixelX{ minX }; pixelX < maxX; pixelX++)
@@ -373,6 +417,7 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 				if (signedAreaW2 >= 0) continue;
 			}
 
+			// Get total area before
 			const float totalArea = signedAreaW0 + signedAreaW1 + signedAreaW2;
 			const float totalAreaInv = 1.0f / totalArea;
 			const float signedAreaW0Inv = signedAreaW0 * totalAreaInv;
@@ -474,8 +519,6 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 						break;
 					default: 
 						finalPixelColor = colors::White;
-
-						;
 					}
 
 				} break;

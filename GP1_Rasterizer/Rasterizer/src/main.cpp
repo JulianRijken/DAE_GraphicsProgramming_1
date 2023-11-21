@@ -48,7 +48,8 @@ int main(int argc, char* args[])
 
 	//Initialize "framework"
 	Timer timer{}; 
-	Camera camera{ {0,2.5f,-6.0f},60.0f };
+	//Camera camera{ {0,2.5f,-6.0f},60.0f };
+	Camera camera{ {0,0,-6.0f},60.0f };
 	Renderer renderer{&camera, pWindow};
 
 	//Start loop

@@ -86,9 +86,6 @@ namespace dae
 			v = (v < 0.0f) ? (v + 1.0f) : v;
 		}
 
-
-
-
 		
 		// Convert UV coordinates to texel coordinates
 		const int texelX = static_cast<int>(u * m_SurfacePtr->w);
@@ -97,17 +94,18 @@ namespace dae
 		// Get the pixel value at the texel coordinates
 		const uint32_t pixel = m_SurfacePixelsPtr[texelY * m_SurfacePtr->w + texelX];
 
-		// Extract individual color channels (assuming 8 bits per channel)
-		const uint8_t red = (pixel & 0xFF0000) >> 16;
-		const uint8_t green = (pixel & 0x00FF00) >> 8;
-		const uint8_t blue = pixel & 0x0000FF;
+		Uint8 red{};
+		Uint8 green{};
+		Uint8 blue{};
+
+		SDL_GetRGB(pixel,m_SurfacePtr->format,&red, &green, &blue);
 
 		// Return the sampled color
 		return
 		{
-			static_cast<float>(blue) / 255.0f,
-			static_cast<float>(green) / 255.0f,
 			static_cast<float>(red) / 255.0f,
+			static_cast<float>(green) / 255.0f,
+			static_cast<float>(blue) / 255.0f,
 		};
 	}
 }

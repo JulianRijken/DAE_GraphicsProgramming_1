@@ -25,6 +25,9 @@ namespace dae
 		float m_FovAngle;
 		float m_FovValue;
 
+		float m_NearClippingPlane = 0.001f;
+		float m_FarClippingPlane = 10000.0f;
+
 		Vector3 m_Forward{ Vector3::UnitZ };
 		Vector3 m_Up{ Vector3::UnitY };
 		Vector3 m_Right{ Vector3::UnitX };
