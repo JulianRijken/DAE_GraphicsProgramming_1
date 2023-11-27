@@ -313,21 +313,34 @@ void Renderer::RenderMesh(Mesh& mesh) const
 
 void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Material*>& materialPtrs) const
 {
+	constexpr bool USE_BACK_FACE_CULLING = true;
 
+
+	// early out culling
+	if (triangle.vertex0.positionScreen.z < 0.0f or triangle.vertex0.positionScreen.z > 1.0f and
+		triangle.vertex1.positionScreen.z < 0.0f or triangle.vertex1.positionScreen.z > 1.0f and
+		triangle.vertex2.positionScreen.z < 0.0f or triangle.vertex2.positionScreen.z > 1.0f) return;
 	if (triangle.vertex0.positionScreen.w < 0.0f) return;
 	if (triangle.vertex1.positionScreen.w < 0.0f) return;
 	if (triangle.vertex2.positionScreen.w < 0.0f) return;
 
-	const Vector3 edge1 = triangle.vertex1.positionScreen - triangle.vertex0.positionScreen;
-	const Vector3 edge2 = triangle.vertex2.positionScreen - triangle.vertex0.positionScreen;
-	const Vector3 normal = Vector3::Cross(edge1, edge2);
-	//if (normal.z < 0.0f)
-	//	return;
 
-	constexpr int boundingBoxPadding{1};
+	// Checking normal early for more performance
+	const Vector3 normal = Vector3::Cross
+	(
+		triangle.vertex1.positionScreen - triangle.vertex0.positionScreen,
+		triangle.vertex2.positionScreen - triangle.vertex0.positionScreen
+	);
 
-	// Create bounding box adding 1 pixel on each side
+	if (USE_BACK_FACE_CULLING)
+	{
+		if (normal.z <= 0.0f)
+			return;
+	}
+
+
 	// Adding the 1 pixel is done to prevent gaps in the triangles
+	constexpr int boundingBoxPadding{1};
 	int minX = static_cast<int>(std::min(triangle.vertex0.positionScreen.x, std::min(triangle.vertex1.positionScreen.x, triangle.vertex2.positionScreen.x))) - boundingBoxPadding;
 	int maxX = static_cast<int>(std::max(triangle.vertex0.positionScreen.x, std::max(triangle.vertex1.positionScreen.x, triangle.vertex2.positionScreen.x))) + boundingBoxPadding;
 	int minY = static_cast<int>(std::min(triangle.vertex0.positionScreen.y, std::min(triangle.vertex1.positionScreen.y, triangle.vertex2.positionScreen.y))) - boundingBoxPadding;
@@ -339,12 +352,10 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 	minY = std::ranges::clamp(minY, 0, m_ScreenHeight);
 	maxY = std::ranges::clamp(maxY, 0, m_ScreenHeight);
 
-	//if (minX < 0.0f) return;
-	//if (maxX > m_ScreenWidth) return;
-	//if (minY < 0.0f) return;
-	//if (maxY > m_ScreenHeight) return;
 
-
+	float signedAreaW0;
+	float signedAreaW1;
+	float signedAreaW2;
 
 	// Looping all pixels within the bounding box
 	// This is done for optimization
@@ -353,11 +364,8 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 		for (int pixelY{ minY }; pixelY < maxY; pixelY++)
 		{
 			const Vector2 pixelCenter{ static_cast<float>(pixelX) + 0.5f,static_cast<float>(pixelY) + 0.5f };
-			float signedAreaW0;
-			float signedAreaW1;
-			float signedAreaW2;
 
-			if (normal.z > 0.0f)
+			if (USE_BACK_FACE_CULLING)
 			{
 				signedAreaW0 = Vector2::Cross(pixelCenter - triangle.vertex1.positionScreen.GetXY(), triangle.vertex2.positionScreen.GetXY() - triangle.vertex1.positionScreen.GetXY());
 				if (signedAreaW0 >= 0) continue;
@@ -368,12 +376,24 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 			}
 			else
 			{
-				signedAreaW0 = Vector2::Cross(triangle.vertex2.positionScreen.GetXY() - triangle.vertex1.positionScreen.GetXY(), pixelCenter - triangle.vertex1.positionScreen.GetXY());
-				if (signedAreaW0 >= 0) continue;
-				signedAreaW1 = Vector2::Cross(triangle.vertex0.positionScreen.GetXY() - triangle.vertex2.positionScreen.GetXY(), pixelCenter - triangle.vertex2.positionScreen.GetXY());
-				if (signedAreaW1 >= 0) continue;
-				signedAreaW2 = Vector2::Cross(triangle.vertex1.positionScreen.GetXY() - triangle.vertex0.positionScreen.GetXY(), pixelCenter - triangle.vertex0.positionScreen.GetXY());
-				if (signedAreaW2 >= 0) continue;
+				if (normal.z > 0.0f)
+				{
+					signedAreaW0 = Vector2::Cross(pixelCenter - triangle.vertex1.positionScreen.GetXY(), triangle.vertex2.positionScreen.GetXY() - triangle.vertex1.positionScreen.GetXY());
+					if (signedAreaW0 >= 0) continue;
+					signedAreaW1 = Vector2::Cross(pixelCenter - triangle.vertex2.positionScreen.GetXY(), triangle.vertex0.positionScreen.GetXY() - triangle.vertex2.positionScreen.GetXY());
+					if (signedAreaW1 >= 0) continue;
+					signedAreaW2 = Vector2::Cross(pixelCenter - triangle.vertex0.positionScreen.GetXY(), triangle.vertex1.positionScreen.GetXY() - triangle.vertex0.positionScreen.GetXY());
+					if (signedAreaW2 >= 0) continue;
+				}
+				else
+				{
+					signedAreaW0 = Vector2::Cross(triangle.vertex2.positionScreen.GetXY() - triangle.vertex1.positionScreen.GetXY(), pixelCenter - triangle.vertex1.positionScreen.GetXY());
+					if (signedAreaW0 >= 0) continue;
+					signedAreaW1 = Vector2::Cross(triangle.vertex0.positionScreen.GetXY() - triangle.vertex2.positionScreen.GetXY(), pixelCenter - triangle.vertex2.positionScreen.GetXY());
+					if (signedAreaW1 >= 0) continue;
+					signedAreaW2 = Vector2::Cross(triangle.vertex1.positionScreen.GetXY() - triangle.vertex0.positionScreen.GetXY(), pixelCenter - triangle.vertex0.positionScreen.GetXY());
+					if (signedAreaW2 >= 0) continue;
+				}
 			}
 
 			// Get total area before
@@ -390,16 +410,15 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 				1.0f / triangle.vertex2.positionScreen.z * signedAreaW2Inv);
 
 
-			// Culling
-			if (nonLinearPixelDepth < 0.0f or nonLinearPixelDepth > 1.0f)
-				continue;
+			// Culling I DON"T KNOW IT DOES NOT SEEM CORRECT THE DEPTH THAT IS
+			//if (nonLinearPixelDepth < 0.0f)
+			//	continue;
 
 			const int pixelIndex{ pixelX + pixelY * m_ScreenWidth };
 
 			// Depth check
 			if (nonLinearPixelDepth > m_pDepthBufferPixels[pixelIndex])
 				continue;
-
 			m_pDepthBufferPixels[pixelIndex] = nonLinearPixelDepth;
 
 
@@ -511,7 +530,8 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 					//finalPixelColor = colors::White * ;
 					//finalPixelColor = colors::White * std::lerp(0.985f, 1.0f, nonLinearPixelDepth);
 
-					finalPixelColor = colors::White * Utils::Remap(nonLinearPixelDepth,0.9f,1.0f,0.0f,1.0f);
+					finalPixelColor = colors::White * std::clamp(nonLinearPixelDepth,0.0f,1.0f);
+					//finalPixelColor = colors::White * Utils::MapValueInRangeClamped(nonLinearPixelDepth,0.9f,1.0f,0.0f,1.0f);
 					//finalPixelColor = colors::White * std::ranges::clamp(nonLinearPixelDepth,0.0f,1.0f);
 
 				}break;

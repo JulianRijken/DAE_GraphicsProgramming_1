@@ -213,7 +213,7 @@ namespace dae
 				Vector4{1.0f / (m_AspectRatio * m_FovValue),0,0,0},
 				Vector4{0,1.0f / m_FovValue,0,0},
 				Vector4{0,0,m_FarClippingPlane / (m_FarClippingPlane - m_NearClippingPlane),1},
-				Vector4{0,0,-(m_FarClippingPlane - m_NearClippingPlane) / (m_FarClippingPlane - m_NearClippingPlane),0},
+				Vector4{0,0,-(m_FarClippingPlane * m_NearClippingPlane) / (m_FarClippingPlane - m_NearClippingPlane),0},
 			};
 		}
 
