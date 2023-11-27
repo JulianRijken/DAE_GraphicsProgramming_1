@@ -182,5 +182,23 @@ namespace dae
 			return true;
 		}
 #pragma warning(pop)
+
+		static float MapValueInRange(float value, float inRangeMin, float inRangeMax, float outRangeMin = 0.0f, float outRangeMax = 1.0f)
+		{
+			return (value - inRangeMin) * (outRangeMax - outRangeMin) / (inRangeMax - inRangeMin) + outRangeMin;
+		}
+
+		static float MapValueInRangeClamped(float value, float inRangeMin, float inRangeMax, float outRangeMin = 0.0f, float outRangeMax = 1.0f)
+		{
+			return std::ranges::clamp((value - inRangeMin) * (outRangeMax - outRangeMin) / (inRangeMax - inRangeMin) + outRangeMin, outRangeMin, outRangeMax);
+		}
+
+
+		static float Remap(float value, float inputMin, float inputMax, float outputMin, float outputMax)
+		{
+			if (value <= inputMin) return outputMin;
+			if (value >= inputMax) return outputMax;
+			return outputMin + (value - inputMin) * (outputMax - outputMin) / (inputMax - inputMin);
+		}
 	}
 }

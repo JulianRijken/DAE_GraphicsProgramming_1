@@ -35,6 +35,7 @@ int main(int argc, char* args[])
 
 	const uint32_t width = 1280;
 	const uint32_t height = 720;
+	const float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 
 	SDL_Window* pWindow = SDL_CreateWindow(
 		"Rasterizer - Julian Rijken",
@@ -46,10 +47,12 @@ int main(int argc, char* args[])
 		return 1;
 
 
+
+
 	//Initialize "framework"
 	Timer timer{}; 
 	//Camera camera{ {0,2.5f,-6.0f},60.0f };
-	Camera camera{ {0,0,-6.0f},60.0f };
+	Camera camera{ {0,0,-6.0f},60.0f,aspectRatio };
 	Renderer renderer{&camera, pWindow};
 
 	//Start loop

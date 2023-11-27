@@ -14,6 +14,7 @@ namespace dae
 		Vector3 viewDirection{};
 		int materialIndex{0}; 
 		ColorRGB color{colors::White};
+		Vector4 positionScreen{};
 	};
 
 	struct Triangle
@@ -23,15 +24,16 @@ namespace dae
 		Vertex vertex2;
 	};
 
-	struct Vertex_Out
-	{
-		Vector4 position{};
-		Vector2 uv{};
-		Vector3 normal{};
-		Vector3 tangent{};
-		Vector3 viewDirection{};
-		ColorRGB color{ colors::White };
-	};
+	//struct Vertex_Out
+	//{
+	//	Vector4 position{};
+	//	Vector2 uv{};
+	//	Vector3 normal{};
+	//	Vector3 tangent{};
+	//	Vector3 viewDirection{};
+	//	int materialIndex{ 0 };
+	//	ColorRGB color{ colors::White };
+	//};
 
 	enum class PrimitiveTopology
 	{
@@ -51,9 +53,15 @@ namespace dae
 		std::vector<uint32_t> indices{};
 		PrimitiveTopology primitiveTopology{ PrimitiveTopology::TriangleStrip };
 
-		std::vector<Vertex_Out> vertices_out{};
+		//std::vector<Vertex_Out> vertices_out{};
 		std::vector<Material*> materialPtrs{};
-		//Matrix worldMatrix{};
+		Matrix worldMatrix
+		{
+				{1.0f,0.0f,0.0f},
+				{0.0f,1.0f,0.0f},
+				{0.0f,0.0f,1.0f},
+				{0.0f,0.0f,0.0f}
+		};
 
 		void Translate(Vector3 translate)
 		{

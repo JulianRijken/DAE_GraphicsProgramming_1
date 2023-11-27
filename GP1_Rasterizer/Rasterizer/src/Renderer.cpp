@@ -24,7 +24,6 @@ m_CameraPtr(camera)
 {
 	//Initialize
 	SDL_GetWindowSize(pWindow, &m_ScreenWidth, &m_ScreenHeight);
-	m_AspectRatio = static_cast<float>(m_ScreenWidth) / static_cast<float>(m_ScreenHeight);
 
 	//Create Buffers
 	m_FrontBufferPtr = SDL_GetWindowSurface(pWindow);
@@ -139,8 +138,8 @@ void Renderer::InitializeObjects()
 	carMesh.primitiveTopology = PrimitiveTopology::TriangleList;
 	carMesh.materialPtrs.push_back(m_Materials[1]);
 	carMesh.materialPtrs.push_back(m_Materials[2]);
-	//carMesh.Rotate(35 * TO_RADIANS);
-	//carMesh.Translate({ -2, 0, 0 });
+	carMesh.Rotate(35 * TO_RADIANS);
+	carMesh.Translate({ -2, 0, 0 });
 
 
 	Mesh tuktuk{};
@@ -165,13 +164,13 @@ void Renderer::InitializeObjects()
 	// Setup meshes
 	//m_WorldMeshes.push_back(testMeshList);
 	//m_WorldMeshes.push_back(testMeshStrip);
-	//m_WorldMeshes.push_back(diorama);
+	m_WorldMeshes.push_back(diorama);
 	m_WorldMeshes.push_back(carMesh);
-	//m_WorldMeshes.push_back(tuktuk);
+	m_WorldMeshes.push_back(tuktuk);
 }
 
 
-void Renderer::Render() const
+void Renderer::Render()
 {
 	//Lock BackBuffer
 	SDL_LockSurface(m_BackBufferPtr);
@@ -182,8 +181,9 @@ void Renderer::Render() const
 	constexpr int color{ 20 };
 	SDL_FillRect(m_BackBufferPtr, nullptr, SDL_MapRGB(m_BackBufferPtr->format, color, color, color));
 
+
 	// Render all meshes
-	for (const Mesh& mesh : m_WorldMeshes)
+	for (Mesh& mesh : m_WorldMeshes)
 		RenderMesh(mesh);
 	
 
@@ -220,84 +220,37 @@ void Renderer::SetRenderMode(DebugRenderMode mode)
 }
 
 
-void Renderer::World_to_Screen(const std::vector<Vertex>& verticesIn, std::vector<Vertex>& verticesOut) const
+void Renderer::World_to_Screen(Mesh& mesh) const
 {
-	verticesOut.resize(verticesIn.size());
+	const Matrix worldViewProjectionMatrix = mesh.worldMatrix * m_CameraPtr->m_InvViewMatrix * m_CameraPtr->m_ProjectionMatrix;
 
-
-	Matrix projectionMatrix
+	for (Vertex& vertex : mesh.vertices)
 	{
-		Vector4{1.0f / m_AspectRatio * m_CameraPtr->m_FovValue,0,0,0},
-		Vector4{0,1.0f / m_CameraPtr->m_FovValue,0,0},
-		Vector4{0,0,m_CameraPtr->m_FarClippingPlane / (m_CameraPtr->m_FarClippingPlane - m_CameraPtr->m_NearClippingPlane),1},
-		Vector4{0,0,-(m_CameraPtr->m_FarClippingPlane - m_CameraPtr->m_NearClippingPlane) / (m_CameraPtr->m_FarClippingPlane - m_CameraPtr->m_NearClippingPlane),0},
-	};
+		vertex.positionScreen = Vector4(vertex.position.x, vertex.position.y, vertex.position.z, 0);
 
-	Matrix worldViewProjectionMatrix = /*World matrix * */ m_CameraPtr->m_InvViewMatrix * projectionMatrix;
+		vertex.positionScreen = worldViewProjectionMatrix.TransformPoint(vertex.positionScreen);
 
-
-	for (int i{}; i < static_cast<int>(verticesIn.size()); i++)
-	{
-		constexpr bool useOldMethod = false;
-		if (useOldMethod)
-		{
-
-			// Vertex in world space
-			Vertex newVertex{ verticesIn[i] };
-
-			// Convert from World to View/Camera space
-			newVertex.position = m_CameraPtr->m_InvViewMatrix.TransformPoint(newVertex.position);
-
-			// Apply perspective divide
-			newVertex.position.x = newVertex.position.x / newVertex.position.z;
-			newVertex.position.y = newVertex.position.y / newVertex.position.z;
+		// Apply perspective divide  
+		vertex.positionScreen.x /= vertex.positionScreen.w;
+		vertex.positionScreen.y /= vertex.positionScreen.w;
+		vertex.positionScreen.z /= vertex.positionScreen.w;
 
 
-			// Apply FOV and Aspect
-			newVertex.position.x = newVertex.position.x / (m_AspectRatio * m_CameraPtr->m_FovValue);
-			newVertex.position.y = newVertex.position.y / m_CameraPtr->m_FovValue;
-
-			// Convert from NDC to screen
-			newVertex.position.x = (newVertex.position.x + 1.0f) / 2.0f * static_cast<float>(m_ScreenWidth);
-			newVertex.position.y = (1.0f - newVertex.position.y) / 2.0f * static_cast<float>(m_ScreenHeight);
-
-			verticesOut[i] = newVertex;
-		}
-		else
-		{
-			Vertex_Out newVertex;
-
-			// USE W AS THE NEW DEPTH
-			newVertex.position = worldViewProjectionMatrix.TransformPoint( verticesIn[i].position);
-
-
-
-			// USE W AS THE NEW DEPTH
-			// Apply perspective divide  
-			newVertex.position.x = newVertex.position.x / newVertex.position.w;
-			newVertex.position.y = newVertex.position.y / newVertex.position.w;
-
-
-			// Convert from NDC to screen
-			newVertex.position.x = (newVertex.position.x + 1.0f) / 2.0f * static_cast<float>(m_ScreenWidth);
-			newVertex.position.y = (1.0f - newVertex.position.y) / 2.0f * static_cast<float>(m_ScreenHeight);
-
-
-			verticesOut[i] = newVertex;
-		}
+		// Convert from NDC to screen
+		vertex.positionScreen.x = (vertex.positionScreen.x + 1.0f) / 2.0f * static_cast<float>(m_ScreenWidth);
+		vertex.positionScreen.y = (1.0f - vertex.positionScreen.y) / 2.0f * static_cast<float>(m_ScreenHeight);
 	}
 }
 
 
-void Renderer::RenderMesh(const Mesh& mesh) const
+void Renderer::RenderMesh(Mesh& mesh) const
 {
 	// Convert world to screen
-	std::vector<Vertex> verticesScreen{};
-	World_to_Screen(mesh.vertices, verticesScreen);
+	World_to_Screen(mesh);
 
 	// Color world vertex
 	int vertexIndex{ 0 };
-	for (Vertex& vertex : verticesScreen)
+	for (Vertex& vertex : mesh.vertices)
 	{
 		if (vertexIndex == 0)
 			vertex.color = colors::Red;
@@ -319,9 +272,9 @@ void Renderer::RenderMesh(const Mesh& mesh) const
 		{
 			triangle =
 			{
-				verticesScreen[mesh.indices[i]],
-				verticesScreen[mesh.indices[i + 1]],
-				verticesScreen[mesh.indices[i + 2]],
+				mesh.vertices[mesh.indices[i]],
+				mesh.vertices[mesh.indices[i + 1]],
+				mesh.vertices[mesh.indices[i + 2]],
 			};
 
 			RenderTriangle(triangle, mesh.materialPtrs);
@@ -336,9 +289,9 @@ void Renderer::RenderMesh(const Mesh& mesh) const
 			{
 				triangle =
 				{
-					verticesScreen[mesh.indices[i]],
-					verticesScreen[mesh.indices[i + 1]],
-					verticesScreen[mesh.indices[i + 2]]
+					mesh.vertices[mesh.indices[i]],
+					mesh.vertices[mesh.indices[i + 1]],
+					mesh.vertices[mesh.indices[i + 2]]
 				};
 
 				RenderTriangle(triangle,mesh.materialPtrs);
@@ -347,9 +300,9 @@ void Renderer::RenderMesh(const Mesh& mesh) const
 			{
 				Triangle triangle =
 				{
-					verticesScreen[mesh.indices[i]],
-					verticesScreen[mesh.indices[i + 2]],
-					verticesScreen[mesh.indices[i + 1]]
+					mesh.vertices[mesh.indices[i]],
+					mesh.vertices[mesh.indices[i + 2]],
+					mesh.vertices[mesh.indices[i + 1]]
 				};
 
 				RenderTriangle(triangle,mesh.materialPtrs);
@@ -360,22 +313,25 @@ void Renderer::RenderMesh(const Mesh& mesh) const
 
 void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Material*>& materialPtrs) const
 {
-	constexpr int boundingBoxPadding{1};
 
-	const Vector3 edge1 = triangle.vertex1.position - triangle.vertex0.position;
-	const Vector3 edge2 = triangle.vertex2.position - triangle.vertex0.position;
+	if (triangle.vertex0.positionScreen.w < 0.0f) return;
+	if (triangle.vertex1.positionScreen.w < 0.0f) return;
+	if (triangle.vertex2.positionScreen.w < 0.0f) return;
+
+	const Vector3 edge1 = triangle.vertex1.positionScreen - triangle.vertex0.positionScreen;
+	const Vector3 edge2 = triangle.vertex2.positionScreen - triangle.vertex0.positionScreen;
 	const Vector3 normal = Vector3::Cross(edge1, edge2);
-
-
 	//if (normal.z < 0.0f)
 	//	return;
 
+	constexpr int boundingBoxPadding{1};
+
 	// Create bounding box adding 1 pixel on each side
 	// Adding the 1 pixel is done to prevent gaps in the triangles
-	int minX = static_cast<int>(std::min(triangle.vertex0.position.x, std::min(triangle.vertex1.position.x, triangle.vertex2.position.x))) - boundingBoxPadding;
-	int maxX = static_cast<int>(std::max(triangle.vertex0.position.x, std::max(triangle.vertex1.position.x, triangle.vertex2.position.x))) + boundingBoxPadding;
-	int minY = static_cast<int>(std::min(triangle.vertex0.position.y, std::min(triangle.vertex1.position.y, triangle.vertex2.position.y))) - boundingBoxPadding;
-	int maxY = static_cast<int>(std::max(triangle.vertex0.position.y, std::max(triangle.vertex1.position.y, triangle.vertex2.position.y))) + boundingBoxPadding;
+	int minX = static_cast<int>(std::min(triangle.vertex0.positionScreen.x, std::min(triangle.vertex1.positionScreen.x, triangle.vertex2.positionScreen.x))) - boundingBoxPadding;
+	int maxX = static_cast<int>(std::max(triangle.vertex0.positionScreen.x, std::max(triangle.vertex1.positionScreen.x, triangle.vertex2.positionScreen.x))) + boundingBoxPadding;
+	int minY = static_cast<int>(std::min(triangle.vertex0.positionScreen.y, std::min(triangle.vertex1.positionScreen.y, triangle.vertex2.positionScreen.y))) - boundingBoxPadding;
+	int maxY = static_cast<int>(std::max(triangle.vertex0.positionScreen.y, std::max(triangle.vertex1.positionScreen.y, triangle.vertex2.positionScreen.y))) + boundingBoxPadding;
 
 	// Clamping is done so that the triangle is not rendered off the screen
 	minX = std::ranges::clamp(minX, 0, m_ScreenWidth);
@@ -383,9 +339,12 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 	minY = std::ranges::clamp(minY, 0, m_ScreenHeight);
 	maxY = std::ranges::clamp(maxY, 0, m_ScreenHeight);
 
-	//// Get total area before
-	//const float totalArea = (maxX - minX) * (maxY - minY) / 2.0f;
-	//const float totalAreaInv = 1.0f / totalArea;
+	//if (minX < 0.0f) return;
+	//if (maxX > m_ScreenWidth) return;
+	//if (minY < 0.0f) return;
+	//if (maxY > m_ScreenHeight) return;
+
+
 
 	// Looping all pixels within the bounding box
 	// This is done for optimization
@@ -400,20 +359,20 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 
 			if (normal.z > 0.0f)
 			{
-				signedAreaW0 = Vector2::Cross(pixelCenter - triangle.vertex1.position.GetXY(), triangle.vertex2.position.GetXY() - triangle.vertex1.position.GetXY());
+				signedAreaW0 = Vector2::Cross(pixelCenter - triangle.vertex1.positionScreen.GetXY(), triangle.vertex2.positionScreen.GetXY() - triangle.vertex1.positionScreen.GetXY());
 				if (signedAreaW0 >= 0) continue;
-				signedAreaW1 = Vector2::Cross(pixelCenter - triangle.vertex2.position.GetXY(), triangle.vertex0.position.GetXY() - triangle.vertex2.position.GetXY());
+				signedAreaW1 = Vector2::Cross(pixelCenter - triangle.vertex2.positionScreen.GetXY(), triangle.vertex0.positionScreen.GetXY() - triangle.vertex2.positionScreen.GetXY());
 				if (signedAreaW1 >= 0) continue;
-				signedAreaW2 = Vector2::Cross(pixelCenter - triangle.vertex0.position.GetXY(), triangle.vertex1.position.GetXY() - triangle.vertex0.position.GetXY());
+				signedAreaW2 = Vector2::Cross(pixelCenter - triangle.vertex0.positionScreen.GetXY(), triangle.vertex1.positionScreen.GetXY() - triangle.vertex0.positionScreen.GetXY());
 				if (signedAreaW2 >= 0) continue;
 			}
 			else
 			{
-				signedAreaW0 = Vector2::Cross(triangle.vertex2.position.GetXY() - triangle.vertex1.position.GetXY(), pixelCenter - triangle.vertex1.position.GetXY());
+				signedAreaW0 = Vector2::Cross(triangle.vertex2.positionScreen.GetXY() - triangle.vertex1.positionScreen.GetXY(), pixelCenter - triangle.vertex1.positionScreen.GetXY());
 				if (signedAreaW0 >= 0) continue;
-				signedAreaW1 = Vector2::Cross(triangle.vertex0.position.GetXY() - triangle.vertex2.position.GetXY(), pixelCenter - triangle.vertex2.position.GetXY());
+				signedAreaW1 = Vector2::Cross(triangle.vertex0.positionScreen.GetXY() - triangle.vertex2.positionScreen.GetXY(), pixelCenter - triangle.vertex2.positionScreen.GetXY());
 				if (signedAreaW1 >= 0) continue;
-				signedAreaW2 = Vector2::Cross(triangle.vertex1.position.GetXY() - triangle.vertex0.position.GetXY(), pixelCenter - triangle.vertex0.position.GetXY());
+				signedAreaW2 = Vector2::Cross(triangle.vertex1.positionScreen.GetXY() - triangle.vertex0.positionScreen.GetXY(), pixelCenter - triangle.vertex0.positionScreen.GetXY());
 				if (signedAreaW2 >= 0) continue;
 			}
 
@@ -425,31 +384,42 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 			const float signedAreaW2Inv = signedAreaW2 * totalAreaInv;
 
 
-			const float pixelDepth = 1.0f / (
-				1.0f / triangle.vertex0.position.z * signedAreaW0Inv +
-				1.0f / triangle.vertex1.position.z * signedAreaW1Inv +
-				1.0f / triangle.vertex2.position.z * signedAreaW2Inv);
+			const float nonLinearPixelDepth = 1.0f / (
+				1.0f / triangle.vertex0.positionScreen.z * signedAreaW0Inv +
+				1.0f / triangle.vertex1.positionScreen.z * signedAreaW1Inv +
+				1.0f / triangle.vertex2.positionScreen.z * signedAreaW2Inv);
+
+
+			// Culling
+			if (nonLinearPixelDepth < 0.0f or nonLinearPixelDepth > 1.0f)
+				continue;
 
 			const int pixelIndex{ pixelX + pixelY * m_ScreenWidth };
 
-
 			// Depth check
-			if (pixelDepth > m_pDepthBufferPixels[pixelIndex])
+			if (nonLinearPixelDepth > m_pDepthBufferPixels[pixelIndex])
 				continue;
 
-			m_pDepthBufferPixels[pixelIndex] = pixelDepth;
-			
+			m_pDepthBufferPixels[pixelIndex] = nonLinearPixelDepth;
+
+
+
+			const float linearPixelDepth = 1.0f / (
+				1.0f / triangle.vertex0.positionScreen.w * signedAreaW0Inv +
+				1.0f / triangle.vertex1.positionScreen.w * signedAreaW1Inv +
+				1.0f / triangle.vertex2.positionScreen.w * signedAreaW2Inv);
+
+
+			const Vector2 uv = linearPixelDepth * (
+				triangle.vertex0.uv / triangle.vertex0.positionScreen.w * signedAreaW0Inv +
+				triangle.vertex1.uv / triangle.vertex1.positionScreen.w * signedAreaW1Inv +
+				triangle.vertex2.uv / triangle.vertex2.positionScreen.w * signedAreaW2Inv);
+
+
+
+
 			ColorRGB finalPixelColor{};
 			const Material* material{ materialPtrs[triangle.vertex0.materialIndex] };
-
-
-			const Vector2 uv =
-				(
-					triangle.vertex0.uv / triangle.vertex0.position.z * signedAreaW0Inv +
-					triangle.vertex1.uv / triangle.vertex1.position.z * signedAreaW1Inv +
-					triangle.vertex2.uv / triangle.vertex2.position.z * signedAreaW2Inv
-					) * pixelDepth;
-
 			switch (m_RenderMode)
 			{
 				case DebugRenderMode::FinalColor:
@@ -538,13 +508,17 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 				} break;
 				case DebugRenderMode::DepthBuffer:
 				{
-					finalPixelColor = colors::White * (1.0f - std::clamp(m_pDepthBufferPixels[pixelIndex] / 10.0f, 0.0f, 1.0f));;
+					//finalPixelColor = colors::White * ;
+					//finalPixelColor = colors::White * std::lerp(0.985f, 1.0f, nonLinearPixelDepth);
+
+					finalPixelColor = colors::White * Utils::Remap(nonLinearPixelDepth,0.9f,1.0f,0.0f,1.0f);
+					//finalPixelColor = colors::White * std::ranges::clamp(nonLinearPixelDepth,0.0f,1.0f);
+
 				}break;
 			case DebugRenderMode::UVColor:
 					finalPixelColor = m_Materials[0]->color->Sample(uv);
 				break;
 			}
-
 
 
 			//Update Color in Buffer

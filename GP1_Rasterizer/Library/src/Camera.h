@@ -11,9 +11,10 @@ namespace dae
 	{
 		Camera() = default;
 
-		Camera(const Vector3& origin, float fovAngle) :
+		Camera(const Vector3& origin, float fovAngle, float aspectRatio) :
 		m_Origin{origin},
-		m_TargetOrigin{m_Origin}
+		m_TargetOrigin{m_Origin},
+		m_AspectRatio{aspectRatio}
 		{
 			SetFovAngle(fovAngle);
 		}
@@ -25,8 +26,8 @@ namespace dae
 		float m_FovAngle;
 		float m_FovValue;
 
-		float m_NearClippingPlane = 0.001f;
-		float m_FarClippingPlane = 10000.0f;
+		float m_NearClippingPlane = 1.0f;
+		float m_FarClippingPlane = 100.0f;
 
 		Vector3 m_Forward{ Vector3::UnitZ };
 		Vector3 m_Up{ Vector3::UnitY };
@@ -37,8 +38,11 @@ namespace dae
 		float m_Yaw{};
 		float m_TargetYaw{};
 
+		float m_AspectRatio{};
+
 		Matrix m_InvViewMatrix{};
 		Matrix m_ViewMatrix{};
+		Matrix m_ProjectionMatrix{};
 
 		inline static constexpr float KEY_MOVE_SPEED{ 10.0f };
 		inline static constexpr float MOUSE_MOVE_SPEED{ 1.0f };
@@ -136,8 +140,9 @@ namespace dae
 			//m_Origin = Lerp(m_Origin, m_TargetOrigin, deltaTime * MOVE_LERP_SPEED);
 
 			//Update Matrices
+			//Try to optimize this - should only be called once or when fov/aspectRatio changes
 			UpdateViewMatrix();
-			CalculateProjectionMatrix(); //Try to optimize this - should only be called once or when fov/aspectRatio changes
+			CalculateProjectionMatrix();
 		}
 
 
@@ -200,10 +205,16 @@ namespace dae
 
 		void CalculateProjectionMatrix()
 		{
-			//TODO W3
-
-			//ProjectionMatrix => Matrix::CreatePerspectiveFovLH(...) [not implemented yet]
 			//DirectX Implementation => https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3dxmatrixperspectivefovlh
+			//m_ProjectionMatrix = Matrix::CreatePerspectiveFovLH(m_FovValue,m_AspectRatio)
+
+			m_ProjectionMatrix = 
+			{
+				Vector4{1.0f / (m_AspectRatio * m_FovValue),0,0,0},
+				Vector4{0,1.0f / m_FovValue,0,0},
+				Vector4{0,0,m_FarClippingPlane / (m_FarClippingPlane - m_NearClippingPlane),1},
+				Vector4{0,0,-(m_FarClippingPlane - m_NearClippingPlane) / (m_FarClippingPlane - m_NearClippingPlane),0},
+			};
 		}
 
 	};

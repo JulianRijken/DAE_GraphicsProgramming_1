@@ -52,7 +52,7 @@ namespace dae
 		Renderer& operator=(const Renderer&) = delete;
 		Renderer& operator=(Renderer&&) noexcept = delete;
 
-		void Render() const;
+		void Render();
 
 		void CycleDebugMode(bool up);
 		void SetRenderMode(DebugRenderMode mode);
@@ -61,9 +61,9 @@ namespace dae
 
 	private:
 
-		void World_to_Screen(const std::vector<Vertex>& verticesIn, std::vector<Vertex>& verticesOut) const;
+		void World_to_Screen(Mesh& mesh) const;
 
-		inline void RenderMesh(const Mesh& mesh) const;
+		inline void RenderMesh(Mesh& mesh) const;
 		inline void RenderTriangle(const Triangle& triangle, const std::vector<Material*>& materialPtrs) const;
 
 		void InitializeObjects();
@@ -83,6 +83,5 @@ namespace dae
 
 		int m_ScreenWidth{};
 		int m_ScreenHeight{};
-		float m_AspectRatio{};
 	};
 }
