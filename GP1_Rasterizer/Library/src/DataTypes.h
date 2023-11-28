@@ -5,7 +5,7 @@
 
 namespace dae
 {
-	struct Vertex
+	struct VertexModel
 	{
 		Vector3 position{};
 		Vector2 uv{};
@@ -14,26 +14,25 @@ namespace dae
 		Vector3 viewDirection{};
 		int materialIndex{0}; 
 		ColorRGB color{colors::White};
-		Vector4 positionScreen{};
 	};
 
 	struct Triangle
 	{
-		Vertex vertex0;
-		Vertex vertex1;
-		Vertex vertex2;
+		VertexModel vertex0;
+		VertexModel vertex1;
+		VertexModel vertex2;
 	};
 
-	//struct Vertex_Out
-	//{
-	//	Vector4 position{};
-	//	Vector2 uv{};
-	//	Vector3 normal{};
-	//	Vector3 tangent{};
-	//	Vector3 viewDirection{};
-	//	int materialIndex{ 0 };
-	//	ColorRGB color{ colors::White };
-	//};
+	struct VertexTransformed
+	{
+		Vector4 position{};
+		Vector2 uv{};
+		Vector3 normal{};
+		Vector3 tangent{};
+		Vector3 viewDirection{};
+		int materialIndex{ 0 };
+		ColorRGB color{ colors::White };
+	};
 
 	enum class PrimitiveTopology
 	{
@@ -47,20 +46,30 @@ namespace dae
 		Texture* opacity = nullptr;
 	};
 
-	struct Mesh
+	class Mesh
 	{
-		std::vector<Vertex> vertices{};
+	public:
+		//Mesh(std::vector<VertexModel> vertexModels)
+
+
+	private:
+
+		std::vector<VertexModel> m_VerticesModel{};
+		std::vector<VertexTransformed> m_VerticesTransformed{};
+
+		int vertexCount{};
+
 		std::vector<uint32_t> indices{};
+		std::vector<Material*> materialPtrs{};
+
 		PrimitiveTopology primitiveTopology{ PrimitiveTopology::TriangleStrip };
 
-		//std::vector<Vertex_Out> vertices_out{};
-		std::vector<Material*> materialPtrs{};
 		Matrix worldMatrix
 		{
-				{1.0f,0.0f,0.0f},
-				{0.0f,1.0f,0.0f},
-				{0.0f,0.0f,1.0f},
-				{0.0f,0.0f,0.0f}
+			{1.0f,0.0f,0.0f},
+			{0.0f,1.0f,0.0f},
+			{0.0f,0.0f,1.0f},
+			{0.0f,0.0f,0.0f}
 		};
 
 		void Translate(Vector3 translate)
@@ -73,9 +82,10 @@ namespace dae
 				{translate}
 			};
 
-			for (Vertex& vertex : vertices)
+			for (VertexModel& vertex : m_VerticesModel)
 				vertex.position = translateMatrix.TransformPoint(vertex.position);
 		}
+
 		void Scale(Vector3 scale)
 		{
 			const Matrix scaleMatrix{
@@ -86,9 +96,10 @@ namespace dae
 					{0.f,0.f,0.f,1.f}
 			};
 
-			for (Vertex& vertex : vertices)
+			for (VertexModel& vertex : m_VerticesModel)
 				vertex.position = scaleMatrix.TransformPoint(vertex.position);
 		}
+
 		void Rotate(float yaw)
 		{
 			const Matrix rotateMatrix{
@@ -98,7 +109,7 @@ namespace dae
 				{0.f, 0.f, 0.f, 1.f}
 			};
 
-			for (Vertex& vertex : vertices)
+			for (VertexModel& vertex : m_VerticesModel)
 				vertex.position = rotateMatrix.TransformPoint(vertex.position);
 		}
 	};

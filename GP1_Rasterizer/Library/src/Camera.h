@@ -44,7 +44,7 @@ namespace dae
 		Matrix m_ViewMatrix{};
 		Matrix m_ProjectionMatrix{};
 
-		inline static constexpr float KEY_MOVE_SPEED{ 10.0f };
+		inline static constexpr float KEY_MOVE_SPEED{ 60.0f };
 		inline static constexpr float MOUSE_MOVE_SPEED{ 1.0f };
 		inline static constexpr float ROTATE_SPEED{ 0.001f };
 
@@ -135,7 +135,7 @@ namespace dae
 
 
 			inputVector = pitchYawRotation.TransformVector(inputVector);
-			m_TargetOrigin += inputVector * deltaTime * 10.0f;
+			m_TargetOrigin += inputVector * deltaTime * KEY_MOVE_SPEED;
 			m_Origin = m_TargetOrigin;
 			//m_Origin = Lerp(m_Origin, m_TargetOrigin, deltaTime * MOVE_LERP_SPEED);
 

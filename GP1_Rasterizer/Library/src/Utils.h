@@ -9,7 +9,7 @@ namespace dae
 {
 	namespace Utils
 	{
-		static bool ParseOBJ(const std::string& filename, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices, bool flipAxisAndWinding = true)
+		static bool ParseOBJ(const std::string& filename, std::vector<VertexModel>& vertices, std::vector<uint32_t>& indices, bool flipAxisAndWinding = true)
 		{
 
 			std::ifstream file(filename);
@@ -57,7 +57,7 @@ namespace dae
 				}
 				else if (sCommand == "v")
 				{
-					//Vertex
+					//VertexModel
 					float x, y, z;
 					file >> x >> y >> z;
 
@@ -65,14 +65,14 @@ namespace dae
 				}
 				else if (sCommand == "vt")
 				{
-					// Vertex TexCoord
+					// VertexModel TexCoord
 					float u, v;
 					file >> u >> v;
 					UVs.emplace_back(u, 1 - v);
 				}
 				else if (sCommand == "vn")
 				{
-					// Vertex Normal
+					// VertexModel Normal
 					float x, y, z;
 					file >> x >> y >> z;
 
@@ -81,12 +81,12 @@ namespace dae
 				else if (sCommand == "f")
 				{
 					//if a face is read:
-					//construct the 3 vertices, add them to the vertex array
+					//construct the 3 m_VerticesModel, add them to the vertex array
 					//add three indices to the index array
 					//add the material index as attibute to the attribute array
 					//
 					// Faces or triangles
-					Vertex vertex{};
+					VertexModel vertex{};
 					size_t iPosition, iTexCoord, iNormal;
 
 					uint32_t tempIndices[3];
@@ -121,7 +121,7 @@ namespace dae
 
 						vertices.push_back(vertex);
 						tempIndices[iFace] = uint32_t(vertices.size()) - 1;
-						//indices.push_back(uint32_t(vertices.size()) - 1);
+						//indices.push_back(uint32_t(m_VerticesModel.size()) - 1);
 					}
 
 					indices.push_back(tempIndices[0]);
@@ -167,7 +167,7 @@ namespace dae
 			}
 
 			//Fix the tangents per vertex now because we accumulated
-			for (Vertex& vertex : vertices)
+			for (VertexModel& vertex : vertices)
 			{
 				vertex.tangent = Vector3::Reject(vertex.tangent, vertex.normal).Normalized();
 

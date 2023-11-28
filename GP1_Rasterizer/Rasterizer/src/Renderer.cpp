@@ -56,7 +56,7 @@ void Renderer::InitializeScene()
 		Bike
 	};
 
-	constexpr Scenes CURRENT_SCENE{Scenes::OLD};
+	constexpr Scenes CURRENT_SCENE{Scenes::Bike};
 
 
 	// Uv debug material
@@ -104,17 +104,17 @@ void Renderer::InitializeScene()
 		//Mesh testMeshList{};
 		//testMeshList.primitiveTopology = PrimitiveTopology::TriangleList;
 		//testMeshList.materialPtrs.push_back(m_Materials[0]);
-		//testMeshList.vertices =
+		//testMeshList.m_VerticesModel =
 		//{
-		//	Vertex{{-3,  3, -2},{0.0f,0.0f}},
-		//	Vertex{{ 0,  3, -2},{0.5f,0.0f}},
-		//	Vertex{{ 3,  3, -2},{1.0f,0.0f}},
-		//	Vertex{{-3,  0, -2},{0.0f,0.5f}},
-		//	Vertex{{ 0,  0, -2},{0.5f,0.5f}},
-		//	Vertex{{ 3,  0, -2},{1.0f,0.5f}},
-		//	Vertex{{-3, -3, -2},{0.0f,1.0f}},
-		//	Vertex{{ 0, -3, -2},{0.5f,1.0f}},
-		//	Vertex{{ 3, -3, -2},{1.0f,1.0f}}
+		//	VertexModel{{-3,  3, -2},{0.0f,0.0f}},
+		//	VertexModel{{ 0,  3, -2},{0.5f,0.0f}},
+		//	VertexModel{{ 3,  3, -2},{1.0f,0.0f}},
+		//	VertexModel{{-3,  0, -2},{0.0f,0.5f}},
+		//	VertexModel{{ 0,  0, -2},{0.5f,0.5f}},
+		//	VertexModel{{ 3,  0, -2},{1.0f,0.5f}},
+		//	VertexModel{{-3, -3, -2},{0.0f,1.0f}},
+		//	VertexModel{{ 0, -3, -2},{0.5f,1.0f}},
+		//	VertexModel{{ 3, -3, -2},{1.0f,1.0f}}
 		//};
 		//testMeshList.indices =
 		//{
@@ -127,17 +127,17 @@ void Renderer::InitializeScene()
 		Mesh testMeshStrip{};
 		testMeshStrip.primitiveTopology = PrimitiveTopology::TriangleStrip;
 		testMeshStrip.materialPtrs.push_back(m_Materials[0]);
-		testMeshStrip.vertices =
+		testMeshStrip.m_VerticesModel =
 		{
-			Vertex{{-3,  3, -2},{0.0f,0.0f}},
-			Vertex{{ 0,  3, -2},{0.5f,0.0f}},
-			Vertex{{ 3,  3, -2},{1.0f,0.0f}},
-			Vertex{{-3,  0, -2},{0.0f,0.5f}},
-			Vertex{{ 0,  0, -2},{0.5f,0.5f}},
-			Vertex{{ 3,  0, -2},{1.0f,0.5f}},
-			Vertex{{-3, -3, -2},{0.0f,1.0f}},
-			Vertex{{ 0, -3, -2},{0.5f,1.0f}},
-			Vertex{{ 3, -3, -2},{1.0f,1.0f}}
+			VertexModel{{-3,  3, -2},{0.0f,0.0f}},
+			VertexModel{{ 0,  3, -2},{0.5f,0.0f}},
+			VertexModel{{ 3,  3, -2},{1.0f,0.0f}},
+			VertexModel{{-3,  0, -2},{0.0f,0.5f}},
+			VertexModel{{ 0,  0, -2},{0.5f,0.5f}},
+			VertexModel{{ 3,  0, -2},{1.0f,0.5f}},
+			VertexModel{{-3, -3, -2},{0.0f,1.0f}},
+			VertexModel{{ 0, -3, -2},{0.5f,1.0f}},
+			VertexModel{{ 3, -3, -2},{1.0f,1.0f}}
 		};
 		testMeshStrip.indices =
 		{
@@ -147,7 +147,7 @@ void Renderer::InitializeScene()
 
 
 		Mesh carMesh{};
-		Utils::ParseOBJ("Resources/Car/car2.obj", carMesh.vertices, carMesh.indices);
+		Utils::ParseOBJ("Resources/Car/car2.obj", carMesh.m_VerticesModel, carMesh.indices);
 		carMesh.primitiveTopology = PrimitiveTopology::TriangleList;
 		carMesh.materialPtrs.push_back(m_Materials[1]);
 		carMesh.materialPtrs.push_back(m_Materials[2]);
@@ -156,7 +156,7 @@ void Renderer::InitializeScene()
 
 
 		Mesh tuktuk{};
-		Utils::ParseOBJ("Resources/tuktuk.obj", tuktuk.vertices, tuktuk.indices);
+		Utils::ParseOBJ("Resources/tuktuk.obj", tuktuk.m_VerticesModel, tuktuk.indices);
 		tuktuk.primitiveTopology = PrimitiveTopology::TriangleList;
 		tuktuk.materialPtrs.push_back(m_Materials[3]);
 		//tuktuk.Scale({ 0.2f, 0.2f, 0.2f });
@@ -164,7 +164,7 @@ void Renderer::InitializeScene()
 		//tuktuk.Translate({ 2, 0, 0 });
 
 		Mesh diorama{};
-		Utils::ParseOBJ("Resources/Diorama2.obj", diorama.vertices, diorama.indices);
+		Utils::ParseOBJ("Resources/Diorama2.obj", diorama.m_VerticesModel, diorama.indices);
 		diorama.primitiveTopology = PrimitiveTopology::TriangleList;
 		diorama.materialPtrs.push_back(m_Materials[4]);
 		//diorama.Scale({ 0.2f, 0.2f, 0.2f });
@@ -186,12 +186,12 @@ void Renderer::InitializeScene()
 	{
 		m_Materials.push_back(new Material
 			{
-			Texture::LoadFromFile("vehicle_diffuse.png"),
+			Texture::LoadFromFile("Resources/vehicle_diffuse.png"),
 			});
 
 
 		Mesh bike{};
-		Utils::ParseOBJ("Resources/vehicle.obj", bike.vertices, bike.indices);
+		Utils::ParseOBJ("Resources/vehicle.obj", bike.m_VerticesModel, bike.indices);
 		bike.primitiveTopology = PrimitiveTopology::TriangleList;
 		bike.materialPtrs.push_back(m_Materials[1]);
 		//bike.Scale({ 0.2f, 0.2f, 0.2f });
@@ -255,10 +255,30 @@ void Renderer::SetRenderMode(DebugRenderMode mode)
 
 void Renderer::World_to_Screen(Mesh& mesh) const
 {
+	// SPACES
+	// - Model
+	// - World
+	// - world offset -> Camera -> projection
+	// - Perspective divide
+	// - NDC
+
+
+	// For our translation
+	// For the postions we go from model space -> NDC
+	// For the normal and trangent we go grom: model space -> world space (ONLY ROTATION SO MATRIX3)
+	// For the view direction the camera is in world and we only need to translate the vertex from model -> world
+
 	const Matrix worldViewProjectionMatrix =/* mesh.worldMatrix * */m_CameraPtr->m_InvViewMatrix * m_CameraPtr->m_ProjectionMatrix;
 
-	for (Vertex& vertex : mesh.vertices)
+	
+
+
+	for (VertexModel& vertex : mesh.m_VerticesModel)
 	{
+
+
+
+
 		vertex.positionScreen = Vector4(vertex.position.x, vertex.position.y, vertex.position.z, 1);
 
 		vertex.positionScreen = worldViewProjectionMatrix.TransformPoint(vertex.positionScreen);
@@ -283,7 +303,7 @@ void Renderer::RenderMesh(Mesh& mesh) const
 
 	// Color world vertex
 	int vertexIndex{ 0 };
-	for (Vertex& vertex : mesh.vertices)
+	for (VertexModel& vertex : mesh.m_VerticesModel)
 	{
 		if (vertexIndex == 0)
 			vertex.color = colors::Red;
@@ -305,9 +325,9 @@ void Renderer::RenderMesh(Mesh& mesh) const
 		{
 			triangle =
 			{
-				mesh.vertices[mesh.indices[i]],
-				mesh.vertices[mesh.indices[i + 1]],
-				mesh.vertices[mesh.indices[i + 2]],
+				mesh.m_VerticesModel[mesh.indices[i]],
+				mesh.m_VerticesModel[mesh.indices[i + 1]],
+				mesh.m_VerticesModel[mesh.indices[i + 2]],
 			};
 
 			RenderTriangle(triangle, mesh.materialPtrs);
@@ -322,9 +342,9 @@ void Renderer::RenderMesh(Mesh& mesh) const
 			{
 				triangle =
 				{
-					mesh.vertices[mesh.indices[i]],
-					mesh.vertices[mesh.indices[i + 1]],
-					mesh.vertices[mesh.indices[i + 2]]
+					mesh.m_VerticesModel[mesh.indices[i]],
+					mesh.m_VerticesModel[mesh.indices[i + 1]],
+					mesh.m_VerticesModel[mesh.indices[i + 2]]
 				};
 
 				RenderTriangle(triangle,mesh.materialPtrs);
@@ -333,9 +353,9 @@ void Renderer::RenderMesh(Mesh& mesh) const
 			{
 				Triangle triangle =
 				{
-					mesh.vertices[mesh.indices[i]],
-					mesh.vertices[mesh.indices[i + 2]],
-					mesh.vertices[mesh.indices[i + 1]]
+					mesh.m_VerticesModel[mesh.indices[i]],
+					mesh.m_VerticesModel[mesh.indices[i + 2]],
+					mesh.m_VerticesModel[mesh.indices[i + 1]]
 				};
 
 				RenderTriangle(triangle,mesh.materialPtrs);
@@ -349,13 +369,13 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 	constexpr bool USE_BACK_FACE_CULLING = true;
 
 	// early out culling
-	//if (triangle.vertex0.positionScreen.z < 0.0f or triangle.vertex0.positionScreen.z > 1.0f and
-	//	triangle.vertex1.positionScreen.z < 0.0f or triangle.vertex1.positionScreen.z > 1.0f and
-	//	triangle.vertex2.positionScreen.z < 0.0f or triangle.vertex2.positionScreen.z > 1.0f) return;
+	if (triangle.vertex0.positionScreen.z < 0.0f or triangle.vertex0.positionScreen.z > 1.0f and
+		triangle.vertex1.positionScreen.z < 0.0f or triangle.vertex1.positionScreen.z > 1.0f and
+		triangle.vertex2.positionScreen.z < 0.0f or triangle.vertex2.positionScreen.z > 1.0f) return;
 
-	//if (triangle.vertex0.positionScreen.w < 0.0f) return;
-	//if (triangle.vertex1.positionScreen.w < 0.0f) return;
-	//if (triangle.vertex2.positionScreen.w < 0.0f) return;
+	if (triangle.vertex0.positionScreen.w < 0.0f) return;
+	if (triangle.vertex1.positionScreen.w < 0.0f) return;
+	if (triangle.vertex2.positionScreen.w < 0.0f) return;
 
 
 	// Checking normal early for more performance
@@ -364,6 +384,7 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 		triangle.vertex1.positionScreen - triangle.vertex0.positionScreen,
 		triangle.vertex2.positionScreen - triangle.vertex0.positionScreen
 	);
+
 
 	if (USE_BACK_FACE_CULLING)
 	{
