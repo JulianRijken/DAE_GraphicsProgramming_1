@@ -11,6 +11,7 @@
 
 #include "Camera.h"
 #include "Maths.h"
+#include "Mesh.h"
 #include "Texture.h"
 #include "Utils.h"
 
@@ -36,170 +37,58 @@ m_CameraPtr(camera)
 
 Renderer::~Renderer()
 {
-	for (const Material* material: m_Materials)
+	for (const std::pair<const std::string, Material*> materialPtrMap : m_MaterialPtrMap)
 	{
-		delete material->opacity;
-		delete material->color;
-		delete material;
+		delete materialPtrMap.second->color;
+		delete materialPtrMap.second->opacity;
+		delete materialPtrMap.second->normalMap;
+		delete materialPtrMap.second;
 	}
 
 	delete[] m_pDepthBufferPixels;
 }
 
+void Renderer::InitializeMaterials()
+{
+	m_MaterialPtrMap.insert({ "uvGrid2",new Material {
+		Texture::LoadFromFile("Resources/uv_grid_2.png"),
+	}});
+
+
+	//m_MaterialPtrMap.insert({ "uvGrid3",new Material {
+	//	Texture::LoadFromFile("Resources/uv_grid_3.png"),
+	//}});
+
+
+
+	//m_MaterialPtrMap.insert({ "carBody",new Material {
+	//	Texture::LoadFromFile("Resources/Car/Tex_FordGT40_Color_2k_02_Clean.png"),
+	//	Texture::LoadFromFile("Resources/Car/Tex_FordGT40_Opacity_2k_02.png")
+	//}});
+
+	//m_MaterialPtrMap.insert({ "carWheel",new Material {
+	//	Texture::LoadFromFile("Resources/Car/Tex_TireAndRim_Color_1k_02.png"),
+	//}});
+
+
+	//m_MaterialPtrMap.insert({ "tukTuk",new Material {
+	//	Texture::LoadFromFile("Resources/tuktuk.png"),
+	//} });
+
+
+	m_MaterialPtrMap.insert({ "bike",new Material {
+		Texture::LoadFromFile("Resources/vehicle_diffuse.png"),
+		nullptr
+	}});
+}
 
 void Renderer::InitializeScene()
 {
-
-	enum class Scenes
-	{
-		OLD,
-		Bike
-	};
-
-	constexpr Scenes CURRENT_SCENE{Scenes::Bike};
-
-
-	// Uv debug material
-	m_Materials.push_back(new Material
-		{
-		Texture::LoadFromFile("Resources/uv_grid_2.png"),
-		nullptr
-		});
-
-	if constexpr (CURRENT_SCENE == Scenes::OLD)
-	{
-
-		// Car body
-		m_Materials.push_back(new Material
-			{
-			Texture::LoadFromFile("Resources/Car/Tex_FordGT40_Color_2k_02_Clean.png"),
-			Texture::LoadFromFile("Resources/Car/Tex_FordGT40_Opacity_2k_02.png")
-			});
-
-		// Car wheel
-		m_Materials.push_back(new Material
-			{
-			Texture::LoadFromFile("Resources/Car/Tex_TireAndRim_Color_1k_02.png"),
-			nullptr
-			});
-
-
-		// tuktuk
-		m_Materials.push_back(new Material
-			{
-			Texture::LoadFromFile("Resources/tuktuk.png"),
-			nullptr
-			});
-
-		// Uv debug material
-		m_Materials.push_back(new Material
-			{
-			Texture::LoadFromFile("Resources/uv_grid_3.png"),
-			nullptr
-			});
-
-
-
-
-		//Mesh testMeshList{};
-		//testMeshList.primitiveTopology = PrimitiveTopology::TriangleList;
-		//testMeshList.materialPtrs.push_back(m_Materials[0]);
-		//testMeshList.m_VerticesModel =
-		//{
-		//	VertexModel{{-3,  3, -2},{0.0f,0.0f}},
-		//	VertexModel{{ 0,  3, -2},{0.5f,0.0f}},
-		//	VertexModel{{ 3,  3, -2},{1.0f,0.0f}},
-		//	VertexModel{{-3,  0, -2},{0.0f,0.5f}},
-		//	VertexModel{{ 0,  0, -2},{0.5f,0.5f}},
-		//	VertexModel{{ 3,  0, -2},{1.0f,0.5f}},
-		//	VertexModel{{-3, -3, -2},{0.0f,1.0f}},
-		//	VertexModel{{ 0, -3, -2},{0.5f,1.0f}},
-		//	VertexModel{{ 3, -3, -2},{1.0f,1.0f}}
-		//};
-		//testMeshList.indices =
-		//{
-		//		3, 0, 1,    1, 4, 3,    4, 1, 2,
-		//		2, 5, 4,    6, 3, 4,    4, 7, 6,
-		//		7, 4, 5,    5, 8, 7
-		//};
-
-
-		Mesh testMeshStrip{};
-		testMeshStrip.primitiveTopology = PrimitiveTopology::TriangleStrip;
-		testMeshStrip.materialPtrs.push_back(m_Materials[0]);
-		testMeshStrip.m_VerticesModel =
-		{
-			VertexModel{{-3,  3, -2},{0.0f,0.0f}},
-			VertexModel{{ 0,  3, -2},{0.5f,0.0f}},
-			VertexModel{{ 3,  3, -2},{1.0f,0.0f}},
-			VertexModel{{-3,  0, -2},{0.0f,0.5f}},
-			VertexModel{{ 0,  0, -2},{0.5f,0.5f}},
-			VertexModel{{ 3,  0, -2},{1.0f,0.5f}},
-			VertexModel{{-3, -3, -2},{0.0f,1.0f}},
-			VertexModel{{ 0, -3, -2},{0.5f,1.0f}},
-			VertexModel{{ 3, -3, -2},{1.0f,1.0f}}
-		};
-		testMeshStrip.indices =
-		{
-			3, 0, 4, 1, 5, 2, 2, 6, 6, 3, 7, 4, 8, 5
-		};
-
-
-
-		Mesh carMesh{};
-		Utils::ParseOBJ("Resources/Car/car2.obj", carMesh.m_VerticesModel, carMesh.indices);
-		carMesh.primitiveTopology = PrimitiveTopology::TriangleList;
-		carMesh.materialPtrs.push_back(m_Materials[1]);
-		carMesh.materialPtrs.push_back(m_Materials[2]);
-		carMesh.Rotate(35 * TO_RADIANS);
-		carMesh.Translate({ -2, 0, 0 });
-
-
-		Mesh tuktuk{};
-		Utils::ParseOBJ("Resources/tuktuk.obj", tuktuk.m_VerticesModel, tuktuk.indices);
-		tuktuk.primitiveTopology = PrimitiveTopology::TriangleList;
-		tuktuk.materialPtrs.push_back(m_Materials[3]);
-		//tuktuk.Scale({ 0.2f, 0.2f, 0.2f });
-		//tuktuk.Rotate(-35 * TO_RADIANS);
-		//tuktuk.Translate({ 2, 0, 0 });
-
-		Mesh diorama{};
-		Utils::ParseOBJ("Resources/Diorama2.obj", diorama.m_VerticesModel, diorama.indices);
-		diorama.primitiveTopology = PrimitiveTopology::TriangleList;
-		diorama.materialPtrs.push_back(m_Materials[4]);
-		//diorama.Scale({ 0.2f, 0.2f, 0.2f });
-		//diorama.Rotate(-35 * TO_RADIANS);
-		diorama.Translate({ 0, 0, 20 });
-
-
-
-
-		// Setup meshes
-		//m_WorldMeshes.push_back(testMeshList);
-		//m_WorldMeshes.push_back(testMeshStrip);
-		//m_WorldMeshes.push_back(diorama);
-		//m_WorldMeshes.push_back(carMesh);
-		m_WorldMeshes.push_back(tuktuk);
-	}
-
-	if constexpr (CURRENT_SCENE == Scenes::Bike)
-	{
-		m_Materials.push_back(new Material
-			{
-			Texture::LoadFromFile("Resources/vehicle_diffuse.png"),
-			});
-
-
-		Mesh bike{};
-		Utils::ParseOBJ("Resources/vehicle.obj", bike.m_VerticesModel, bike.indices);
-		bike.primitiveTopology = PrimitiveTopology::TriangleList;
-		bike.materialPtrs.push_back(m_Materials[1]);
-		//bike.Scale({ 0.2f, 0.2f, 0.2f });
-		//bike.Rotate(-35 * TO_RADIANS);
-		//bike.Translate({ 0, 0, 20 });
-		m_WorldMeshes.push_back(bike);
-
-	}
+	const Mesh bikeMesh("Resources/vehicle.obj", { m_MaterialPtrMap["bike"] });
+	//bikeMesh.Scale({ 0.2f, 0.2f, 0.2f });
+	//bikeMesh.Rotate(-35 * TO_RADIANS);
+	//bikeMesh.Translate({ 0, 0, 20 });
+	m_WorldMeshes.push_back(bikeMesh);
 }
 
 
@@ -253,7 +142,7 @@ void Renderer::SetRenderMode(DebugRenderMode mode)
 }
 
 
-void Renderer::World_to_Screen(Mesh& mesh) const
+void Renderer::TransformMesh(Mesh& mesh) const
 {
 	// SPACES
 	// - Model
@@ -270,15 +159,8 @@ void Renderer::World_to_Screen(Mesh& mesh) const
 
 	const Matrix worldViewProjectionMatrix =/* mesh.worldMatrix * */m_CameraPtr->m_InvViewMatrix * m_CameraPtr->m_ProjectionMatrix;
 
-	
-
-
 	for (VertexModel& vertex : mesh.m_VerticesModel)
 	{
-
-
-
-
 		vertex.positionScreen = Vector4(vertex.position.x, vertex.position.y, vertex.position.z, 1);
 
 		vertex.positionScreen = worldViewProjectionMatrix.TransformPoint(vertex.positionScreen);
@@ -299,7 +181,7 @@ void Renderer::World_to_Screen(Mesh& mesh) const
 void Renderer::RenderMesh(Mesh& mesh) const
 {
 	// Convert world to screen
-	World_to_Screen(mesh);
+	TransformMesh(mesh);
 
 	// Color world vertex
 	int vertexIndex{ 0 };
@@ -318,47 +200,47 @@ void Renderer::RenderMesh(Mesh& mesh) const
 		vertexIndex %= 3;
 	}
 
-	if (mesh.primitiveTopology == PrimitiveTopology::TriangleList)
+	if (mesh.m_PrimitiveTopology == PrimitiveTopology::TriangleList)
 	{
 		Triangle triangle{};
-		for (int i{}; i < static_cast<int>(mesh.indices.size()); i += 3)
+		for (int i{}; i < static_cast<int>(mesh.m_Indices.size()); i += 3)
 		{
 			triangle =
 			{
-				mesh.m_VerticesModel[mesh.indices[i]],
-				mesh.m_VerticesModel[mesh.indices[i + 1]],
-				mesh.m_VerticesModel[mesh.indices[i + 2]],
+				mesh.m_VerticesModel[mesh.m_Indices[i]],
+				mesh.m_VerticesModel[mesh.m_Indices[i + 1]],
+				mesh.m_VerticesModel[mesh.m_Indices[i + 2]],
 			};
 
-			RenderTriangle(triangle, mesh.materialPtrs);
+			RenderTriangle(triangle, mesh.m_MaterialPtrs);
 		}
 	}
 	else
 	{
 		Triangle triangle{};
-		for (int i{}; i < static_cast<int>(mesh.indices.size() - 2); i++)
+		for (int i{}; i < static_cast<int>(mesh.m_Indices.size() - 2); i++)
 		{
 			if (i % 2 == 0)
 			{
 				triangle =
 				{
-					mesh.m_VerticesModel[mesh.indices[i]],
-					mesh.m_VerticesModel[mesh.indices[i + 1]],
-					mesh.m_VerticesModel[mesh.indices[i + 2]]
+					mesh.m_VerticesModel[mesh.m_Indices[i]],
+					mesh.m_VerticesModel[mesh.m_Indices[i + 1]],
+					mesh.m_VerticesModel[mesh.m_Indices[i + 2]]
 				};
 
-				RenderTriangle(triangle,mesh.materialPtrs);
+				RenderTriangle(triangle,mesh.m_MaterialPtrs);
 			}
 			else
 			{
 				Triangle triangle =
 				{
-					mesh.m_VerticesModel[mesh.indices[i]],
-					mesh.m_VerticesModel[mesh.indices[i + 2]],
-					mesh.m_VerticesModel[mesh.indices[i + 1]]
+					mesh.m_VerticesModel[mesh.m_Indices[i]],
+					mesh.m_VerticesModel[mesh.m_Indices[i + 2]],
+					mesh.m_VerticesModel[mesh.m_Indices[i + 1]]
 				};
 
-				RenderTriangle(triangle,mesh.materialPtrs);
+				RenderTriangle(triangle,mesh.m_MaterialPtrs);
 			}
 		}
 	}
@@ -604,7 +486,7 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 
 				}break;
 			case DebugRenderMode::UVColor:
-					finalPixelColor = m_Materials[0]->color->Sample(uv);
+					finalPixelColor = m_MaterialPtrMap[0]->color->Sample(uv);
 				break;
 			}
 

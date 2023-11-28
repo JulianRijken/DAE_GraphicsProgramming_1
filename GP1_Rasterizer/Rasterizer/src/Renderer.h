@@ -4,12 +4,12 @@
 #include <vector>
 #include <DataTypes.h>
 
-
 namespace dae
 {
 	struct Camera;
 	class Timer;
 	class Texture;
+	class Mesh;
 }
 
 struct SDL_Window;
@@ -61,11 +61,12 @@ namespace dae
 
 	private:
 
-		void World_to_Screen(Mesh& mesh) const;
+		void TransformMesh(Mesh& mesh) const;
 
 		inline void RenderMesh(Mesh& mesh) const;
 		inline void RenderTriangle(const Triangle& triangle, const std::vector<Material*>& materialPtrs) const;
 
+		void InitializeMaterials();
 		void InitializeScene();
 
 		SDL_Window* m_WindowPtr{};
@@ -79,7 +80,8 @@ namespace dae
 		DebugRenderMode m_RenderMode{DebugRenderMode::FinalColor};
 
 		std::vector<Mesh> m_WorldMeshes{};
-		std::vector<Material*> m_Materials{};
+		std::vector<Vector3> what{};
+		std::map <std::string, Material* > m_MaterialPtrMap{};
 
 		int m_ScreenWidth{};
 		int m_ScreenHeight{};
