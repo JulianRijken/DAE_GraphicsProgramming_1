@@ -349,13 +349,13 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 	constexpr bool USE_BACK_FACE_CULLING = true;
 
 	// early out culling
-	if (triangle.vertex0.positionScreen.z < 0.0f or triangle.vertex0.positionScreen.z > 1.0f and
-		triangle.vertex1.positionScreen.z < 0.0f or triangle.vertex1.positionScreen.z > 1.0f and
-		triangle.vertex2.positionScreen.z < 0.0f or triangle.vertex2.positionScreen.z > 1.0f) return;
+	//if (triangle.vertex0.positionScreen.z < 0.0f or triangle.vertex0.positionScreen.z > 1.0f and
+	//	triangle.vertex1.positionScreen.z < 0.0f or triangle.vertex1.positionScreen.z > 1.0f and
+	//	triangle.vertex2.positionScreen.z < 0.0f or triangle.vertex2.positionScreen.z > 1.0f) return;
 
-	if (triangle.vertex0.positionScreen.w < 0.0f) return;
-	if (triangle.vertex1.positionScreen.w < 0.0f) return;
-	if (triangle.vertex2.positionScreen.w < 0.0f) return;
+	//if (triangle.vertex0.positionScreen.w < 0.0f) return;
+	//if (triangle.vertex1.positionScreen.w < 0.0f) return;
+	//if (triangle.vertex2.positionScreen.w < 0.0f) return;
 
 
 	// Checking normal early for more performance
