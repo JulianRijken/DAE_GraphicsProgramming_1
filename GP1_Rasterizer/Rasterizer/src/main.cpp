@@ -30,11 +30,11 @@ int main(int argc, char* args[])
 	//Create window + surfaces
 	SDL_Init(SDL_INIT_VIDEO);
 
-	//const uint32_t width = 640;
-	//const uint32_t height = 480;
+	const uint32_t width = 640;
+	const uint32_t height = 480;
 
-	const uint32_t width = 1280;
-	const uint32_t height = 720;
+	//const uint32_t width = 1280;
+	//const uint32_t height = 720;
 	const float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 
 	SDL_Window* pWindow = SDL_CreateWindow(
@@ -52,7 +52,7 @@ int main(int argc, char* args[])
 	//Initialize "framework"
 	Timer timer{}; 
 	//Camera camera{ {0,2.5f,-6.0f},60.0f };
-	Camera camera{ {0,2.7f,-7.0f},60.0f,aspectRatio };
+	Camera camera{ {0,2.7f,-40.0f},60.0f,aspectRatio };
 	Renderer renderer{&camera, pWindow};
 
 	//Start loop

@@ -31,7 +31,7 @@ m_CameraPtr(camera)
 	m_BackBufferPixelsPtr = static_cast<uint32_t*>(m_BackBufferPtr->pixels);
 	m_pDepthBufferPixels = new float[m_ScreenWidth * m_ScreenHeight];
 
-	InitializeObjects();
+	InitializeScene();
 }
 
 Renderer::~Renderer()
@@ -47,8 +47,18 @@ Renderer::~Renderer()
 }
 
 
-void Renderer::InitializeObjects()
+void Renderer::InitializeScene()
 {
+
+	enum class Scenes
+	{
+		OLD,
+		Bike
+	};
+
+	constexpr Scenes CURRENT_SCENE{Scenes::OLD};
+
+
 	// Uv debug material
 	m_Materials.push_back(new Material
 		{
@@ -56,117 +66,140 @@ void Renderer::InitializeObjects()
 		nullptr
 		});
 
-	// Car body
-	m_Materials.push_back(new Material
-		{
-		Texture::LoadFromFile("Resources/Car/Tex_FordGT40_Color_2k_02_Clean.png"),
-		Texture::LoadFromFile("Resources/Car/Tex_FordGT40_Opacity_2k_02.png")
-		});
-
-	// Car wheel
-	m_Materials.push_back(new Material
-		{
-		Texture::LoadFromFile("Resources/Car/Tex_TireAndRim_Color_1k_02.png"),
-		nullptr
-		});
-
-
-	// tuktuk
-	m_Materials.push_back(new Material
-		{
-		Texture::LoadFromFile("Resources/tuktuk.png"),
-		nullptr
-		});
-
-	// Uv debug material
-	m_Materials.push_back(new Material
-		{
-		Texture::LoadFromFile("Resources/uv_grid_3.png"),
-		nullptr
-		});
-
-
-
-
-	//Mesh testMeshList{};
-	//testMeshList.primitiveTopology = PrimitiveTopology::TriangleList;
-	//testMeshList.materialPtrs.push_back(m_Materials[0]);
-	//testMeshList.vertices =
-	//{
-	//	Vertex{{-3,  3, -2},{0.0f,0.0f}},
-	//	Vertex{{ 0,  3, -2},{0.5f,0.0f}},
-	//	Vertex{{ 3,  3, -2},{1.0f,0.0f}},
-	//	Vertex{{-3,  0, -2},{0.0f,0.5f}},
-	//	Vertex{{ 0,  0, -2},{0.5f,0.5f}},
-	//	Vertex{{ 3,  0, -2},{1.0f,0.5f}},
-	//	Vertex{{-3, -3, -2},{0.0f,1.0f}},
-	//	Vertex{{ 0, -3, -2},{0.5f,1.0f}},
-	//	Vertex{{ 3, -3, -2},{1.0f,1.0f}}
-	//};
-	//testMeshList.indices =
-	//{
-	//		3, 0, 1,    1, 4, 3,    4, 1, 2,
-	//		2, 5, 4,    6, 3, 4,    4, 7, 6,
-	//		7, 4, 5,    5, 8, 7
-	//};
-
-
-	Mesh testMeshStrip{};
-	testMeshStrip.primitiveTopology = PrimitiveTopology::TriangleStrip;
-	testMeshStrip.materialPtrs.push_back(m_Materials[0]);
-	testMeshStrip.vertices =
+	if constexpr (CURRENT_SCENE == Scenes::OLD)
 	{
-		Vertex{{-3,  3, -2},{0.0f,0.0f}},
-		Vertex{{ 0,  3, -2},{0.5f,0.0f}},
-		Vertex{{ 3,  3, -2},{1.0f,0.0f}},
-		Vertex{{-3,  0, -2},{0.0f,0.5f}},
-		Vertex{{ 0,  0, -2},{0.5f,0.5f}},
-		Vertex{{ 3,  0, -2},{1.0f,0.5f}},
-		Vertex{{-3, -3, -2},{0.0f,1.0f}},
-		Vertex{{ 0, -3, -2},{0.5f,1.0f}},
-		Vertex{{ 3, -3, -2},{1.0f,1.0f}}
-	};
-	testMeshStrip.indices =
+
+		// Car body
+		m_Materials.push_back(new Material
+			{
+			Texture::LoadFromFile("Resources/Car/Tex_FordGT40_Color_2k_02_Clean.png"),
+			Texture::LoadFromFile("Resources/Car/Tex_FordGT40_Opacity_2k_02.png")
+			});
+
+		// Car wheel
+		m_Materials.push_back(new Material
+			{
+			Texture::LoadFromFile("Resources/Car/Tex_TireAndRim_Color_1k_02.png"),
+			nullptr
+			});
+
+
+		// tuktuk
+		m_Materials.push_back(new Material
+			{
+			Texture::LoadFromFile("Resources/tuktuk.png"),
+			nullptr
+			});
+
+		// Uv debug material
+		m_Materials.push_back(new Material
+			{
+			Texture::LoadFromFile("Resources/uv_grid_3.png"),
+			nullptr
+			});
+
+
+
+
+		//Mesh testMeshList{};
+		//testMeshList.primitiveTopology = PrimitiveTopology::TriangleList;
+		//testMeshList.materialPtrs.push_back(m_Materials[0]);
+		//testMeshList.vertices =
+		//{
+		//	Vertex{{-3,  3, -2},{0.0f,0.0f}},
+		//	Vertex{{ 0,  3, -2},{0.5f,0.0f}},
+		//	Vertex{{ 3,  3, -2},{1.0f,0.0f}},
+		//	Vertex{{-3,  0, -2},{0.0f,0.5f}},
+		//	Vertex{{ 0,  0, -2},{0.5f,0.5f}},
+		//	Vertex{{ 3,  0, -2},{1.0f,0.5f}},
+		//	Vertex{{-3, -3, -2},{0.0f,1.0f}},
+		//	Vertex{{ 0, -3, -2},{0.5f,1.0f}},
+		//	Vertex{{ 3, -3, -2},{1.0f,1.0f}}
+		//};
+		//testMeshList.indices =
+		//{
+		//		3, 0, 1,    1, 4, 3,    4, 1, 2,
+		//		2, 5, 4,    6, 3, 4,    4, 7, 6,
+		//		7, 4, 5,    5, 8, 7
+		//};
+
+
+		Mesh testMeshStrip{};
+		testMeshStrip.primitiveTopology = PrimitiveTopology::TriangleStrip;
+		testMeshStrip.materialPtrs.push_back(m_Materials[0]);
+		testMeshStrip.vertices =
+		{
+			Vertex{{-3,  3, -2},{0.0f,0.0f}},
+			Vertex{{ 0,  3, -2},{0.5f,0.0f}},
+			Vertex{{ 3,  3, -2},{1.0f,0.0f}},
+			Vertex{{-3,  0, -2},{0.0f,0.5f}},
+			Vertex{{ 0,  0, -2},{0.5f,0.5f}},
+			Vertex{{ 3,  0, -2},{1.0f,0.5f}},
+			Vertex{{-3, -3, -2},{0.0f,1.0f}},
+			Vertex{{ 0, -3, -2},{0.5f,1.0f}},
+			Vertex{{ 3, -3, -2},{1.0f,1.0f}}
+		};
+		testMeshStrip.indices =
+		{
+			3, 0, 4, 1, 5, 2, 2, 6, 6, 3, 7, 4, 8, 5
+		};
+
+
+
+		Mesh carMesh{};
+		Utils::ParseOBJ("Resources/Car/car2.obj", carMesh.vertices, carMesh.indices);
+		carMesh.primitiveTopology = PrimitiveTopology::TriangleList;
+		carMesh.materialPtrs.push_back(m_Materials[1]);
+		carMesh.materialPtrs.push_back(m_Materials[2]);
+		carMesh.Rotate(35 * TO_RADIANS);
+		carMesh.Translate({ -2, 0, 0 });
+
+
+		Mesh tuktuk{};
+		Utils::ParseOBJ("Resources/tuktuk.obj", tuktuk.vertices, tuktuk.indices);
+		tuktuk.primitiveTopology = PrimitiveTopology::TriangleList;
+		tuktuk.materialPtrs.push_back(m_Materials[3]);
+		//tuktuk.Scale({ 0.2f, 0.2f, 0.2f });
+		//tuktuk.Rotate(-35 * TO_RADIANS);
+		//tuktuk.Translate({ 2, 0, 0 });
+
+		Mesh diorama{};
+		Utils::ParseOBJ("Resources/Diorama2.obj", diorama.vertices, diorama.indices);
+		diorama.primitiveTopology = PrimitiveTopology::TriangleList;
+		diorama.materialPtrs.push_back(m_Materials[4]);
+		//diorama.Scale({ 0.2f, 0.2f, 0.2f });
+		//diorama.Rotate(-35 * TO_RADIANS);
+		diorama.Translate({ 0, 0, 20 });
+
+
+
+
+		// Setup meshes
+		//m_WorldMeshes.push_back(testMeshList);
+		//m_WorldMeshes.push_back(testMeshStrip);
+		//m_WorldMeshes.push_back(diorama);
+		//m_WorldMeshes.push_back(carMesh);
+		m_WorldMeshes.push_back(tuktuk);
+	}
+
+	if constexpr (CURRENT_SCENE == Scenes::Bike)
 	{
-		3, 0, 4, 1, 5, 2, 2, 6, 6, 3, 7, 4, 8, 5
-	};
+		m_Materials.push_back(new Material
+			{
+			Texture::LoadFromFile("vehicle_diffuse.png"),
+			});
 
 
+		Mesh bike{};
+		Utils::ParseOBJ("Resources/vehicle.obj", bike.vertices, bike.indices);
+		bike.primitiveTopology = PrimitiveTopology::TriangleList;
+		bike.materialPtrs.push_back(m_Materials[1]);
+		//bike.Scale({ 0.2f, 0.2f, 0.2f });
+		//bike.Rotate(-35 * TO_RADIANS);
+		//bike.Translate({ 0, 0, 20 });
+		m_WorldMeshes.push_back(bike);
 
-	Mesh carMesh{};
-	Utils::ParseOBJ("Resources/Car/car2.obj", carMesh.vertices, carMesh.indices);
-	carMesh.primitiveTopology = PrimitiveTopology::TriangleList;
-	carMesh.materialPtrs.push_back(m_Materials[1]);
-	carMesh.materialPtrs.push_back(m_Materials[2]);
-	carMesh.Rotate(35 * TO_RADIANS);
-	carMesh.Translate({ -2, 0, 0 });
-
-
-	Mesh tuktuk{};
-	Utils::ParseOBJ("Resources/tuktuk.obj", tuktuk.vertices, tuktuk.indices);
-	tuktuk.primitiveTopology = PrimitiveTopology::TriangleList;
-	tuktuk.materialPtrs.push_back(m_Materials[3]);
-	tuktuk.Scale({ 0.2f, 0.2f, 0.2f });
-	tuktuk.Rotate(-35 * TO_RADIANS);
-	tuktuk.Translate({ 2, 0, 0 });
-
-	Mesh diorama{};
-	Utils::ParseOBJ("Resources/Diorama2.obj", diorama.vertices, diorama.indices);
-	diorama.primitiveTopology = PrimitiveTopology::TriangleList;
-	diorama.materialPtrs.push_back(m_Materials[4]);
-	//diorama.Scale({ 0.2f, 0.2f, 0.2f });
-	//diorama.Rotate(-35 * TO_RADIANS);
-	diorama.Translate({ 0, 0, 20 });
-
-
-	
-
-	// Setup meshes
-	//m_WorldMeshes.push_back(testMeshList);
-	//m_WorldMeshes.push_back(testMeshStrip);
-	m_WorldMeshes.push_back(diorama);
-	m_WorldMeshes.push_back(carMesh);
-	m_WorldMeshes.push_back(tuktuk);
+	}
 }
 
 
@@ -222,11 +255,11 @@ void Renderer::SetRenderMode(DebugRenderMode mode)
 
 void Renderer::World_to_Screen(Mesh& mesh) const
 {
-	const Matrix worldViewProjectionMatrix = mesh.worldMatrix * m_CameraPtr->m_InvViewMatrix * m_CameraPtr->m_ProjectionMatrix;
+	const Matrix worldViewProjectionMatrix =/* mesh.worldMatrix * */m_CameraPtr->m_InvViewMatrix * m_CameraPtr->m_ProjectionMatrix;
 
 	for (Vertex& vertex : mesh.vertices)
 	{
-		vertex.positionScreen = Vector4(vertex.position.x, vertex.position.y, vertex.position.z, 0);
+		vertex.positionScreen = Vector4(vertex.position.x, vertex.position.y, vertex.position.z, 1);
 
 		vertex.positionScreen = worldViewProjectionMatrix.TransformPoint(vertex.positionScreen);
 
@@ -317,12 +350,13 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 
 
 	// early out culling
-	if (triangle.vertex0.positionScreen.z < 0.0f or triangle.vertex0.positionScreen.z > 1.0f and
-		triangle.vertex1.positionScreen.z < 0.0f or triangle.vertex1.positionScreen.z > 1.0f and
-		triangle.vertex2.positionScreen.z < 0.0f or triangle.vertex2.positionScreen.z > 1.0f) return;
-	if (triangle.vertex0.positionScreen.w < 0.0f) return;
-	if (triangle.vertex1.positionScreen.w < 0.0f) return;
-	if (triangle.vertex2.positionScreen.w < 0.0f) return;
+	//if (triangle.vertex0.positionScreen.z < 0.0f or triangle.vertex0.positionScreen.z > 1.0f and
+	//	triangle.vertex1.positionScreen.z < 0.0f or triangle.vertex1.positionScreen.z > 1.0f and
+	//	triangle.vertex2.positionScreen.z < 0.0f or triangle.vertex2.positionScreen.z > 1.0f) return;
+
+	//if (triangle.vertex0.positionScreen.w < 0.0f) return;
+	//if (triangle.vertex1.positionScreen.w < 0.0f) return;
+	//if (triangle.vertex2.positionScreen.w < 0.0f) return;
 
 
 	// Checking normal early for more performance
@@ -334,8 +368,8 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 
 	if (USE_BACK_FACE_CULLING)
 	{
-		if (normal.z <= 0.0f)
-			return;
+		//if (normal.z <= 0.0f)
+		//	return;
 	}
 
 
@@ -411,7 +445,7 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 
 
 			// Culling I DON"T KNOW IT DOES NOT SEEM CORRECT THE DEPTH THAT IS
-			//if (nonLinearPixelDepth < 0.0f)
+			//if (nonLinearPixelDepth < 0.0f or nonLinearPixelDepth > 1.0f)
 			//	continue;
 
 			const int pixelIndex{ pixelX + pixelY * m_ScreenWidth };
@@ -529,7 +563,8 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 				{
 					//finalPixelColor = colors::White * ;
 					//finalPixelColor = colors::White * std::lerp(0.985f, 1.0f, nonLinearPixelDepth);
-
+					
+					//finalPixelColor = colors::White * std::clamp(triangle.vertex0.positionScreen.z,0.0f,1.0f);
 					finalPixelColor = colors::White * std::clamp(nonLinearPixelDepth,0.0f,1.0f);
 					//finalPixelColor = colors::White * Utils::MapValueInRangeClamped(nonLinearPixelDepth,0.9f,1.0f,0.0f,1.0f);
 					//finalPixelColor = colors::White * std::ranges::clamp(nonLinearPixelDepth,0.0f,1.0f);
@@ -542,7 +577,7 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 
 
 			//Update Color in Buffer
-			//finalPixelColor.MaxToOne();
+			finalPixelColor.MaxToOne();
 			m_BackBufferPixelsPtr[pixelIndex] = SDL_MapRGB(m_BackBufferPtr->format,
 				static_cast<uint8_t>(finalPixelColor.r * 255),
 				static_cast<uint8_t>(finalPixelColor.g * 255),

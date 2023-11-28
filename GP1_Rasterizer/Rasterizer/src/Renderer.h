@@ -66,7 +66,7 @@ namespace dae
 		inline void RenderMesh(Mesh& mesh) const;
 		inline void RenderTriangle(const Triangle& triangle, const std::vector<Material*>& materialPtrs) const;
 
-		void InitializeObjects();
+		void InitializeScene();
 
 		SDL_Window* m_WindowPtr{};
 
