@@ -348,15 +348,14 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 {
 	constexpr bool USE_BACK_FACE_CULLING = true;
 
-
 	// early out culling
-	//if (triangle.vertex0.positionScreen.z < 0.0f or triangle.vertex0.positionScreen.z > 1.0f and
-	//	triangle.vertex1.positionScreen.z < 0.0f or triangle.vertex1.positionScreen.z > 1.0f and
-	//	triangle.vertex2.positionScreen.z < 0.0f or triangle.vertex2.positionScreen.z > 1.0f) return;
+	if (triangle.vertex0.positionScreen.z < 0.0f or triangle.vertex0.positionScreen.z > 1.0f and
+		triangle.vertex1.positionScreen.z < 0.0f or triangle.vertex1.positionScreen.z > 1.0f and
+		triangle.vertex2.positionScreen.z < 0.0f or triangle.vertex2.positionScreen.z > 1.0f) return;
 
-	//if (triangle.vertex0.positionScreen.w < 0.0f) return;
-	//if (triangle.vertex1.positionScreen.w < 0.0f) return;
-	//if (triangle.vertex2.positionScreen.w < 0.0f) return;
+	if (triangle.vertex0.positionScreen.w < 0.0f) return;
+	if (triangle.vertex1.positionScreen.w < 0.0f) return;
+	if (triangle.vertex2.positionScreen.w < 0.0f) return;
 
 
 	// Checking normal early for more performance
@@ -565,9 +564,22 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 					//finalPixelColor = colors::White * std::lerp(0.985f, 1.0f, nonLinearPixelDepth);
 					
 					//finalPixelColor = colors::White * std::clamp(triangle.vertex0.positionScreen.z,0.0f,1.0f);
-					finalPixelColor = colors::White * std::clamp(nonLinearPixelDepth,0.0f,1.0f);
+
+
+					//finalPixelColor = colors::White * std::clamp(nonLinearPixelDepth,0.0f,1.0f);
+
+
 					//finalPixelColor = colors::White * Utils::MapValueInRangeClamped(nonLinearPixelDepth,0.9f,1.0f,0.0f,1.0f);
 					//finalPixelColor = colors::White * std::ranges::clamp(nonLinearPixelDepth,0.0f,1.0f);
+
+					if (nonLinearPixelDepth < 0.0f)
+						finalPixelColor = colors::Red;
+					else
+					if (nonLinearPixelDepth > 1.0f)
+						finalPixelColor = colors::Blue;
+					else
+						finalPixelColor = colors::Green * nonLinearPixelDepth;
+
 
 				}break;
 			case DebugRenderMode::UVColor:
@@ -577,7 +589,7 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 
 
 			//Update Color in Buffer
-			finalPixelColor.MaxToOne();
+			//finalPixelColor.MaxToOne();
 			m_BackBufferPixelsPtr[pixelIndex] = SDL_MapRGB(m_BackBufferPtr->format,
 				static_cast<uint8_t>(finalPixelColor.r * 255),
 				static_cast<uint8_t>(finalPixelColor.g * 255),
