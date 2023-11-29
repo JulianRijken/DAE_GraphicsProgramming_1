@@ -70,20 +70,18 @@ namespace dae
 		void InitializeScene();
 
 		SDL_Window* m_WindowPtr{};
-
 		SDL_Surface* m_FrontBufferPtr{ nullptr };
 		SDL_Surface* m_BackBufferPtr{ nullptr };
 		uint32_t* m_BackBufferPixelsPtr{};
-		float* m_pDepthBufferPixels{};
+		float* m_pDepthBufferPixels{ nullptr };
 
 		Camera* m_CameraPtr;
-		DebugRenderMode m_RenderMode{DebugRenderMode::FinalColor};
+		DebugRenderMode m_RenderMode;
 
-		std::vector<Mesh> m_WorldMeshes{};
-		std::vector<Vector3> what{};
-		std::map <std::string, Material* > m_MaterialPtrMap{};
+		std::vector<Mesh> m_WorldMeshes;
+		std::map <std::string, Material* > m_MaterialPtrMap;
 
-		int m_ScreenWidth{};
-		int m_ScreenHeight{};
+		int m_ScreenWidth;
+		int m_ScreenHeight;
 	};
 }

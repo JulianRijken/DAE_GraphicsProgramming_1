@@ -7,7 +7,7 @@ namespace dae
 {
 	struct VertexModel
 	{
-		Vector3 position{};
+		Vector3 pos{};
 		Vector2 uv{};
 		Vector3 normal{}; 
 		Vector3 tangent{};
@@ -18,7 +18,7 @@ namespace dae
 
 	struct VertexTransformed
 	{
-		Vector4 position{};
+		Vector4 pos{};
 		Vector2 uv{};
 		Vector3 normal{};
 		Vector3 tangent{};

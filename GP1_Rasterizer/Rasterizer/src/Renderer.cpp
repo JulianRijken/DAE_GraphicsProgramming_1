@@ -21,7 +21,10 @@ using namespace dae;
 
 Renderer::Renderer(Camera* camera, SDL_Window* pWindow) :
 m_WindowPtr(pWindow),
-m_CameraPtr(camera)
+m_CameraPtr(camera),
+m_RenderMode(DebugRenderMode::FinalColor),
+m_ScreenWidth(), // Is set later
+m_ScreenHeight() // Is set later
 {
 	//Initialize
 	SDL_GetWindowSize(pWindow, &m_ScreenWidth, &m_ScreenHeight);
@@ -32,12 +35,13 @@ m_CameraPtr(camera)
 	m_BackBufferPixelsPtr = static_cast<uint32_t*>(m_BackBufferPtr->pixels);
 	m_pDepthBufferPixels = new float[m_ScreenWidth * m_ScreenHeight];
 
+	InitializeMaterials();
 	InitializeScene();
 }
 
 Renderer::~Renderer()
 {
-	for (const std::pair<const std::string, Material*> materialPtrMap : m_MaterialPtrMap)
+	for (const std::pair<const std::string, Material*>& materialPtrMap : m_MaterialPtrMap)
 	{
 		delete materialPtrMap.second->color;
 		delete materialPtrMap.second->opacity;
@@ -76,7 +80,7 @@ void Renderer::InitializeMaterials()
 	//} });
 
 
-	m_MaterialPtrMap.insert({ "bike",new Material {
+	m_MaterialPtrMap.insert({"bike",new Material {
 		Texture::LoadFromFile("Resources/vehicle_diffuse.png"),
 		nullptr
 	}});
@@ -157,23 +161,26 @@ void Renderer::TransformMesh(Mesh& mesh) const
 	// For the normal and trangent we go grom: model space -> world space (ONLY ROTATION SO MATRIX3)
 	// For the view direction the camera is in world and we only need to translate the vertex from model -> world
 
+
+	// Make sure the transformed vertices are back in the same state as the model vertices
+	// This is done because we apply matrix transformations on the transformed vertices
+	mesh.ResetTransformedVertices();
+
 	const Matrix worldViewProjectionMatrix =/* mesh.worldMatrix * */m_CameraPtr->m_InvViewMatrix * m_CameraPtr->m_ProjectionMatrix;
 
-	for (VertexModel& vertex : mesh.m_VerticesModel)
+	for (VertexTransformed& vertex : mesh.m_VerticesTransformed)
 	{
-		vertex.positionScreen = Vector4(vertex.position.x, vertex.position.y, vertex.position.z, 1);
-
-		vertex.positionScreen = worldViewProjectionMatrix.TransformPoint(vertex.positionScreen);
+		vertex.pos = worldViewProjectionMatrix.TransformPoint(vertex.pos);
 
 		// Apply perspective divide  
-		vertex.positionScreen.x /= vertex.positionScreen.w;
-		vertex.positionScreen.y /= vertex.positionScreen.w;
-		vertex.positionScreen.z /= vertex.positionScreen.w;
+		vertex.pos.x /= vertex.pos.w;
+		vertex.pos.y /= vertex.pos.w;
+		vertex.pos.z /= vertex.pos.w;
 
 
 		// Convert from NDC to screen
-		vertex.positionScreen.x = (vertex.positionScreen.x + 1.0f) / 2.0f * static_cast<float>(m_ScreenWidth);
-		vertex.positionScreen.y = (1.0f - vertex.positionScreen.y) / 2.0f * static_cast<float>(m_ScreenHeight);
+		vertex.pos.x = (vertex.pos.x + 1.0f) / 2.0f * static_cast<float>(m_ScreenWidth);
+		vertex.pos.y = (1.0f - vertex.pos.y) / 2.0f * static_cast<float>(m_ScreenHeight);
 	}
 }
 
@@ -185,7 +192,7 @@ void Renderer::RenderMesh(Mesh& mesh) const
 
 	// Color world vertex
 	int vertexIndex{ 0 };
-	for (VertexModel& vertex : mesh.m_VerticesModel)
+	for (VertexTransformed& vertex : mesh.m_VerticesTransformed)
 	{
 		if (vertexIndex == 0)
 			vertex.color = colors::Red;
@@ -207,9 +214,9 @@ void Renderer::RenderMesh(Mesh& mesh) const
 		{
 			triangle =
 			{
-				mesh.m_VerticesModel[mesh.m_Indices[i]],
-				mesh.m_VerticesModel[mesh.m_Indices[i + 1]],
-				mesh.m_VerticesModel[mesh.m_Indices[i + 2]],
+				mesh.m_VerticesTransformed[mesh.m_Indices[i]],
+				mesh.m_VerticesTransformed[mesh.m_Indices[i + 1]],
+				mesh.m_VerticesTransformed[mesh.m_Indices[i + 2]],
 			};
 
 			RenderTriangle(triangle, mesh.m_MaterialPtrs);
@@ -224,20 +231,20 @@ void Renderer::RenderMesh(Mesh& mesh) const
 			{
 				triangle =
 				{
-					mesh.m_VerticesModel[mesh.m_Indices[i]],
-					mesh.m_VerticesModel[mesh.m_Indices[i + 1]],
-					mesh.m_VerticesModel[mesh.m_Indices[i + 2]]
+					mesh.m_VerticesTransformed[mesh.m_Indices[i]],
+					mesh.m_VerticesTransformed[mesh.m_Indices[i + 1]],
+					mesh.m_VerticesTransformed[mesh.m_Indices[i + 2]]
 				};
 
 				RenderTriangle(triangle,mesh.m_MaterialPtrs);
 			}
 			else
 			{
-				Triangle triangle =
+				triangle =
 				{
-					mesh.m_VerticesModel[mesh.m_Indices[i]],
-					mesh.m_VerticesModel[mesh.m_Indices[i + 2]],
-					mesh.m_VerticesModel[mesh.m_Indices[i + 1]]
+					mesh.m_VerticesTransformed[mesh.m_Indices[i]],
+					mesh.m_VerticesTransformed[mesh.m_Indices[i + 2]],
+					mesh.m_VerticesTransformed[mesh.m_Indices[i + 1]]
 				};
 
 				RenderTriangle(triangle,mesh.m_MaterialPtrs);
@@ -251,20 +258,20 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 	constexpr bool USE_BACK_FACE_CULLING = true;
 
 	// early out culling
-	if (triangle.vertex0.positionScreen.z < 0.0f or triangle.vertex0.positionScreen.z > 1.0f and
-		triangle.vertex1.positionScreen.z < 0.0f or triangle.vertex1.positionScreen.z > 1.0f and
-		triangle.vertex2.positionScreen.z < 0.0f or triangle.vertex2.positionScreen.z > 1.0f) return;
+	if (triangle.vertex0.pos.z < 0.0f or triangle.vertex0.pos.z > 1.0f and
+		triangle.vertex1.pos.z < 0.0f or triangle.vertex1.pos.z > 1.0f and
+		triangle.vertex2.pos.z < 0.0f or triangle.vertex2.pos.z > 1.0f) return;
 
-	if (triangle.vertex0.positionScreen.w < 0.0f) return;
-	if (triangle.vertex1.positionScreen.w < 0.0f) return;
-	if (triangle.vertex2.positionScreen.w < 0.0f) return;
+	if (triangle.vertex0.pos.w < 0.0f) return;
+	if (triangle.vertex1.pos.w < 0.0f) return;
+	if (triangle.vertex2.pos.w < 0.0f) return;
 
 
 	// Checking normal early for more performance
 	const Vector3 normal = Vector3::Cross
 	(
-		triangle.vertex1.positionScreen - triangle.vertex0.positionScreen,
-		triangle.vertex2.positionScreen - triangle.vertex0.positionScreen
+		triangle.vertex1.pos - triangle.vertex0.pos,
+		triangle.vertex2.pos - triangle.vertex0.pos
 	);
 
 
@@ -277,10 +284,10 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 
 	// Adding the 1 pixel is done to prevent gaps in the triangles
 	constexpr int boundingBoxPadding{1};
-	int minX = static_cast<int>(std::min(triangle.vertex0.positionScreen.x, std::min(triangle.vertex1.positionScreen.x, triangle.vertex2.positionScreen.x))) - boundingBoxPadding;
-	int maxX = static_cast<int>(std::max(triangle.vertex0.positionScreen.x, std::max(triangle.vertex1.positionScreen.x, triangle.vertex2.positionScreen.x))) + boundingBoxPadding;
-	int minY = static_cast<int>(std::min(triangle.vertex0.positionScreen.y, std::min(triangle.vertex1.positionScreen.y, triangle.vertex2.positionScreen.y))) - boundingBoxPadding;
-	int maxY = static_cast<int>(std::max(triangle.vertex0.positionScreen.y, std::max(triangle.vertex1.positionScreen.y, triangle.vertex2.positionScreen.y))) + boundingBoxPadding;
+	int minX = static_cast<int>(std::min(triangle.vertex0.pos.x, std::min(triangle.vertex1.pos.x, triangle.vertex2.pos.x))) - boundingBoxPadding;
+	int maxX = static_cast<int>(std::max(triangle.vertex0.pos.x, std::max(triangle.vertex1.pos.x, triangle.vertex2.pos.x))) + boundingBoxPadding;
+	int minY = static_cast<int>(std::min(triangle.vertex0.pos.y, std::min(triangle.vertex1.pos.y, triangle.vertex2.pos.y))) - boundingBoxPadding;
+	int maxY = static_cast<int>(std::max(triangle.vertex0.pos.y, std::max(triangle.vertex1.pos.y, triangle.vertex2.pos.y))) + boundingBoxPadding;
 
 	// Clamping is done so that the triangle is not rendered off the screen
 	minX = std::ranges::clamp(minX, 0, m_ScreenWidth);
@@ -303,31 +310,31 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 
 			if (USE_BACK_FACE_CULLING)
 			{
-				signedAreaW0 = Vector2::Cross(pixelCenter - triangle.vertex1.positionScreen.GetXY(), triangle.vertex2.positionScreen.GetXY() - triangle.vertex1.positionScreen.GetXY());
+				signedAreaW0 = Vector2::Cross(pixelCenter - triangle.vertex1.pos.GetXY(), triangle.vertex2.pos.GetXY() - triangle.vertex1.pos.GetXY());
 				if (signedAreaW0 >= 0) continue;
-				signedAreaW1 = Vector2::Cross(pixelCenter - triangle.vertex2.positionScreen.GetXY(), triangle.vertex0.positionScreen.GetXY() - triangle.vertex2.positionScreen.GetXY());
+				signedAreaW1 = Vector2::Cross(pixelCenter - triangle.vertex2.pos.GetXY(), triangle.vertex0.pos.GetXY() - triangle.vertex2.pos.GetXY());
 				if (signedAreaW1 >= 0) continue;
-				signedAreaW2 = Vector2::Cross(pixelCenter - triangle.vertex0.positionScreen.GetXY(), triangle.vertex1.positionScreen.GetXY() - triangle.vertex0.positionScreen.GetXY());
+				signedAreaW2 = Vector2::Cross(pixelCenter - triangle.vertex0.pos.GetXY(), triangle.vertex1.pos.GetXY() - triangle.vertex0.pos.GetXY());
 				if (signedAreaW2 >= 0) continue;
 			}
 			else
 			{
 				if (normal.z > 0.0f)
 				{
-					signedAreaW0 = Vector2::Cross(pixelCenter - triangle.vertex1.positionScreen.GetXY(), triangle.vertex2.positionScreen.GetXY() - triangle.vertex1.positionScreen.GetXY());
+					signedAreaW0 = Vector2::Cross(pixelCenter - triangle.vertex1.pos.GetXY(), triangle.vertex2.pos.GetXY() - triangle.vertex1.pos.GetXY());
 					if (signedAreaW0 >= 0) continue;
-					signedAreaW1 = Vector2::Cross(pixelCenter - triangle.vertex2.positionScreen.GetXY(), triangle.vertex0.positionScreen.GetXY() - triangle.vertex2.positionScreen.GetXY());
+					signedAreaW1 = Vector2::Cross(pixelCenter - triangle.vertex2.pos.GetXY(), triangle.vertex0.pos.GetXY() - triangle.vertex2.pos.GetXY());
 					if (signedAreaW1 >= 0) continue;
-					signedAreaW2 = Vector2::Cross(pixelCenter - triangle.vertex0.positionScreen.GetXY(), triangle.vertex1.positionScreen.GetXY() - triangle.vertex0.positionScreen.GetXY());
+					signedAreaW2 = Vector2::Cross(pixelCenter - triangle.vertex0.pos.GetXY(), triangle.vertex1.pos.GetXY() - triangle.vertex0.pos.GetXY());
 					if (signedAreaW2 >= 0) continue;
 				}
 				else
 				{
-					signedAreaW0 = Vector2::Cross(triangle.vertex2.positionScreen.GetXY() - triangle.vertex1.positionScreen.GetXY(), pixelCenter - triangle.vertex1.positionScreen.GetXY());
+					signedAreaW0 = Vector2::Cross(triangle.vertex2.pos.GetXY() - triangle.vertex1.pos.GetXY(), pixelCenter - triangle.vertex1.pos.GetXY());
 					if (signedAreaW0 >= 0) continue;
-					signedAreaW1 = Vector2::Cross(triangle.vertex0.positionScreen.GetXY() - triangle.vertex2.positionScreen.GetXY(), pixelCenter - triangle.vertex2.positionScreen.GetXY());
+					signedAreaW1 = Vector2::Cross(triangle.vertex0.pos.GetXY() - triangle.vertex2.pos.GetXY(), pixelCenter - triangle.vertex2.pos.GetXY());
 					if (signedAreaW1 >= 0) continue;
-					signedAreaW2 = Vector2::Cross(triangle.vertex1.positionScreen.GetXY() - triangle.vertex0.positionScreen.GetXY(), pixelCenter - triangle.vertex0.positionScreen.GetXY());
+					signedAreaW2 = Vector2::Cross(triangle.vertex1.pos.GetXY() - triangle.vertex0.pos.GetXY(), pixelCenter - triangle.vertex0.pos.GetXY());
 					if (signedAreaW2 >= 0) continue;
 				}
 			}
@@ -341,9 +348,9 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 
 
 			const float nonLinearPixelDepth = 1.0f / (
-				1.0f / triangle.vertex0.positionScreen.z * signedAreaW0Inv +
-				1.0f / triangle.vertex1.positionScreen.z * signedAreaW1Inv +
-				1.0f / triangle.vertex2.positionScreen.z * signedAreaW2Inv);
+				1.0f / triangle.vertex0.pos.z * signedAreaW0Inv +
+				1.0f / triangle.vertex1.pos.z * signedAreaW1Inv +
+				1.0f / triangle.vertex2.pos.z * signedAreaW2Inv);
 
 
 			// Culling I DON"T KNOW IT DOES NOT SEEM CORRECT THE DEPTH THAT IS
@@ -360,15 +367,15 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 
 
 			const float linearPixelDepth = 1.0f / (
-				1.0f / triangle.vertex0.positionScreen.w * signedAreaW0Inv +
-				1.0f / triangle.vertex1.positionScreen.w * signedAreaW1Inv +
-				1.0f / triangle.vertex2.positionScreen.w * signedAreaW2Inv);
+				1.0f / triangle.vertex0.pos.w * signedAreaW0Inv +
+				1.0f / triangle.vertex1.pos.w * signedAreaW1Inv +
+				1.0f / triangle.vertex2.pos.w * signedAreaW2Inv);
 
 
 			const Vector2 uv = linearPixelDepth * (
-				triangle.vertex0.uv / triangle.vertex0.positionScreen.w * signedAreaW0Inv +
-				triangle.vertex1.uv / triangle.vertex1.positionScreen.w * signedAreaW1Inv +
-				triangle.vertex2.uv / triangle.vertex2.positionScreen.w * signedAreaW2Inv);
+				triangle.vertex0.uv / triangle.vertex0.pos.w * signedAreaW0Inv +
+				triangle.vertex1.uv / triangle.vertex1.pos.w * signedAreaW1Inv +
+				triangle.vertex2.uv / triangle.vertex2.pos.w * signedAreaW2Inv);
 
 
 
@@ -486,7 +493,7 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 
 				}break;
 			case DebugRenderMode::UVColor:
-					finalPixelColor = m_MaterialPtrMap[0]->color->Sample(uv);
+					finalPixelColor = m_MaterialPtrMap.at("uvGrid2")->color->Sample(uv);
 				break;
 			}
 

@@ -22,10 +22,10 @@ namespace dae
 
 	private:
 
-		std::vector<VertexModel> m_VerticesModel{};
-		std::vector<VertexTransformed> m_VerticesTransformed{};
+		std::vector<VertexModel> m_VerticesModel;
+		std::vector<VertexTransformed> m_VerticesTransformed;
 
-		std::vector<uint32_t> m_Indices{};
+		std::vector<uint32_t> m_Indices;
 
 		std::vector<Material*> m_MaterialPtrs;
 		PrimitiveTopology m_PrimitiveTopology;
