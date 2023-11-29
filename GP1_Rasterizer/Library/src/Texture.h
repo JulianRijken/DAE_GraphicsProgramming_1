@@ -14,10 +14,11 @@ namespace dae
 
 		static Texture* LoadFromFile(const std::string& path);
 		ColorRGB Sample(const Vector2& uv) const;
-		ColorRGB Sample(float u, float v) const;
 
 	private:
 		Texture(SDL_Surface* pSurface);
+
+		ColorRGB GetTexelColor(int x, int y) const;
 
 		SDL_Surface* m_SurfacePtr{ nullptr };
 		uint32_t* m_SurfacePixelsPtr{ nullptr };

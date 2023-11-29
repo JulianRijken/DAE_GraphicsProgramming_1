@@ -30,11 +30,14 @@ int main(int argc, char* args[])
 	//Create window + surfaces
 	SDL_Init(SDL_INIT_VIDEO);
 
-	const uint32_t width = 640;
-	const uint32_t height = 480;
+	//const uint32_t width = 640;
+	//const uint32_t height = 480;
 
-	//const uint32_t width = 1280;
-	//const uint32_t height = 720;
+	const uint32_t width = 1280;
+	const uint32_t height = 720;
+
+	//const uint32_t width = 1920;
+	//const uint32_t height = 1080;
 
 	const float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 
@@ -53,7 +56,7 @@ int main(int argc, char* args[])
 	//Initialize "framework"
 	Timer timer{}; 
 	//Camera camera{ {0,2.5f,-6.0f},60.0f };
-	Camera camera{ {0,2.7f,-40.0f},60.0f,aspectRatio };
+	Camera camera{ {0,0,0.0f},45.0f,aspectRatio };
 	Renderer renderer{&camera, pWindow};
 
 	//Start loop
@@ -78,22 +81,31 @@ int main(int argc, char* args[])
 			case SDL_KEYDOWN:
 				if (e.key.keysym.scancode == SDL_SCANCODE_X)
 					takeScreenshot = true;
-				if(e.key.keysym.scancode == SDL_SCANCODE_F6)
-					timer.StartBenchmark();
+
+				if (e.key.keysym.scancode == SDL_SCANCODE_F5)
+					renderer.ToggleRotation();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F6)
+					renderer.ToggleNormalMap();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F7)
+					renderer.CycleRenderMode();
 
 				if (e.key.keysym.scancode == SDL_SCANCODE_1)
-					renderer.SetRenderMode(DebugRenderMode::FinalColor);
+					renderer.SetRenderMode(DebugRenderMode::Diffuse);
 				if (e.key.keysym.scancode == SDL_SCANCODE_2)
-					renderer.SetRenderMode(DebugRenderMode::Color);
+					renderer.SetRenderMode(DebugRenderMode::ObservedArea);
 				if (e.key.keysym.scancode == SDL_SCANCODE_3)
-					renderer.SetRenderMode(DebugRenderMode::Opacity);
+					renderer.SetRenderMode(DebugRenderMode::DiffuseOA);
 				if (e.key.keysym.scancode == SDL_SCANCODE_4)
-					renderer.SetRenderMode(DebugRenderMode::UVColor);
+					renderer.SetRenderMode(DebugRenderMode::SpecularOA);
 				if (e.key.keysym.scancode == SDL_SCANCODE_5)
-					renderer.SetRenderMode(DebugRenderMode::Weights);
+					renderer.SetRenderMode(DebugRenderMode::Combined);
 				if (e.key.keysym.scancode == SDL_SCANCODE_6)
-					renderer.SetRenderMode(DebugRenderMode::DepthBuffer);
+					renderer.SetRenderMode(DebugRenderMode::UVColor);
 				if (e.key.keysym.scancode == SDL_SCANCODE_7)
+					renderer.SetRenderMode(DebugRenderMode::Weights);
+				if (e.key.keysym.scancode == SDL_SCANCODE_8)
+					renderer.SetRenderMode(DebugRenderMode::DepthBuffer);
+				if (e.key.keysym.scancode == SDL_SCANCODE_9)
 					renderer.SetRenderMode(DebugRenderMode::MaterialIndex);
 				break;
 

@@ -18,7 +18,7 @@ namespace dae
 		m_Scale(1.0f, 1.0f, 1.0f),
 		m_Position(0.0f, 0.0f, 0.0f)
 	{
-		InitializeVerticesTransformed();
+		InitializeVertices();
 		InitializeVertexColors();
 		InitializeTriangles();
 	}
@@ -32,7 +32,7 @@ namespace dae
 	{
 		Utils::ParseOBJ(name, m_VerticesModel, m_Indices);
 
-		InitializeVerticesTransformed();
+		InitializeVertices();
 		InitializeVertexColors();
 		InitializeTriangles();
 	}
@@ -63,11 +63,19 @@ namespace dae
 	}
 
 
-	void Mesh::InitializeVerticesTransformed()
+	void Mesh::InitializeVertices()
 	{
 		m_VerticesTransformed.resize(m_VerticesModel.size());
 		for (size_t i = 0; i < m_VerticesModel.size(); i++)
+		{
 			m_VerticesTransformed[i] = std::make_shared<VertexTransformed>();
+
+			// Force the normal and tangent to be normalized
+			// This is to avoid user error
+			m_VerticesModel[i].normal = m_VerticesModel[i].normal.Normalized();
+			m_VerticesModel[i].tangent = m_VerticesModel[i].tangent.Normalized();
+		}
+
 	}
 
 	void Mesh::InitializeVertexColors()

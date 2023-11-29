@@ -45,9 +45,11 @@ namespace dae
 
 	struct Material
 	{
-		Texture* color = nullptr;
+		Texture* diffuse = nullptr;
 		Texture* opacity = nullptr;
-		Texture* normalMap = nullptr;
+		Texture* normal = nullptr;
+		Texture* specular = nullptr;
+		Texture* gloss = nullptr;
 	};
 
 }

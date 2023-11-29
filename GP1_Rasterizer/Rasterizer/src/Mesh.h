@@ -45,7 +45,7 @@ namespace dae
 		Vector3 m_Scale;
 		Vector3 m_Position;
 
-		void InitializeVerticesTransformed();
+		void InitializeVertices();
 		void InitializeVertexColors();
 		void InitializeTriangles();
 		void UpdateWorldMatrix();

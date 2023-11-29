@@ -44,18 +44,20 @@ namespace dae
 		Matrix m_ViewMatrix{};
 		Matrix m_ProjectionMatrix{};
 
-		inline static constexpr float KEY_MOVE_SPEED{ 60.0f };
-		inline static constexpr float MOUSE_MOVE_SPEED{ 1.0f };
+		inline static constexpr float KEY_MOVE_SPEED{ 50.0f };
+		inline static constexpr float MOUSE_MOVE_SPEED{ 0.5f };
 		inline static constexpr float ROTATE_SPEED{ 0.001f };
 
-		inline static constexpr float ROTATE_LERP_SPEED{ 30.0f };
-		inline static constexpr float MOVE_LERP_SPEED{ 20.0f };
+		inline static constexpr float ROTATE_LERP_SPEED{ 20.0f };
+		inline static constexpr float MOVE_LERP_SPEED{ 10.0f };
 
 
 		void Update(const Timer& timer)
 		{
-			const float deltaTime = timer.GetElapsed();
-
+			constexpr float minFps{ 30.0f };
+			constexpr float maxElapsed{ 1.0f / minFps };
+			// using min to create a minimum delay
+			const float deltaTime = std::min(timer.GetElapsed(), maxElapsed);
 
 			//Keyboard Input
 			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
@@ -111,11 +113,11 @@ namespace dae
 			if (pKeyboardState[SDL_SCANCODE_E] || pKeyboardState[SDL_SCANCODE_LCTRL])
 				inputVector.y += 1;
 
-			m_Pitch = m_TargetPitch;
-			m_Yaw = m_TargetYaw;
+			//m_Pitch = m_TargetPitch;
+			//m_Yaw = m_TargetYaw;
 
-			//m_Pitch = Lerpf(m_Pitch, m_TargetPitch, deltaTime * ROTATE_LERP_SPEED);
-			//m_Yaw = Lerpf(m_Yaw, m_TargetYaw, deltaTime * ROTATE_LERP_SPEED);
+			m_Pitch = Lerpf(m_Pitch, m_TargetPitch, deltaTime * ROTATE_LERP_SPEED);
+			m_Yaw = Lerpf(m_Yaw, m_TargetYaw, deltaTime * ROTATE_LERP_SPEED);
 
 
 			const Matrix pitchYawRotation
@@ -136,8 +138,8 @@ namespace dae
 
 			inputVector = pitchYawRotation.TransformVector(inputVector);
 			m_TargetOrigin += inputVector * deltaTime * KEY_MOVE_SPEED;
-			m_Origin = m_TargetOrigin;
-			//m_Origin = Lerp(m_Origin, m_TargetOrigin, deltaTime * MOVE_LERP_SPEED);
+			//m_Origin = m_TargetOrigin;
+			m_Origin = Lerp(m_Origin, m_TargetOrigin, deltaTime * MOVE_LERP_SPEED);
 
 			//Update Matrices
 			//Try to optimize this - should only be called once or when fov/aspectRatio changes

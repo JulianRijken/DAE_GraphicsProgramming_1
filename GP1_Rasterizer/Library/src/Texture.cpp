@@ -45,23 +45,11 @@ namespace dae
 
 	ColorRGB Texture::Sample(const Vector2& uv) const
 	{
-		return Sample(uv.x, uv.y);
-	}
+		float u{ uv.x };
+		float v{ uv.y };
 
-	ColorRGB Texture::Sample(float u,float v) const
-	{
-		// Ensure that the UV coordinates are within the valid range [0, 1]
-		//const float u{ std::ranges::clamp(uv.x, 0.0f, 1.0f) };
-		//const float v{ std::ranges::clamp(uv.y, 0.0f, 1.0f) };
-
-		// Not sure if clamping or returning if out is better
-		//if (u > 1.0f or u < 0.0f or v > 1.0f or v < 0.0f)
-		//	return colors::Red;
-
-
-		constexpr bool USE_WHILE{ true };
-		
-		if(USE_WHILE)
+		// Handle uv wrapping
+		if constexpr (true)
 		{
 			while (u > 1.0f)
 				u -= 1.0f;
@@ -74,7 +62,6 @@ namespace dae
 
 			while (v < 0.0f)
 				v += 1.0f;
-
 		}
 		else
 		{
@@ -86,19 +73,44 @@ namespace dae
 			v = (v < 0.0f) ? (v + 1.0f) : v;
 		}
 
-		
 		// Convert UV coordinates to texel coordinates
-		const int texelX = static_cast<int>(u * m_SurfacePtr->w);
-		const int texelY = static_cast<int>(v * m_SurfacePtr->h);
+		const float texelXf = u * static_cast<float>(m_SurfacePtr->w - 1);
+		const float texelYf = v * static_cast<float>(m_SurfacePtr->h - 1);
 
+		// Get the integer part and fractional part of texel coordinates
+		const int texelX = static_cast<int>(texelXf);
+		const int texelY = static_cast<int>(texelYf);
+		const float fracX = texelXf - texelX;
+		const float fracY = texelYf - texelY;
+
+		// Sample colors from four neighboring texels
+		const ColorRGB c00 = GetTexelColor(texelX, texelY);
+		const ColorRGB c10 = GetTexelColor(texelX + 1, texelY);
+		const ColorRGB c01 = GetTexelColor(texelX, texelY + 1);
+		const ColorRGB c11 = GetTexelColor(texelX + 1, texelY + 1);
+
+		// Bilinear interpolation
+		const ColorRGB interpolatedColor =
+			Lerp(
+				Lerp(c00, c10, fracX),
+				Lerp(c01, c11, fracX),
+				fracY
+			);
+
+		return interpolatedColor;
+	}
+
+
+	ColorRGB Texture::GetTexelColor(int x, int y) const
+	{
 		// Get the pixel value at the texel coordinates
-		const uint32_t pixel = m_SurfacePixelsPtr[texelY * m_SurfacePtr->w + texelX];
+		const uint32_t pixel = m_SurfacePixelsPtr[y * m_SurfacePtr->w + x];
 
 		Uint8 red{};
 		Uint8 green{};
 		Uint8 blue{};
 
-		SDL_GetRGB(pixel,m_SurfacePtr->format,&red, &green, &blue);
+		SDL_GetRGB(pixel, m_SurfacePtr->format, &red, &green, &blue);
 
 		// Return the sampled color
 		return

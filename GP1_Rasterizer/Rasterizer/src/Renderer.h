@@ -21,9 +21,11 @@ namespace dae
 {
 	enum class DebugRenderMode
 	{
-		FinalColor,
-		Color,
-		Opacity,
+		Diffuse,
+		ObservedArea,
+		DiffuseOA,
+		SpecularOA,
+		Combined,
 		UVColor,
 		Weights,
 		DepthBuffer,
@@ -33,14 +35,21 @@ namespace dae
 
 	const std::map<DebugRenderMode, std::string> RENDER_MODE_NAMES
 	{
-		{DebugRenderMode::FinalColor,"Final Color"},
-		{DebugRenderMode::Color,"Color"},
-		{DebugRenderMode::Opacity,"Opacity"},
+		{DebugRenderMode::Diffuse,"Diffuse Color"},
+		{DebugRenderMode::ObservedArea,"Observed Area"},
+		{DebugRenderMode::DiffuseOA,"Diffuse + OA"},
+		{DebugRenderMode::SpecularOA,"Specular + OA"},
+		{DebugRenderMode::Combined,"Combined"},
 		{DebugRenderMode::UVColor,"UV Color"},
 		{DebugRenderMode::Weights,"Weights"},
 		{DebugRenderMode::DepthBuffer,"Depth Buffer"},
 		{DebugRenderMode::MaterialIndex,"Material Index"},
 	};
+
+
+	const Vector3 LIGHT_DIRECTION{ Vector3{0.577f,-0.577f,0.577f}.Normalized() };
+	const ColorRGB AMBIENT_COLOR{ 0.025f,0.025f ,0.025f };
+
 
 
 	class Renderer final
@@ -57,8 +66,10 @@ namespace dae
 		void Update(const Timer& timer);
 		void Render();
 
-		void CycleDebugMode(bool up);
+		void ToggleRotation();
+		void ToggleNormalMap();
 		void SetRenderMode(DebugRenderMode mode);
+		void CycleRenderMode();
 
 		bool SaveBufferToImage() const;
 
@@ -87,5 +98,8 @@ namespace dae
 
 		int m_ScreenWidth;
 		int m_ScreenHeight;
+
+		bool m_HasToRotate;
+		bool m_UseNormalMap;
 	};
 }
