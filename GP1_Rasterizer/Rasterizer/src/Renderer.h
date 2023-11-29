@@ -4,6 +4,8 @@
 #include <vector>
 #include <DataTypes.h>
 
+#include "Mesh.h"
+
 namespace dae
 {
 	struct Camera;
@@ -23,7 +25,7 @@ namespace dae
 		Color,
 		Opacity,
 		UVColor,
-		BiometricCoordinate,
+		Weights,
 		DepthBuffer,
 		MaterialIndex,
 		COUNT
@@ -35,7 +37,7 @@ namespace dae
 		{DebugRenderMode::Color,"Color"},
 		{DebugRenderMode::Opacity,"Opacity"},
 		{DebugRenderMode::UVColor,"UV Color"},
-		{DebugRenderMode::BiometricCoordinate,"Biometric Coordinates"},
+		{DebugRenderMode::Weights,"Weights"},
 		{DebugRenderMode::DepthBuffer,"Depth Buffer"},
 		{DebugRenderMode::MaterialIndex,"Material Index"},
 	};
@@ -66,7 +68,7 @@ namespace dae
 
 		inline void RasterizeMesh(Mesh& mesh) const;
 		inline void RasterizeTriangle(const Triangle& triangle, const std::vector<Material*>& materialPtrs) const;
-		inline void ShadePixel(const Triangle& triangle) const;
+		inline void ShadePixel       (const Triangle& triangle, const std::vector<Material*>& materialPtrs, const Vector3& weights, int pixelIndex, float nonLinearDepth) const;
 
 		void InitializeMaterials();
 		void InitializeScene();

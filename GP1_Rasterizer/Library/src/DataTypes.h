@@ -1,4 +1,6 @@
 #pragma once
+#include <memory>
+
 #include "Maths.h"
 #include "Texture.h"
 #include "vector"
@@ -29,9 +31,9 @@ namespace dae
 
 	struct Triangle
 	{
-		VertexTransformed vertex0;
-		VertexTransformed vertex1;
-		VertexTransformed vertex2;
+		std::shared_ptr<VertexTransformed> vertex0;
+		std::shared_ptr<VertexTransformed> vertex1;
+	 	std::shared_ptr<VertexTransformed> vertex2;
 	};
 
 

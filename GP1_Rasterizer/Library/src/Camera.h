@@ -26,8 +26,8 @@ namespace dae
 		float m_FovAngle;
 		float m_FovValue;
 
-		float m_NearClippingPlane = 3.0f;
-		float m_FarClippingPlane = 100.0f;
+		float m_NearClippingPlane = 1.0f;
+		float m_FarClippingPlane = 1000.0f;
 
 		Vector3 m_Forward{ Vector3::UnitZ };
 		Vector3 m_Up{ Vector3::UnitY };
@@ -169,7 +169,8 @@ namespace dae
 			}
 
 
-			m_FovValue = tanf((m_FovAngle * TO_RADIANS) / 2.f);
+
+			m_FovValue = std::tan((m_FovAngle * TO_RADIANS) / 2.f);
 
 
 			// Extra to create effect that camera is not moving

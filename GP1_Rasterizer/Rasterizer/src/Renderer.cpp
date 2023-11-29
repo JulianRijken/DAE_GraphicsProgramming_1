@@ -22,7 +22,7 @@ using namespace dae;
 Renderer::Renderer(Camera* camera, SDL_Window* pWindow) :
 m_WindowPtr(pWindow),
 m_CameraPtr(camera),
-m_RenderMode(DebugRenderMode::FinalColor),
+m_RenderMode(DebugRenderMode::Color),
 m_ScreenWidth(), // Is set later
 m_ScreenHeight() // Is set later
 {
@@ -65,14 +65,14 @@ void Renderer::InitializeMaterials()
 
 
 
-	//m_MaterialPtrMap.insert({ "carBody",new Material {
-	//	Texture::LoadFromFile("Resources/Car/Tex_FordGT40_Color_2k_02_Clean.png"),
-	//	Texture::LoadFromFile("Resources/Car/Tex_FordGT40_Opacity_2k_02.png")
-	//}});
+	m_MaterialPtrMap.insert({ "carBody",new Material {
+		Texture::LoadFromFile("Resources/Car/Tex_FordGT40_Color_2k_02_Clean.png"),
+		Texture::LoadFromFile("Resources/Car/Tex_FordGT40_Opacity_2k_02.png")
+	}});
 
-	//m_MaterialPtrMap.insert({ "carWheel",new Material {
-	//	Texture::LoadFromFile("Resources/Car/Tex_TireAndRim_Color_1k_02.png"),
-	//}});
+	m_MaterialPtrMap.insert({ "carWheel",new Material {
+		Texture::LoadFromFile("Resources/Car/Tex_TireAndRim_Color_1k_02.png"),
+	}});
 
 
 	//m_MaterialPtrMap.insert({ "tukTuk",new Material {
@@ -93,6 +93,11 @@ void Renderer::InitializeScene()
 	//bikeMesh.SetYawRotation(-100.0f * TO_RADIANS);
 	//bikeMesh.SetPosition({ 50, 0, 0 });
 	m_WorldMeshes.push_back(bikeMesh);
+
+
+	//Mesh carMesh("Resources/Car/car2.obj", { m_MaterialPtrMap["carBody"],m_MaterialPtrMap["carWheel"] });
+	//carMesh.SetScale({8,8,8});
+	//m_WorldMeshes.push_back(carMesh);
 }
 
 
@@ -123,6 +128,7 @@ void Renderer::Render()
 	SDL_BlitSurface(m_BackBufferPtr, 0, m_FrontBufferPtr, 0);
 	SDL_UpdateWindowSurface(m_WindowPtr);
 }
+
 
 void Renderer::CycleDebugMode(bool up)
 {
@@ -160,7 +166,6 @@ void Renderer::TransformMesh(Mesh& mesh) const
 	// - Perspective divide
 	// - NDC
 
-
 	// For our translation
 	// For the postions we go from model space -> NDC
 	// For the normal and trangent we go from: model space -> world space (ONLY ROTATION SO MATRIX3)
@@ -173,139 +178,77 @@ void Renderer::TransformMesh(Mesh& mesh) const
 
 	const Matrix worldToViewProjectionMatrix = m_CameraPtr->m_InvViewMatrix * m_CameraPtr->m_ProjectionMatrix;
 
-	for (VertexTransformed& vertex : mesh.m_VerticesTransformed)
+	for (const std::shared_ptr<VertexTransformed>& vertex : mesh.m_VerticesTransformed)
 	{
 		// Convert vertex to world
-		vertex.pos = mesh.m_WorldMatrix.TransformPoint(vertex.pos);
+		vertex->pos = mesh.m_WorldMatrix.TransformPoint(vertex->pos);
 
 		// Convert normal to world
 		// Note we use transform vector
-		vertex.normal = mesh.m_WorldMatrix.TransformVector(vertex.normal);
-		vertex.tangent = mesh.m_WorldMatrix.TransformVector(vertex.normal);
+		vertex->normal = mesh.m_WorldMatrix.TransformPoint(vertex->normal);
+		vertex->tangent = mesh.m_WorldMatrix.TransformPoint(vertex->tangent);
 
 		// Calculate view direction based on vertex in world
-		vertex.viewDirection = vertex.pos.GetXYZ() - m_CameraPtr->m_Origin;
+		vertex->viewDirection = (vertex->pos.GetXYZ() - m_CameraPtr->m_Origin).Normalized(); // Might not need the normalized
 
 		// Transform vertex to view
-		vertex.pos = worldToViewProjectionMatrix.TransformPoint(vertex.pos);
+		vertex->pos = worldToViewProjectionMatrix.TransformPoint(vertex->pos);
 
 		// Apply perspective divide  
-		vertex.pos.x /= vertex.pos.w;
-		vertex.pos.y /= vertex.pos.w;
-		vertex.pos.z /= vertex.pos.w;
+		vertex->pos.x /= vertex->pos.w;
+		vertex->pos.y /= vertex->pos.w;
+		vertex->pos.z /= vertex->pos.w;
 
 		// Convert from NDC to screen
-		vertex.pos.x = (vertex.pos.x + 1.0f) / 2.0f * static_cast<float>(m_ScreenWidth);
-		vertex.pos.y = (1.0f - vertex.pos.y) / 2.0f * static_cast<float>(m_ScreenHeight);
+		vertex->pos.x = (vertex->pos.x + 1.0f) / 2.0f * static_cast<float>(m_ScreenWidth);
+		vertex->pos.y = (1.0f - vertex->pos.y) / 2.0f * static_cast<float>(m_ScreenHeight);
 	}
 }
 
 
 void Renderer::RasterizeMesh(Mesh& mesh) const
 {
-	// Convert world to screen
-	Transfo rmMesh(mesh);
-	// NOTE TO SELF MAKE it so that the triangles are stored in the mesh. and the triangle also stores the weights 
+	TransformMesh(mesh);
 
-
-	// Color world vertex
-	int vertexIndex{ 0 };
-	for (VertexTransformed& vertex : mesh.m_VerticesTransformed)
-	{
-		if (vertexIndex == 0)
-			vertex.color = colors::Red;
-
-		if (vertexIndex == 1)
-			vertex.color = colors::Green;
-
-		if (vertexIndex == 2)
-			vertex.color = colors::Blue;
-
-		vertexIndex++;
-		vertexIndex %= 3;
-	}
-
-	if (mesh.m_PrimitiveTopology == PrimitiveTopology::TriangleList)
-	{
-		Triangle triangle{};
-		for (int i{}; i < static_cast<int>(mesh.m_Indices.size()); i += 3)
+#ifdef MULTI_THREAD
+	std::for_each(std::execution::par, mesh.m_Triangles.begin(), mesh.m_Triangles.end(), [this,mesh](Triangle& triangle)
 		{
-			triangle =
-			{
-				mesh.m_VerticesTransformed[mesh.m_Indices[i]],
-				mesh.m_VerticesTransformed[mesh.m_Indices[i + 1]],
-				mesh.m_VerticesTransformed[mesh.m_Indices[i + 2]],
-			};
-
 			RasterizeTriangle(triangle, mesh.m_MaterialPtrs);
-		}
-	}
-	else
-	{
-		Triangle triangle{};
-		for (int i{}; i < static_cast<int>(mesh.m_Indices.size() - 2); i++)
-		{
-			if (i % 2 == 0)
-			{
-				triangle =
-				{
-					mesh.m_VerticesTransformed[mesh.m_Indices[i]],
-					mesh.m_VerticesTransformed[mesh.m_Indices[i + 1]],
-					mesh.m_VerticesTransformed[mesh.m_Indices[i + 2]]
-				};
-
-				RasterizeTriangle(triangle,mesh.m_MaterialPtrs);
-			}
-			else
-			{
-				triangle =
-				{
-					mesh.m_VerticesTransformed[mesh.m_Indices[i]],
-					mesh.m_VerticesTransformed[mesh.m_Indices[i + 2]],
-					mesh.m_VerticesTransformed[mesh.m_Indices[i + 1]]
-				};
-
-				RasterizeTriangle(triangle,mesh.m_MaterialPtrs);
-			}
-		}
-	}
+		});
+#else
+	for (Triangle& triangle : mesh.m_Triangles)
+		RasterizeTriangle(triangle, mesh.m_MaterialPtrs);
+#endif
 }
 
 void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Material*>& materialPtrs) const
 {
-	constexpr bool USE_BACK_FACE_CULLING = true;
-
 	// early out culling
-	if (triangle.vertex0.pos.z < 0.0f or triangle.vertex0.pos.z > 1.0f and
-		triangle.vertex1.pos.z < 0.0f or triangle.vertex1.pos.z > 1.0f and
-		triangle.vertex2.pos.z < 0.0f or triangle.vertex2.pos.z > 1.0f) return;
+	if (triangle.vertex0->pos.z < 0.0f or triangle.vertex0->pos.z > 1.0f and
+		triangle.vertex1->pos.z < 0.0f or triangle.vertex1->pos.z > 1.0f and
+		triangle.vertex2->pos.z < 0.0f or triangle.vertex2->pos.z > 1.0f) return;
 
-	if (triangle.vertex0.pos.w < 0.0f) return;
-	if (triangle.vertex1.pos.w < 0.0f) return;
-	if (triangle.vertex2.pos.w < 0.0f) return;
+	if (triangle.vertex0->pos.w < 0.0f) return;
+	if (triangle.vertex1->pos.w < 0.0f) return;
+	if (triangle.vertex2->pos.w < 0.0f) return;
 
 
 	// Checking normal early for more performance
 	const Vector3 normal = Vector3::Cross
 	(
-		triangle.vertex1.pos - triangle.vertex0.pos,
-		triangle.vertex2.pos - triangle.vertex0.pos
+		triangle.vertex1->pos - triangle.vertex0->pos,
+		triangle.vertex2->pos - triangle.vertex0->pos
 	);
 
-
-	if (USE_BACK_FACE_CULLING)
-	{
-		//if (normal.z <= 0.0f)
-		//	return;
-	}
-
+	if (normal.z <= 0.0f)
+		return;
 
 	// Adding the 1 pixel is done to prevent gaps in the triangles
 	constexpr int boundingBoxPadding{1};
-	int minX = static_cast<int>(std::min(triangle.vertex0.pos.x, std::min(triangle.vertex1.pos.x, triangle.vertex2.pos.x))) - boundingBoxPadding;
-	int maxX = static_cast<int>(std::max(triangle.vertex0.pos.x, std::max(triangle.vertex1.pos.x, triangle.vertex2.pos.x))) + boundingBoxPadding;
-	int minY = static_cast<int>(std::min(triangle.vertex0.pos.y, std::min(triangle.vertex1.pos.y, triangle.vertex2.pos.y))) - boundingBoxPadding;
-	int maxY = static_cast<int>(std::max(triangle.vertex0.pos.y, std::max(triangle.vertex1.pos.y, triangle.vertex2.pos.y))) + boundingBoxPadding;
+	int minX = static_cast<int>(std::min(triangle.vertex0->pos.x, std::min(triangle.vertex1->pos.x, triangle.vertex2->pos.x))) - boundingBoxPadding;
+	int maxX = static_cast<int>(std::max(triangle.vertex0->pos.x, std::max(triangle.vertex1->pos.x, triangle.vertex2->pos.x))) + boundingBoxPadding;
+	int minY = static_cast<int>(std::min(triangle.vertex0->pos.y, std::min(triangle.vertex1->pos.y, triangle.vertex2->pos.y))) - boundingBoxPadding;
+	int maxY = static_cast<int>(std::max(triangle.vertex0->pos.y, std::max(triangle.vertex1->pos.y, triangle.vertex2->pos.y))) + boundingBoxPadding;
 
 	// Clamping is done so that the triangle is not rendered off the screen
 	minX = std::ranges::clamp(minX, 0, m_ScreenWidth);
@@ -313,10 +256,6 @@ void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Mat
 	minY = std::ranges::clamp(minY, 0, m_ScreenHeight);
 	maxY = std::ranges::clamp(maxY, 0, m_ScreenHeight);
 
-
-	float signedAreaW0;
-	float signedAreaW1;
-	float signedAreaW2;
 
 	// Looping all pixels within the bounding box
 	// This is done for optimization
@@ -326,82 +265,63 @@ void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Mat
 		{
 			const Vector2 pixelCenter{ static_cast<float>(pixelX) + 0.5f,static_cast<float>(pixelY) + 0.5f };
 
-			if (USE_BACK_FACE_CULLING)
-			{
-				signedAreaW0 = Vector2::Cross(pixelCenter - triangle.vertex1.pos.GetXY(), triangle.vertex2.pos.GetXY() - triangle.vertex1.pos.GetXY());
-				if (signedAreaW0 >= 0) continue;
-				signedAreaW1 = Vector2::Cross(pixelCenter - triangle.vertex2.pos.GetXY(), triangle.vertex0.pos.GetXY() - triangle.vertex2.pos.GetXY());
-				if (signedAreaW1 >= 0) continue;
-				signedAreaW2 = Vector2::Cross(pixelCenter - triangle.vertex0.pos.GetXY(), triangle.vertex1.pos.GetXY() - triangle.vertex0.pos.GetXY());
-				if (signedAreaW2 >= 0) continue;
-			}
-			else
-			{
-				if (normal.z > 0.0f)
-				{
-					signedAreaW0 = Vector2::Cross(pixelCenter - triangle.vertex1.pos.GetXY(), triangle.vertex2.pos.GetXY() - triangle.vertex1.pos.GetXY());
-					if (signedAreaW0 >= 0) continue;
-					signedAreaW1 = Vector2::Cross(pixelCenter - triangle.vertex2.pos.GetXY(), triangle.vertex0.pos.GetXY() - triangle.vertex2.pos.GetXY());
-					if (signedAreaW1 >= 0) continue;
-					signedAreaW2 = Vector2::Cross(pixelCenter - triangle.vertex0.pos.GetXY(), triangle.vertex1.pos.GetXY() - triangle.vertex0.pos.GetXY());
-					if (signedAreaW2 >= 0) continue;
-				}
-				else
-				{
-					signedAreaW0 = Vector2::Cross(triangle.vertex2.pos.GetXY() - triangle.vertex1.pos.GetXY(), pixelCenter - triangle.vertex1.pos.GetXY());
-					if (signedAreaW0 >= 0) continue;
-					signedAreaW1 = Vector2::Cross(triangle.vertex0.pos.GetXY() - triangle.vertex2.pos.GetXY(), pixelCenter - triangle.vertex2.pos.GetXY());
-					if (signedAreaW1 >= 0) continue;
-					signedAreaW2 = Vector2::Cross(triangle.vertex1.pos.GetXY() - triangle.vertex0.pos.GetXY(), pixelCenter - triangle.vertex0.pos.GetXY());
-					if (signedAreaW2 >= 0) continue;
-				}
-			}
+			const float signedAreaW0 = Vector2::Cross(pixelCenter - triangle.vertex1->pos.GetXY(),triangle.vertex2->pos.GetXY() - triangle.vertex1->pos.GetXY());
+			if (signedAreaW0 >= 0) continue;
+			const float signedAreaW1 = Vector2::Cross(pixelCenter - triangle.vertex2->pos.GetXY(),triangle.vertex0->pos.GetXY() - triangle.vertex2->pos.GetXY());
+			if (signedAreaW1 >= 0) continue;
+			const float signedAreaW2 = Vector2::Cross(pixelCenter - triangle.vertex0->pos.GetXY(),triangle.vertex1->pos.GetXY() - triangle.vertex0->pos.GetXY());
+			if (signedAreaW2 >= 0) continue;
+
 
 			// Get total area before
 			const float totalArea = signedAreaW0 + signedAreaW1 + signedAreaW2;
 			const float totalAreaInv = 1.0f / totalArea;
-			const float signedAreaW0Inv = signedAreaW0 * totalAreaInv;
-			const float signedAreaW1Inv = signedAreaW1 * totalAreaInv;
-			const float signedAreaW2Inv = signedAreaW2 * totalAreaInv;
+			Vector3 weights
+			{
+				signedAreaW0 * totalAreaInv,
+				signedAreaW1 * totalAreaInv,
+				signedAreaW2 * totalAreaInv,
+			};
 
 
-			const float nonLinearPixelDepth = 1.0f / (
-				1.0f / triangle.vertex0.pos.z * signedAreaW0Inv +
-				1.0f / triangle.vertex1.pos.z * signedAreaW1Inv +
-				1.0f / triangle.vertex2.pos.z * signedAreaW2Inv);
+			const float nonLinearDepth = 1.0f / (
+				1.0f / triangle.vertex0->pos.z * weights.x +
+				1.0f / triangle.vertex1->pos.z * weights.y +
+				1.0f / triangle.vertex2->pos.z * weights.z);
 
 			// Culling I DON"T KNOW IT DOES NOT SEEM CORRECT THE DEPTH THAT IS
 			//if (nonLinearPixelDepth < 0.0f or nonLinearPixelDepth > 1.0f)
 			//	continue;
 
-			const int pixelIndex{ pixelX + pixelY * m_ScreenWidth };
+			const int pixelIndex = pixelX + pixelY * m_ScreenWidth;
 
 			// Depth check
-			if (nonLinearPixelDepth > m_pDepthBufferPixels[pixelIndex])
+			if (nonLinearDepth > m_pDepthBufferPixels[pixelIndex])
 				continue;
-			m_pDepthBufferPixels[pixelIndex] = nonLinearPixelDepth;
+			m_pDepthBufferPixels[pixelIndex] = nonLinearDepth;
 
-			ShadePixel(triangle);
+			ShadePixel(triangle, materialPtrs, weights, pixelIndex, nonLinearDepth);
 		}
 	}
 }
 
-void Renderer::ShadePixel(const Triangle& triangle) const
+void Renderer::ShadePixel(const Triangle& triangle, const std::vector<Material*>& materialPtrs, const Vector3& weights, int pixelIndex, float nonLinearDepth) const
 {
 	const float linearPixelDepth = 1.0f / (
-		1.0f / triangle.vertex0.pos.w * signedAreaW0Inv +
-		1.0f / triangle.vertex1.pos.w * signedAreaW1Inv +
-		1.0f / triangle.vertex2.pos.w * signedAreaW2Inv);
+		1.0f / triangle.vertex0->pos.w * weights.x +
+		1.0f / triangle.vertex1->pos.w * weights.y +
+		1.0f / triangle.vertex2->pos.w * weights.z);
 
 
 	const Vector2 uv = linearPixelDepth * (
-		triangle.vertex0.uv / triangle.vertex0.pos.w * signedAreaW0Inv +
-		triangle.vertex1.uv / triangle.vertex1.pos.w * signedAreaW1Inv +
-		triangle.vertex2.uv / triangle.vertex2.pos.w * signedAreaW2Inv);
+		triangle.vertex0->uv / triangle.vertex0->pos.w * weights.x +
+		triangle.vertex1->uv / triangle.vertex1->pos.w * weights.y +
+		triangle.vertex2->uv / triangle.vertex2->pos.w * weights.z);
 
 
 	ColorRGB finalPixelColor{};
-	const Material* material{ materialPtrs[triangle.vertex0.materialIndex] };
+	const Material* material{ materialPtrs[triangle.vertex0->materialIndex] };
+
 	switch (m_RenderMode)
 	{
 	case DebugRenderMode::FinalColor:
@@ -421,7 +341,7 @@ void Renderer::ShadePixel(const Triangle& triangle) const
 			const uint8_t red = (pixel & 0xFF0000) >> 16;
 			const uint8_t green = (pixel & 0x00FF00) >> 8;
 			const uint8_t blue = pixel & 0x0000FF;
-			ColorRGB backColor
+			const ColorRGB backColor
 			{
 				static_cast<float>(red) / 255.0f,
 				static_cast<float>(green) / 255.0f,
@@ -446,10 +366,11 @@ void Renderer::ShadePixel(const Triangle& triangle) const
 			break;
 
 		finalPixelColor = material->color->Sample(uv);
+
 	} break;
 	case DebugRenderMode::MaterialIndex:
 	{
-		switch (triangle.vertex0.materialIndex)
+		switch (triangle.vertex0->materialIndex)
 		{
 		case 0:
 			finalPixelColor = colors::Red;
@@ -481,13 +402,13 @@ void Renderer::ShadePixel(const Triangle& triangle) const
 		else
 			finalPixelColor = material->opacity->Sample(uv);
 	} break;
-	case DebugRenderMode::BiometricCoordinate:
+	case DebugRenderMode::Weights:
 	{
 		finalPixelColor =
-			triangle.vertex0.color * signedAreaW0 * totalAreaInv +
-			triangle.vertex1.color * signedAreaW1 * totalAreaInv +
-			triangle.vertex2.color * signedAreaW2 * totalAreaInv;
-	} break;
+			triangle.vertex0->color * weights.x +
+			triangle.vertex1->color * weights.y +
+			triangle.vertex2->color * weights.z;
+	} break;								
 	case DebugRenderMode::DepthBuffer:
 	{
 		//finalPixelColor = colors::White * ;
@@ -502,13 +423,13 @@ void Renderer::ShadePixel(const Triangle& triangle) const
 		//finalPixelColor = colors::White * Utils::MapValueInRangeClamped(nonLinearPixelDepth,0.9f,1.0f,0.0f,1.0f);
 		//finalPixelColor = colors::White * std::ranges::clamp(nonLinearPixelDepth,0.0f,1.0f);
 
-		if (nonLinearPixelDepth < 0.0f)
+		if (nonLinearDepth < 0.0f)
 			finalPixelColor = colors::Red;
 		else
-			if (nonLinearPixelDepth > 1.0f)
+			if (nonLinearDepth > 1.0f)
 				finalPixelColor = colors::Blue;
 			else
-				finalPixelColor = colors::Green * nonLinearPixelDepth;
+				finalPixelColor = colors::Green * nonLinearDepth;
 
 
 	}break;
@@ -531,3 +452,5 @@ bool Renderer::SaveBufferToImage() const
 {
 	return SDL_SaveBMP(m_BackBufferPtr, "Rasterizer_ColorBuffer.bmp");
 }
+
+
