@@ -30,11 +30,12 @@ int main(int argc, char* args[])
 	//Create window + surfaces
 	SDL_Init(SDL_INIT_VIDEO);
 
-	const uint32_t width = 640;
-	const uint32_t height = 480;
+	//const uint32_t width = 640;
+	//const uint32_t height = 480;
 
-	//const uint32_t width = 1280;
-	//const uint32_t height = 720;
+	const uint32_t width = 1280;
+	const uint32_t height = 720;
+
 	const float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 
 	SDL_Window* pWindow = SDL_CreateWindow(
@@ -109,6 +110,7 @@ int main(int argc, char* args[])
 		//--------- Update ---------
 		//renderer.Update(timer);
 		camera.Update(timer);
+		renderer.Update(timer);
 
 		//--------- Render ---------
 		renderer.Render();

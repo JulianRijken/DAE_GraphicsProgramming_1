@@ -7,63 +7,82 @@
 
 namespace dae
 {
-	Mesh::Mesh(const std::vector<VertexModel>& vertices, const std::vector<uint32_t>& indices,
-		const std::vector<Material*>& materials, PrimitiveTopology primitiveTopology) :
-		m_VerticesModel(vertices),
+	Mesh::Mesh(std::vector<VertexModel> vertices, std::vector<uint32_t> indices,
+	           std::vector<Material*> materials, PrimitiveTopology primitiveTopology) :
+		m_VerticesModel(std::move(vertices)),
 		m_VerticesTransformed(m_VerticesModel.size()),
-		m_Indices(indices),
-		m_MaterialPtrs(materials),
-		m_PrimitiveTopology(primitiveTopology)
+		m_Indices(std::move(indices)),
+		m_MaterialPtrs(std::move(materials)),
+		m_PrimitiveTopology(primitiveTopology),
+		m_YawRotation(0.0f),
+		m_Scale(1.0f,1.0f,1.0f),
+		m_Position(0.0f, 0.0f, 0.0f)
 	{
 	}
 
-	Mesh::Mesh(const std::string& name, const std::vector<Material*>& materials, PrimitiveTopology primitiveTopology) :
-		m_MaterialPtrs(materials),
-		m_PrimitiveTopology(primitiveTopology)
+	Mesh::Mesh(const std::string& name, std::vector<Material*> materials, PrimitiveTopology primitiveTopology) :
+		m_MaterialPtrs(std::move(materials)),
+		m_PrimitiveTopology(primitiveTopology),
+		m_YawRotation(0.0f),
+		m_Scale(1.0f, 1.0f, 1.0f),
+		m_Position(0.0f, 0.0f, 0.0f)
 	{
 		Utils::ParseOBJ(name, m_VerticesModel, m_Indices);
 		m_VerticesTransformed = std::vector<VertexTransformed>(m_VerticesModel.size());
 	}
 
-	void Mesh::Translate(Vector3 translate)
+	void Mesh::SetPosition(Vector3 translate)
 	{
-		const Matrix translateMatrix{
+		m_Position = translate;
+		UpdateWorldMatrix();
+	}
 
+	void Mesh::SetScale(Vector3 scale)
+	{
+		m_Scale = scale;
+		UpdateWorldMatrix();
+	}
+
+	void Mesh::SetYawRotation(float yawRotation)
+	{
+		m_YawRotation = yawRotation;
+		UpdateWorldMatrix();
+	}
+
+	void Mesh::AddYawRotation(float yawDelta)
+	{
+		m_YawRotation += yawDelta;
+		UpdateWorldMatrix();
+	}
+
+
+	void Mesh::UpdateWorldMatrix()
+	{
+		const Matrix translationMatrix
+		{
 			{1.0f,0.0f,0.0f},
 			{0.0f,1.0f,0.0f},
 			{0.0f,0.0f,1.0f},
-			{translate}
+			{m_Position}
 		};
 
-		for (VertexModel& vertex : m_VerticesModel)
-			vertex.pos = translateMatrix.TransformPoint(vertex.pos);
-	}
-
-	void Mesh::Scale(Vector3 scale)
-	{
-		const Matrix scaleMatrix{
-
-				{scale.x,0.f,0.f,0.f},
-				{0.f,scale.y,0.f,0.f},
-				{0.f,0.f,scale.z,0.f},
-				{0.f,0.f,0.f,1.f}
-		};
-
-		for (VertexModel& vertex : m_VerticesModel)
-			vertex.pos = scaleMatrix.TransformPoint(vertex.pos);
-	}
-
-	void Mesh::Rotate(float yaw)
-	{
-		const Matrix rotateMatrix{
-			{ cosf(yaw), 0, -sinf(yaw), 0},
+		const Matrix rotateMatrix
+		{
+			{ std::cos(m_YawRotation), 0, -std::sin(m_YawRotation), 0},
 			{0.f, 1.f, 0.f, 0.f},
-			{sinf(yaw),0.f, cosf(yaw), 0.f},
+			{std::sin(m_YawRotation),0.f, std::cos(m_YawRotation), 0.f},
 			{0.f, 0.f, 0.f, 1.f}
 		};
 
-		for (VertexModel& vertex : m_VerticesModel)
-			vertex.pos = rotateMatrix.TransformPoint(vertex.pos);
+		const Matrix scaleMatrix
+		{
+			{m_Scale.x,0.f,0.f,0.f},
+			{0.f,m_Scale.y,0.f,0.f},
+			{0.f,0.f,m_Scale.z,0.f},
+			{0.f,0.f,0.f,1.f}
+		};
+
+		m_WorldMatrix = scaleMatrix * rotateMatrix * translationMatrix;
 	}
 
 	void Mesh::ResetTransformedVertices()

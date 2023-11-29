@@ -88,13 +88,18 @@ void Renderer::InitializeMaterials()
 
 void Renderer::InitializeScene()
 {
-	const Mesh bikeMesh("Resources/vehicle.obj", { m_MaterialPtrMap["bike"] });
-	//bikeMesh.Scale({ 0.2f, 0.2f, 0.2f });
-	//bikeMesh.Rotate(-35 * TO_RADIANS);
-	//bikeMesh.Translate({ 0, 0, 20 });
+	Mesh bikeMesh("Resources/vehicle.obj", { m_MaterialPtrMap["bike"] });
+	//bikeMesh.SetScale({ 0.2f, 0.2f, 0.2f });
+	//bikeMesh.SetYawRotation(-100.0f * TO_RADIANS);
+	//bikeMesh.SetPosition({ 50, 0, 0 });
 	m_WorldMeshes.push_back(bikeMesh);
 }
 
+
+void Renderer::Update(const Timer& timer)
+{
+	m_WorldMeshes[0].AddYawRotation(timer.GetElapsed() * 0.5f);
+}
 
 void Renderer::Render()
 {
@@ -110,7 +115,7 @@ void Renderer::Render()
 
 	// Render all meshes
 	for (Mesh& mesh : m_WorldMeshes)
-		RenderMesh(mesh);
+		RasterizeMesh(mesh);
 	
 
 	//Update SDL Surface
@@ -158,7 +163,7 @@ void Renderer::TransformMesh(Mesh& mesh) const
 
 	// For our translation
 	// For the postions we go from model space -> NDC
-	// For the normal and trangent we go grom: model space -> world space (ONLY ROTATION SO MATRIX3)
+	// For the normal and trangent we go from: model space -> world space (ONLY ROTATION SO MATRIX3)
 	// For the view direction the camera is in world and we only need to translate the vertex from model -> world
 
 
@@ -166,17 +171,28 @@ void Renderer::TransformMesh(Mesh& mesh) const
 	// This is done because we apply matrix transformations on the transformed vertices
 	mesh.ResetTransformedVertices();
 
-	const Matrix worldViewProjectionMatrix =/* mesh.worldMatrix * */m_CameraPtr->m_InvViewMatrix * m_CameraPtr->m_ProjectionMatrix;
+	const Matrix worldToViewProjectionMatrix = m_CameraPtr->m_InvViewMatrix * m_CameraPtr->m_ProjectionMatrix;
 
 	for (VertexTransformed& vertex : mesh.m_VerticesTransformed)
 	{
-		vertex.pos = worldViewProjectionMatrix.TransformPoint(vertex.pos);
+		// Convert vertex to world
+		vertex.pos = mesh.m_WorldMatrix.TransformPoint(vertex.pos);
+
+		// Convert normal to world
+		// Note we use transform vector
+		vertex.normal = mesh.m_WorldMatrix.TransformVector(vertex.normal);
+		vertex.tangent = mesh.m_WorldMatrix.TransformVector(vertex.normal);
+
+		// Calculate view direction based on vertex in world
+		vertex.viewDirection = vertex.pos.GetXYZ() - m_CameraPtr->m_Origin;
+
+		// Transform vertex to view
+		vertex.pos = worldToViewProjectionMatrix.TransformPoint(vertex.pos);
 
 		// Apply perspective divide  
 		vertex.pos.x /= vertex.pos.w;
 		vertex.pos.y /= vertex.pos.w;
 		vertex.pos.z /= vertex.pos.w;
-
 
 		// Convert from NDC to screen
 		vertex.pos.x = (vertex.pos.x + 1.0f) / 2.0f * static_cast<float>(m_ScreenWidth);
@@ -185,10 +201,12 @@ void Renderer::TransformMesh(Mesh& mesh) const
 }
 
 
-void Renderer::RenderMesh(Mesh& mesh) const
+void Renderer::RasterizeMesh(Mesh& mesh) const
 {
 	// Convert world to screen
-	TransformMesh(mesh);
+	Transfo rmMesh(mesh);
+	// NOTE TO SELF MAKE it so that the triangles are stored in the mesh. and the triangle also stores the weights 
+
 
 	// Color world vertex
 	int vertexIndex{ 0 };
@@ -219,7 +237,7 @@ void Renderer::RenderMesh(Mesh& mesh) const
 				mesh.m_VerticesTransformed[mesh.m_Indices[i + 2]],
 			};
 
-			RenderTriangle(triangle, mesh.m_MaterialPtrs);
+			RasterizeTriangle(triangle, mesh.m_MaterialPtrs);
 		}
 	}
 	else
@@ -236,7 +254,7 @@ void Renderer::RenderMesh(Mesh& mesh) const
 					mesh.m_VerticesTransformed[mesh.m_Indices[i + 2]]
 				};
 
-				RenderTriangle(triangle,mesh.m_MaterialPtrs);
+				RasterizeTriangle(triangle,mesh.m_MaterialPtrs);
 			}
 			else
 			{
@@ -247,13 +265,13 @@ void Renderer::RenderMesh(Mesh& mesh) const
 					mesh.m_VerticesTransformed[mesh.m_Indices[i + 1]]
 				};
 
-				RenderTriangle(triangle,mesh.m_MaterialPtrs);
+				RasterizeTriangle(triangle,mesh.m_MaterialPtrs);
 			}
 		}
 	}
 }
 
-void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Material*>& materialPtrs) const
+void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Material*>& materialPtrs) const
 {
 	constexpr bool USE_BACK_FACE_CULLING = true;
 
@@ -352,7 +370,6 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 				1.0f / triangle.vertex1.pos.z * signedAreaW1Inv +
 				1.0f / triangle.vertex2.pos.z * signedAreaW2Inv);
 
-
 			// Culling I DON"T KNOW IT DOES NOT SEEM CORRECT THE DEPTH THAT IS
 			//if (nonLinearPixelDepth < 0.0f or nonLinearPixelDepth > 1.0f)
 			//	continue;
@@ -364,150 +381,150 @@ void Renderer::RenderTriangle(const Triangle& triangle, const std::vector<Materi
 				continue;
 			m_pDepthBufferPixels[pixelIndex] = nonLinearPixelDepth;
 
-
-
-			const float linearPixelDepth = 1.0f / (
-				1.0f / triangle.vertex0.pos.w * signedAreaW0Inv +
-				1.0f / triangle.vertex1.pos.w * signedAreaW1Inv +
-				1.0f / triangle.vertex2.pos.w * signedAreaW2Inv);
-
-
-			const Vector2 uv = linearPixelDepth * (
-				triangle.vertex0.uv / triangle.vertex0.pos.w * signedAreaW0Inv +
-				triangle.vertex1.uv / triangle.vertex1.pos.w * signedAreaW1Inv +
-				triangle.vertex2.uv / triangle.vertex2.pos.w * signedAreaW2Inv);
-
-
-
-
-			ColorRGB finalPixelColor{};
-			const Material* material{ materialPtrs[triangle.vertex0.materialIndex] };
-			switch (m_RenderMode)
-			{
-				case DebugRenderMode::FinalColor:
-				{
-					if (material->color == nullptr)
-						break;
-
-					ColorRGB color{};
-
-					// Can be further optimized and more checks
-					color = material->color->Sample(uv);
-
-					if (material->opacity != nullptr)
-					{
-						const uint32_t pixel = m_BackBufferPixelsPtr[pixelIndex];
-						// Extract individual color channels (assuming 8 bits per channel)
-						const uint8_t red = (pixel & 0xFF0000) >> 16;
-						const uint8_t green = (pixel & 0x00FF00) >> 8;
-						const uint8_t blue = pixel & 0x0000FF;
-						ColorRGB backColor
-						{
-							static_cast<float>(red) / 255.0f,
-							static_cast<float>(green) / 255.0f,
-							static_cast<float>(blue) / 255.0f,
-						};
-
-						ColorRGB opacity{ 1.0f,1.0f,1.0f };
-						opacity = material->opacity->Sample(uv);
-
-						const float alpha = std::ranges::clamp(opacity.r, 0.0f, 1.0f);
-						finalPixelColor = ColorRGB::Lerp(backColor, color, alpha);
-					}
-					else
-					{
-						finalPixelColor = color;
-					}
-
-				} break;
-				case DebugRenderMode::Color:
-				{
-					if (material->color == nullptr)
-						break;
-
-					finalPixelColor = material->color->Sample(uv);
-				} break;
-				case DebugRenderMode::MaterialIndex:
-				{
-					switch (triangle.vertex0.materialIndex)
-					{
-					case 0:
-						finalPixelColor = colors::Red;
-						break;
-					case 1:
-						finalPixelColor = colors::Blue;
-						break;
-					case 2:
-						finalPixelColor = colors::Green;
-						break;
-					case 3:
-						finalPixelColor = colors::Cyan;
-						break;
-					case 4:
-						finalPixelColor = colors::Magenta;
-						break;
-					case 5:
-						finalPixelColor = colors::Yellow;
-						break;
-					default: 
-						finalPixelColor = colors::White;
-					}
-
-				} break;
-				case DebugRenderMode::Opacity:
-				{
-					if (material->opacity == nullptr)
-						finalPixelColor = colors::White;
-					else
-						finalPixelColor = material->opacity->Sample(uv);
-				} break;
-				case DebugRenderMode::BiometricCoordinate:
-				{
-					finalPixelColor =
-						triangle.vertex0.color * signedAreaW0 * totalAreaInv +
-						triangle.vertex1.color * signedAreaW1 * totalAreaInv +
-						triangle.vertex2.color * signedAreaW2 * totalAreaInv;
-				} break;
-				case DebugRenderMode::DepthBuffer:
-				{
-					//finalPixelColor = colors::White * ;
-					//finalPixelColor = colors::White * std::lerp(0.985f, 1.0f, nonLinearPixelDepth);
-					
-					//finalPixelColor = colors::White * std::clamp(triangle.vertex0.positionScreen.z,0.0f,1.0f);
-
-
-					//finalPixelColor = colors::White * std::clamp(nonLinearPixelDepth,0.0f,1.0f);
-
-
-					//finalPixelColor = colors::White * Utils::MapValueInRangeClamped(nonLinearPixelDepth,0.9f,1.0f,0.0f,1.0f);
-					//finalPixelColor = colors::White * std::ranges::clamp(nonLinearPixelDepth,0.0f,1.0f);
-
-					if (nonLinearPixelDepth < 0.0f)
-						finalPixelColor = colors::Red;
-					else
-					if (nonLinearPixelDepth > 1.0f)
-						finalPixelColor = colors::Blue;
-					else
-						finalPixelColor = colors::Green * nonLinearPixelDepth;
-
-
-				}break;
-			case DebugRenderMode::UVColor:
-					finalPixelColor = m_MaterialPtrMap.at("uvGrid2")->color->Sample(uv);
-				break;
-			}
-
-
-			//Update Color in Buffer
-			//finalPixelColor.MaxToOne();
-			m_BackBufferPixelsPtr[pixelIndex] = SDL_MapRGB(m_BackBufferPtr->format,
-				static_cast<uint8_t>(finalPixelColor.r * 255),
-				static_cast<uint8_t>(finalPixelColor.g * 255),
-				static_cast<uint8_t>(finalPixelColor.b * 255));
+			ShadePixel(triangle);
 		}
 	}
 }
 
+void Renderer::ShadePixel(const Triangle& triangle) const
+{
+	const float linearPixelDepth = 1.0f / (
+		1.0f / triangle.vertex0.pos.w * signedAreaW0Inv +
+		1.0f / triangle.vertex1.pos.w * signedAreaW1Inv +
+		1.0f / triangle.vertex2.pos.w * signedAreaW2Inv);
+
+
+	const Vector2 uv = linearPixelDepth * (
+		triangle.vertex0.uv / triangle.vertex0.pos.w * signedAreaW0Inv +
+		triangle.vertex1.uv / triangle.vertex1.pos.w * signedAreaW1Inv +
+		triangle.vertex2.uv / triangle.vertex2.pos.w * signedAreaW2Inv);
+
+
+	ColorRGB finalPixelColor{};
+	const Material* material{ materialPtrs[triangle.vertex0.materialIndex] };
+	switch (m_RenderMode)
+	{
+	case DebugRenderMode::FinalColor:
+	{
+		if (material->color == nullptr)
+			break;
+
+		ColorRGB color{};
+
+		// Can be further optimized and more checks
+		color = material->color->Sample(uv);
+
+		if (material->opacity != nullptr)
+		{
+			const uint32_t pixel = m_BackBufferPixelsPtr[pixelIndex];
+			// Extract individual color channels (assuming 8 bits per channel)
+			const uint8_t red = (pixel & 0xFF0000) >> 16;
+			const uint8_t green = (pixel & 0x00FF00) >> 8;
+			const uint8_t blue = pixel & 0x0000FF;
+			ColorRGB backColor
+			{
+				static_cast<float>(red) / 255.0f,
+				static_cast<float>(green) / 255.0f,
+				static_cast<float>(blue) / 255.0f,
+			};
+
+			ColorRGB opacity{ 1.0f,1.0f,1.0f };
+			opacity = material->opacity->Sample(uv);
+
+			const float alpha = std::ranges::clamp(opacity.r, 0.0f, 1.0f);
+			finalPixelColor = ColorRGB::Lerp(backColor, color, alpha);
+		}
+		else
+		{
+			finalPixelColor = color;
+		}
+
+	} break;
+	case DebugRenderMode::Color:
+	{
+		if (material->color == nullptr)
+			break;
+
+		finalPixelColor = material->color->Sample(uv);
+	} break;
+	case DebugRenderMode::MaterialIndex:
+	{
+		switch (triangle.vertex0.materialIndex)
+		{
+		case 0:
+			finalPixelColor = colors::Red;
+			break;
+		case 1:
+			finalPixelColor = colors::Blue;
+			break;
+		case 2:
+			finalPixelColor = colors::Green;
+			break;
+		case 3:
+			finalPixelColor = colors::Cyan;
+			break;
+		case 4:
+			finalPixelColor = colors::Magenta;
+			break;
+		case 5:
+			finalPixelColor = colors::Yellow;
+			break;
+		default:
+			finalPixelColor = colors::White;
+		}
+
+	} break;
+	case DebugRenderMode::Opacity:
+	{
+		if (material->opacity == nullptr)
+			finalPixelColor = colors::White;
+		else
+			finalPixelColor = material->opacity->Sample(uv);
+	} break;
+	case DebugRenderMode::BiometricCoordinate:
+	{
+		finalPixelColor =
+			triangle.vertex0.color * signedAreaW0 * totalAreaInv +
+			triangle.vertex1.color * signedAreaW1 * totalAreaInv +
+			triangle.vertex2.color * signedAreaW2 * totalAreaInv;
+	} break;
+	case DebugRenderMode::DepthBuffer:
+	{
+		//finalPixelColor = colors::White * ;
+		//finalPixelColor = colors::White * std::lerp(0.985f, 1.0f, nonLinearPixelDepth);
+
+		//finalPixelColor = colors::White * std::clamp(triangle.vertex0.positionScreen.z,0.0f,1.0f);
+
+
+		//finalPixelColor = colors::White * std::clamp(nonLinearPixelDepth,0.0f,1.0f);
+
+
+		//finalPixelColor = colors::White * Utils::MapValueInRangeClamped(nonLinearPixelDepth,0.9f,1.0f,0.0f,1.0f);
+		//finalPixelColor = colors::White * std::ranges::clamp(nonLinearPixelDepth,0.0f,1.0f);
+
+		if (nonLinearPixelDepth < 0.0f)
+			finalPixelColor = colors::Red;
+		else
+			if (nonLinearPixelDepth > 1.0f)
+				finalPixelColor = colors::Blue;
+			else
+				finalPixelColor = colors::Green * nonLinearPixelDepth;
+
+
+	}break;
+	case DebugRenderMode::UVColor:
+		finalPixelColor = m_MaterialPtrMap.at("uvGrid2")->color->Sample(uv);
+		break;
+	}
+
+
+	//Update Color in Buffer
+	//finalPixelColor.MaxToOne();
+	m_BackBufferPixelsPtr[pixelIndex] = SDL_MapRGB(m_BackBufferPtr->format,
+		static_cast<uint8_t>(finalPixelColor.r * 255),
+		static_cast<uint8_t>(finalPixelColor.g * 255),
+		static_cast<uint8_t>(finalPixelColor.b * 255));
+}
 
 
 bool Renderer::SaveBufferToImage() const

@@ -13,12 +13,14 @@ namespace dae
 
 		friend Renderer;
 
-		Mesh(const std::vector<VertexModel>& vertices,const std::vector<uint32_t>& indices, const std::vector<Material*>& materials, PrimitiveTopology primitiveTopology = PrimitiveTopology::TriangleList);
-		Mesh(const std::string& name, const std::vector<Material*>& materials, PrimitiveTopology primitiveTopology = PrimitiveTopology::TriangleList);
+		Mesh(std::vector<VertexModel> vertices, std::vector<uint32_t> indices, std::vector<Material*> materials, PrimitiveTopology primitiveTopology = PrimitiveTopology::TriangleList);
+		Mesh(const std::string& name, std::vector<Material*> materials, PrimitiveTopology primitiveTopology = PrimitiveTopology::TriangleList);
 
-		void Translate(Vector3 translate);
-		void Scale(Vector3 scale);
-		void Rotate(float yaw);
+		void SetPosition(Vector3 translate);
+		void SetScale(Vector3 scale);
+		void SetYawRotation(float yaw);
+
+		void AddYawRotation(float yawDelta);
 
 	private:
 
@@ -32,12 +34,17 @@ namespace dae
 
 		Matrix m_WorldMatrix
 		{
-			{1.0f,0.0f,0.0f},
-			{0.0f,1.0f,0.0f},
-			{0.0f,0.0f,1.0f},
-			{0.0f,0.0f,0.0f}
+			{1.0f,0.0f,0.0f,0.0f},
+			{0.0f,1.0f,0.0f,0.0f},
+			{0.0f,0.0f,1.0f,0.0f},
+			{0.0f,0.0f,0.0f,1.0f}
 		};
 
+		float m_YawRotation;
+		Vector3 m_Scale;
+		Vector3 m_Position;
+
+		void UpdateWorldMatrix();
 		void ResetTransformedVertices();
 	};
 }

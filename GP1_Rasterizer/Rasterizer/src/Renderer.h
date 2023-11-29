@@ -52,6 +52,7 @@ namespace dae
 		Renderer& operator=(const Renderer&) = delete;
 		Renderer& operator=(Renderer&&) noexcept = delete;
 
+		void Update(const Timer& timer);
 		void Render();
 
 		void CycleDebugMode(bool up);
@@ -63,8 +64,9 @@ namespace dae
 
 		void TransformMesh(Mesh& mesh) const;
 
-		inline void RenderMesh(Mesh& mesh) const;
-		inline void RenderTriangle(const Triangle& triangle, const std::vector<Material*>& materialPtrs) const;
+		inline void RasterizeMesh(Mesh& mesh) const;
+		inline void RasterizeTriangle(const Triangle& triangle, const std::vector<Material*>& materialPtrs) const;
+		inline void ShadePixel(const Triangle& triangle) const;
 
 		void InitializeMaterials();
 		void InitializeScene();
