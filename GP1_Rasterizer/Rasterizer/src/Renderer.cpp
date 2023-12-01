@@ -17,7 +17,7 @@
 #include "Utils.h"
 
 //#define MULTI_THREAD_TRANSFORM
-#define MULTI_THREAD_TRIANGLE
+//#define MULTI_THREAD_TRIANGLE
 
 using namespace dae;
 
@@ -94,6 +94,18 @@ void Renderer::InitializeMaterials()
 		Texture::LoadFromFile("Resources/vehicle_gloss.png"),
 	}});
 
+
+
+
+
+	m_MaterialPtrMap.insert({"branches",new Material {
+		Texture::LoadFromFile("Resources/Diorama/T_Leaves_Color.png"),
+} });
+
+
+
+
+
 }
 
 void Renderer::InitializeScene()
@@ -109,7 +121,7 @@ void Renderer::InitializeScene()
 	carMesh.SetScale(Vector3{1,1,1} * 15.0f);
 	m_WorldMeshes.push_back(carMesh);
 
-	Mesh diroama("Resources/Diorama2.obj", { m_MaterialPtrMap["uvGrid3"] });
+	Mesh diroama("Resources/Diorama2.obj", { m_MaterialPtrMap["branches"] });
 	diroama.SetPosition({ 100, 0, 400 });
 	diroama.SetScale(Vector3{ 1,1,1 } * 15.0f);
 	m_WorldMeshes.push_back(diroama);
@@ -427,7 +439,7 @@ void Renderer::ShadePixel(const Triangle& triangle, const std::vector<Material*>
 	{
 		case DebugRenderMode::Diffuse:
 		{
-			finalPixelColor = diffuseColor;
+			finalPixelColor = lambertDeffuse;
 		} break;
 		case DebugRenderMode::ObservedArea:
 		{
@@ -435,7 +447,7 @@ void Renderer::ShadePixel(const Triangle& triangle, const std::vector<Material*>
 		}break;
 		case DebugRenderMode::DiffuseOA:
 		{
-			finalPixelColor = material->diffuse->Sample(uv) * observedArea;
+			finalPixelColor = lambertDeffuse * observedArea;
 		}break;
 		case DebugRenderMode::SpecularOA:
 		{
