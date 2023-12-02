@@ -10,7 +10,7 @@ namespace dae
 	Mesh::Mesh(std::vector<VertexModel> vertices, std::vector<uint32_t> indices,
 		std::vector<Material*> materials, PrimitiveTopology primitiveTopology) :
 		m_VerticesModel(std::move(vertices)),
-		m_VerticesTransformed(m_VerticesModel.size(), std::make_shared<VertexTransformed>()),
+		m_VerticesTransformed(m_VerticesModel.size()),
 		m_Indices(std::move(indices)),
 		m_MaterialPtrs(std::move(materials)),
 		m_PrimitiveTopology(primitiveTopology),
@@ -18,7 +18,6 @@ namespace dae
 		m_Scale(1.0f, 1.0f, 1.0f),
 		m_Position(0.0f, 0.0f, 0.0f)
 	{
-		InitializeVertices();
 		InitializeVertexColors();
 		InitializeTriangles();
 	}
@@ -31,8 +30,8 @@ namespace dae
 		m_Position(0.0f, 0.0f, 0.0f)
 	{
 		Utils::ParseOBJ(name, m_VerticesModel, m_Indices);
+		m_VerticesTransformed.resize(m_VerticesModel.size());
 
-		InitializeVertices();
 		InitializeVertexColors();
 		InitializeTriangles();
 	}
@@ -63,21 +62,6 @@ namespace dae
 	}
 
 
-	void Mesh::InitializeVertices()
-	{
-		m_VerticesTransformed.resize(m_VerticesModel.size());
-		for (size_t i = 0; i < m_VerticesModel.size(); i++)
-		{
-			m_VerticesTransformed[i] = std::make_shared<VertexTransformed>();
-
-			// Force the normal and tangent to be normalized
-			// This is to avoid user error
-			m_VerticesModel[i].normal = m_VerticesModel[i].normal.Normalized();
-			m_VerticesModel[i].tangent = m_VerticesModel[i].tangent.Normalized();
-		}
-
-	}
-
 	void Mesh::InitializeVertexColors()
 	{
 		// Color world vertex
@@ -107,11 +91,11 @@ namespace dae
 			for (int triangleIndex{}; triangleIndex < static_cast<int>(m_Indices.size()); triangleIndex += 3)
 			{
 				m_Triangles.push_back(
-				{
-					m_VerticesTransformed[m_Indices[triangleIndex]],
-					m_VerticesTransformed[m_Indices[triangleIndex + 1]],
-					m_VerticesTransformed[m_Indices[triangleIndex + 2]],
-				});
+					{
+						m_VerticesTransformed.begin() + m_Indices[triangleIndex],
+						m_VerticesTransformed.begin() + m_Indices[triangleIndex] + 1,
+						m_VerticesTransformed.begin() + m_Indices[triangleIndex] + 2,
+					});
 			}
 		}
 		else
@@ -122,18 +106,18 @@ namespace dae
 				{
 					m_Triangles.push_back(
 					{
-						m_VerticesTransformed[m_Indices[triangleIndex]],
-						m_VerticesTransformed[m_Indices[triangleIndex + 1]],
-						m_VerticesTransformed[m_Indices[triangleIndex + 2]]
+						m_VerticesTransformed.begin() + m_Indices[triangleIndex],
+						m_VerticesTransformed.begin() + m_Indices[triangleIndex + 1],
+						m_VerticesTransformed.begin() + m_Indices[triangleIndex + 2]
 					});
 				}
 				else
 				{
 					m_Triangles.push_back(
 					{
-						m_VerticesTransformed[m_Indices[triangleIndex]],
-						m_VerticesTransformed[m_Indices[triangleIndex + 2]],
-						m_VerticesTransformed[m_Indices[triangleIndex + 1]]
+						m_VerticesTransformed.begin() + m_Indices[triangleIndex],
+						m_VerticesTransformed.begin() + m_Indices[triangleIndex + 2],
+						m_VerticesTransformed.begin() + m_Indices[triangleIndex + 1]
 					});
 				}
 			}
@@ -176,13 +160,13 @@ namespace dae
 
 		for (size_t i = 0; i < m_VerticesModel.size(); i++)
 		{
-			m_VerticesTransformed[i]->pos = { m_VerticesModel[i].pos.x,m_VerticesModel[i].pos.y,m_VerticesModel[i].pos.z,1.0f };
-			m_VerticesTransformed[i]->uv = m_VerticesModel[i].uv;
-			m_VerticesTransformed[i]->normal = m_VerticesModel[i].normal;
-			m_VerticesTransformed[i]->tangent = m_VerticesModel[i].tangent;
-			m_VerticesTransformed[i]->viewDirection = m_VerticesModel[i].viewDirection;
-			m_VerticesTransformed[i]->materialIndex = m_VerticesModel[i].materialIndex;
-			m_VerticesTransformed[i]->color = m_VerticesModel[i].color;
+			m_VerticesTransformed[i].pos = { m_VerticesModel[i].pos.x,m_VerticesModel[i].pos.y,m_VerticesModel[i].pos.z,1.0f };
+			m_VerticesTransformed[i].uv = m_VerticesModel[i].uv;
+			m_VerticesTransformed[i].normal = m_VerticesModel[i].normal;
+			m_VerticesTransformed[i].tangent = m_VerticesModel[i].tangent;
+			m_VerticesTransformed[i].viewDirection = m_VerticesModel[i].viewDirection;
+			m_VerticesTransformed[i].materialIndex = m_VerticesModel[i].materialIndex;
+			m_VerticesTransformed[i].color = m_VerticesModel[i].color;
 		}
 	}
 }

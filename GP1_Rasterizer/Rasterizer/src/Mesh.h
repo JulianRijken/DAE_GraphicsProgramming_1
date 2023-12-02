@@ -25,7 +25,7 @@ namespace dae
 	private:
 
 		std::vector<VertexModel> m_VerticesModel;
-		std::vector<std::shared_ptr<VertexTransformed>> m_VerticesTransformed;
+		std::vector<VertexTransformed> m_VerticesTransformed;
 		std::vector<Triangle> m_Triangles;
 
 		std::vector<uint32_t> m_Indices;
@@ -45,7 +45,6 @@ namespace dae
 		Vector3 m_Scale;
 		Vector3 m_Position;
 
-		void InitializeVertices();
 		void InitializeVertexColors();
 		void InitializeTriangles();
 		void UpdateWorldMatrix();

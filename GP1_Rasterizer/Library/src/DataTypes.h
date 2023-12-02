@@ -31,9 +31,13 @@ namespace dae
 
 	struct Triangle
 	{
-		std::shared_ptr<VertexTransformed> vertex0;
-		std::shared_ptr<VertexTransformed> vertex1;
-	 	std::shared_ptr<VertexTransformed> vertex2;
+		std::vector<VertexTransformed>::iterator vertex0;
+		std::vector<VertexTransformed>::iterator vertex1;
+		std::vector<VertexTransformed>::iterator vertex2;
+
+		//std::shared_ptr<VertexTransformed> vertex0;
+		//std::shared_ptr<VertexTransformed> vertex1;
+		//std::shared_ptr<VertexTransformed> vertex2;
 	};
 
 

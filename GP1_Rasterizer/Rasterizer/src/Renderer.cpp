@@ -71,14 +71,14 @@ void Renderer::InitializeMaterials()
 
 
 
-	m_MaterialPtrMap.insert({ "carBody",new Material {
-		Texture::LoadFromFile("Resources/Car/Tex_FordGT40_Color_2k_02_Clean.png"),
-		Texture::LoadFromFile("Resources/Car/Tex_FordGT40_Opacity_2k_02.png")
-	}});
+	//m_MaterialPtrMap.insert({ "carBody",new Material {
+	//	Texture::LoadFromFile("Resources/Car/Tex_FordGT40_Color_2k_02_Clean.png"),
+	//	Texture::LoadFromFile("Resources/Car/Tex_FordGT40_Opacity_2k_02.png")
+	//}});
 
-	m_MaterialPtrMap.insert({ "carWheel",new Material {
-		Texture::LoadFromFile("Resources/Car/Tex_TireAndRim_Color_1k_02.png"),
-	}});
+	//m_MaterialPtrMap.insert({ "carWheel",new Material {
+	//	Texture::LoadFromFile("Resources/Car/Tex_TireAndRim_Color_1k_02.png"),
+	//}});
 
 
 	//m_MaterialPtrMap.insert({ "tukTuk",new Material {
@@ -98,9 +98,9 @@ void Renderer::InitializeMaterials()
 
 
 
-	m_MaterialPtrMap.insert({"branches",new Material {
-		Texture::LoadFromFile("Resources/Diorama/T_Leaves_Color.png"),
-} });
+	//m_MaterialPtrMap.insert({"branches",new Material {
+	//	Texture::LoadFromFile("Resources/Diorama/T_Leaves_Color.png"),
+	//}});
 
 
 
@@ -110,21 +110,19 @@ void Renderer::InitializeMaterials()
 
 void Renderer::InitializeScene()
 {
-
 	Mesh bikeMesh("Resources/vehicle.obj", { m_MaterialPtrMap["bike"] });
 	bikeMesh.SetPosition({ 0, 0, 50 });
 	m_WorldMeshes.push_back(bikeMesh);
 
+	//Mesh carMesh("Resources/Car/car2.obj", { m_MaterialPtrMap["carBody"],m_MaterialPtrMap["carWheel"] });
+	//carMesh.SetPosition({ 45, -7, 50 });
+	//carMesh.SetScale(Vector3{1,1,1} * 15.0f);
+	//m_WorldMeshes.push_back(carMesh);
 
-	Mesh carMesh("Resources/Car/car2.obj", { m_MaterialPtrMap["carBody"],m_MaterialPtrMap["carWheel"] });
-	carMesh.SetPosition({ 45, -7, 50 });
-	carMesh.SetScale(Vector3{1,1,1} * 15.0f);
-	m_WorldMeshes.push_back(carMesh);
-
-	Mesh diroama("Resources/Diorama2.obj", { m_MaterialPtrMap["branches"] });
-	diroama.SetPosition({ 100, 0, 400 });
-	diroama.SetScale(Vector3{ 1,1,1 } * 15.0f);
-	m_WorldMeshes.push_back(diroama);
+	//Mesh diroama("Resources/Diorama2.obj", { m_MaterialPtrMap["branches"] });
+	//diroama.SetPosition({ 100, 0, 400 });
+	//diroama.SetScale(Vector3{ 1,1,1 } * 15.0f);
+	//m_WorldMeshes.push_back(diroama);
 }
 
 
@@ -217,32 +215,32 @@ void Renderer::TransformMesh(Mesh& mesh) const
 	std::for_each(std::execution::par, mesh.m_VerticesTransformed.begin(), mesh.m_VerticesTransformed.end(), [this, mesh, worldToViewProjectionMatrix](const std::shared_ptr<VertexTransformed>& vertex)
 		{
 #else
-	for (const std::shared_ptr<VertexTransformed>& vertex : mesh.m_VerticesTransformed)
+	for (VertexTransformed& vertex : mesh.m_VerticesTransformed)
 	{
 #endif
 
 		// Convert vertex to world
-		vertex->pos = mesh.m_WorldMatrix.TransformPoint(vertex->pos);
+		vertex.pos = mesh.m_WorldMatrix.TransformPoint(vertex.pos);
 
 		// Convert normal to world
 		// Note we use transform vector
-		vertex->normal  = mesh.m_WorldMatrix.TransformVector(vertex->normal ).Normalized();
-		vertex->tangent = mesh.m_WorldMatrix.TransformVector(vertex->tangent).Normalized();
+		vertex.normal  = mesh.m_WorldMatrix.TransformVector(vertex.normal ).Normalized();
+		vertex.tangent = mesh.m_WorldMatrix.TransformVector(vertex.tangent).Normalized();
 
 		// Calculate view direction based on vertex in world
-		vertex->viewDirection = (vertex->pos.GetXYZ() - m_CameraPtr->m_Origin).Normalized();
+		vertex.viewDirection = (vertex.pos.GetXYZ() - m_CameraPtr->m_Origin).Normalized();
 
 		// Transform vertex to view
-		vertex->pos = worldToViewProjectionMatrix.TransformPoint(vertex->pos);
+		vertex.pos = worldToViewProjectionMatrix.TransformPoint(vertex.pos);
 
 		// Apply perspective divide  
-		vertex->pos.x /= vertex->pos.w;
-		vertex->pos.y /= vertex->pos.w;
-		vertex->pos.z /= vertex->pos.w;
+		vertex.pos.x /= vertex.pos.w;
+		vertex.pos.y /= vertex.pos.w;
+		vertex.pos.z /= vertex.pos.w;
 
 		// Convert from NDC to screen
-		vertex->pos.x = (vertex->pos.x + 1.0f) / 2.0f * static_cast<float>(m_ScreenWidth);
-		vertex->pos.y = (1.0f - vertex->pos.y) / 2.0f * static_cast<float>(m_ScreenHeight);
+		vertex.pos.x = (vertex.pos.x + 1.0f) / 2.0f * static_cast<float>(m_ScreenWidth);
+		vertex.pos.y = (1.0f - vertex.pos.y) / 2.0f * static_cast<float>(m_ScreenHeight);
 
 #ifdef MULTI_THREAD_TRANSFORM
 		});
