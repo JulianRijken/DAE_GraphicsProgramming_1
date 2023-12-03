@@ -73,31 +73,47 @@ namespace dae
 			v = (v < 0.0f) ? (v + 1.0f) : v;
 		}
 
-		// Convert UV coordinates to texel coordinates
-		const float texelXf = u * static_cast<float>(m_SurfacePtr->w - 1);
-		const float texelYf = v * static_cast<float>(m_SurfacePtr->h - 1);
+		constexpr bool useBilinearInterpolation = true;
 
-		// Get the integer part and fractional part of texel coordinates
-		const int texelX = static_cast<int>(texelXf);
-		const int texelY = static_cast<int>(texelYf);
-		const float fracX = texelXf - texelX;
-		const float fracY = texelYf - texelY;
+		if (useBilinearInterpolation)
+		{
+			// Convert UV coordinates to texel coordinates
+			const float texelXf = u * static_cast<float>(m_SurfacePtr->w - 1);
+			const float texelYf = v * static_cast<float>(m_SurfacePtr->h - 1);
 
-		// Sample colors from four neighboring texels
-		const ColorRGB c00 = GetTexelColor(texelX, texelY);
-		const ColorRGB c10 = GetTexelColor(texelX + 1, texelY);
-		const ColorRGB c01 = GetTexelColor(texelX, texelY + 1);
-		const ColorRGB c11 = GetTexelColor(texelX + 1, texelY + 1);
+			// Get the integer part and fractional part of texel coordinates
+			const int texelX = static_cast<int>(texelXf);
+			const int texelY = static_cast<int>(texelYf);
+			const float fracX = texelXf - texelX;
+			const float fracY = texelYf - texelY;
 
-		// Bilinear interpolation
-		const ColorRGB interpolatedColor =
-			Lerp(
-				Lerp(c00, c10, fracX),
-				Lerp(c01, c11, fracX),
-				fracY
-			);
+			// Sample colors from four neighboring texels
+			const ColorRGB c00 = GetTexelColor(texelX, texelY);
+			const ColorRGB c10 = GetTexelColor(texelX + 1, texelY);
+			const ColorRGB c01 = GetTexelColor(texelX, texelY + 1);
+			const ColorRGB c11 = GetTexelColor(texelX + 1, texelY + 1);
 
-		return interpolatedColor;
+			// Bilinear interpolation
+			const ColorRGB interpolatedColor =
+				Lerp(
+					Lerp(c00, c10, fracX),
+					Lerp(c01, c11, fracX),
+					fracY
+				);
+
+			return interpolatedColor;
+		}
+		else
+		{
+			// Convert UV coordinates to texel coordinates
+			const float texelXf = u * static_cast<float>(m_SurfacePtr->w - 1);
+			const float texelYf = v * static_cast<float>(m_SurfacePtr->h - 1);
+
+			// Get the integer part and fractional part of texel coordinates
+			const int texelX = static_cast<int>(texelXf);
+			const int texelY = static_cast<int>(texelYf);
+			return GetTexelColor(texelX, texelY);
+		}
 	}
 
 

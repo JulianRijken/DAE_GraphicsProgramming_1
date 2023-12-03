@@ -54,6 +54,10 @@ namespace dae
 
 		void Update(const Timer& timer)
 		{
+			//std::cout << "Origin: {" << m_Origin.x << ", " << m_Origin.y << ", " << m_Origin.z << "}" << std::endl;
+			//std::cout << "Pitch: " << m_Pitch << std::endl;
+			//std::cout << "Yaw: " << m_Yaw << std::endl;
+
 			constexpr float minFps{ 30.0f };
 			constexpr float maxElapsed{ 1.0f / minFps };
 			// using min to create a minimum delay
@@ -153,6 +157,28 @@ namespace dae
 			m_FovAngle = fovAngle;
 			m_FovValue = tanf((m_FovAngle * TO_RADIANS) / 2.f);
 		}
+
+		void SetPosition(Vector3 position, bool teleport = true)
+		{
+			m_TargetOrigin = position;
+
+			if(teleport)
+				m_Origin = position;
+		}
+
+		void SetPitch(float pitch)
+		{
+			m_Pitch = pitch;
+			m_TargetPitch = pitch;
+		}
+
+		void SetYaw(float yaw)
+		{
+			m_Yaw = yaw;
+			m_TargetYaw = yaw;
+		}
+
+
 
 		void ChangeFovAngle(float fovAngleChange)
 		{

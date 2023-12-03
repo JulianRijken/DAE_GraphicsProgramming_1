@@ -56,7 +56,7 @@ int main(int argc, char* args[])
 	//Initialize "framework"
 	Timer timer{}; 
 	//Camera camera{ {0,2.5f,-6.0f},60.0f };
-	Camera camera{ {0,0,0.0f},45.0f,aspectRatio };
+	Camera camera{ {0,0,0.0f},90.0f,aspectRatio };
 	Renderer renderer{&camera, pWindow};
 
 	//Start loop
@@ -88,6 +88,8 @@ int main(int argc, char* args[])
 					renderer.ToggleNormalMap();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F7)
 					renderer.CycleRenderMode();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F8)
+					renderer.ToggleLinearDepth();
 
 				if (e.key.keysym.scancode == SDL_SCANCODE_1)
 					renderer.SetRenderMode(DebugRenderMode::Diffuse);
@@ -107,6 +109,8 @@ int main(int argc, char* args[])
 					renderer.SetRenderMode(DebugRenderMode::DepthBuffer);
 				if (e.key.keysym.scancode == SDL_SCANCODE_9)
 					renderer.SetRenderMode(DebugRenderMode::MaterialIndex);
+				if (e.key.keysym.scancode == SDL_SCANCODE_0)
+					renderer.SetRenderMode(DebugRenderMode::Opacity);
 				break;
 
 			case SDL_MOUSEWHEEL:

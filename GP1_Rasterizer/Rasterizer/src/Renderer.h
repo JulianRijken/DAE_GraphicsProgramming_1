@@ -30,6 +30,7 @@ namespace dae
 		Weights,
 		DepthBuffer,
 		MaterialIndex,
+		Opacity,
 		COUNT
 	};
 
@@ -44,11 +45,11 @@ namespace dae
 		{DebugRenderMode::Weights,"Weights"},
 		{DebugRenderMode::DepthBuffer,"Depth Buffer"},
 		{DebugRenderMode::MaterialIndex,"Material Index"},
+		{DebugRenderMode::Opacity,"Opacity"},
 	};
 
 
 	const Vector3 LIGHT_DIRECTION{ Vector3{0.577f,-0.577f,0.577f}.Normalized() };
-	const ColorRGB AMBIENT_COLOR{ 0.025f,0.025f ,0.025f };
 
 
 
@@ -68,6 +69,7 @@ namespace dae
 
 		void ToggleRotation();
 		void ToggleNormalMap();
+		void ToggleLinearDepth();
 		void SetRenderMode(DebugRenderMode mode);
 		void CycleRenderMode();
 
@@ -81,8 +83,9 @@ namespace dae
 		inline void RasterizeTriangle(const Triangle& triangle, const std::vector<Material*>& materialPtrs) const;
 		inline void ShadePixel       (const Triangle& triangle, const std::vector<Material*>& materialPtrs, const Vector3& weights, int pixelIndex, float nonLinearDepth) const;
 
-		void InitializeMaterials();
-		void InitializeScene();
+		void InitializeSceneAssignment();
+		void InitializeSceneCar();
+		void InitializeSceneDiorama();
 
 		SDL_Window* m_WindowPtr{};
 		SDL_Surface* m_FrontBufferPtr{ nullptr };
@@ -95,11 +98,17 @@ namespace dae
 
 		std::vector<Mesh> m_WorldMeshes;
 		std::map <std::string, Material* > m_MaterialPtrMap;
+		Material* defaultMaterial;
+
+		ColorRGB m_AmbientColor{ 0.025f,0.025f ,0.025f };
 
 		int m_ScreenWidth;
 		int m_ScreenHeight;
 
 		bool m_HasToRotate;
 		bool m_UseNormalMap;
+		bool m_UseLinearDepth;
+
+		float spinSpeed{ 0.5f };
 	};
 }

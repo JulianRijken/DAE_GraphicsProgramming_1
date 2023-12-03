@@ -16,8 +16,10 @@
 #include "Texture.h"
 #include "Utils.h"
 
-//#define MULTI_THREAD_TRANSFORM
 //#define MULTI_THREAD_TRIANGLE
+//#define DOUBLE_SIDED
+//#define SORT_TRIANGLES
+//#define RENDER_OPACITY
 
 using namespace dae;
 
@@ -28,7 +30,8 @@ m_RenderMode(DebugRenderMode::Combined),
 m_ScreenWidth(), // Is set later
 m_ScreenHeight(), // Is set later
 m_HasToRotate(true),
-m_UseNormalMap(true)
+m_UseNormalMap(true),
+m_UseLinearDepth(true)
 {
 	//Initialize
 	SDL_GetWindowSize(pWindow, &m_ScreenWidth, &m_ScreenHeight);
@@ -39,90 +42,83 @@ m_UseNormalMap(true)
 	m_BackBufferPixelsPtr = static_cast<uint32_t*>(m_BackBufferPtr->pixels);
 	m_pDepthBufferPixels = new float[m_ScreenWidth * m_ScreenHeight];
 
-	InitializeMaterials();
-	InitializeScene();
+	m_MaterialPtrMap.insert({ "default",new Material {
+	}});
+
+	defaultMaterial = m_MaterialPtrMap["default"];
+
+	m_MaterialPtrMap.insert({ "uvGrid",new Material {
+	Texture::LoadFromFile("Resources/uv_grid_2.png"),
+	}});
+
+
+	InitializeSceneAssignment();
+	//InitializeSceneCar();
+	//InitializeSceneDiorama();
 }
 
 Renderer::~Renderer()
 {
-	for (const std::pair<const std::string, Material*>& materialPtrMap : m_MaterialPtrMap)
+	for (const std::pair<const std::string, Material*>& pair : m_MaterialPtrMap)
 	{
-		delete materialPtrMap.second->diffuse;
-		delete materialPtrMap.second->opacity;
-		delete materialPtrMap.second->normal;
-		delete materialPtrMap.second->specular;
-		delete materialPtrMap.second->gloss;
-		delete materialPtrMap.second;
+		if(pair.second == nullptr)
+			continue;
+
+		delete pair.second->diffuse;
+		delete pair.second->opacity;
+		delete pair.second->normal;
+		delete pair.second->specular;
+		delete pair.second->gloss;
+		delete pair.second;
 	}
 
 	delete[] m_pDepthBufferPixels;
 }
 
-void Renderer::InitializeMaterials()
+
+void Renderer::InitializeSceneAssignment()
 {
-	m_MaterialPtrMap.insert({ "uvGrid2",new Material {
-		Texture::LoadFromFile("Resources/uv_grid_2.png"),
-	}});
+	m_AmbientColor = { 0.025f,0.025f ,0.025f };
 
+	m_CameraPtr->SetFovAngle(45);
+	m_CameraPtr->SetPosition(Vector3{ 0,0,0 });
 
-	m_MaterialPtrMap.insert({ "uvGrid3",new Material {
-		Texture::LoadFromFile("Resources/uv_grid_3.png"),
-	}});
-
-
-
-	m_MaterialPtrMap.insert({ "carBody",new Material {
-		Texture::LoadFromFile("Resources/Car/Tex_FordGT40_Color_2k_02_Clean.png"),
-		Texture::LoadFromFile("Resources/Car/Tex_FordGT40_Opacity_2k_02.png")
-	}});
-
-	m_MaterialPtrMap.insert({ "carWheel",new Material {
-		Texture::LoadFromFile("Resources/Car/Tex_TireAndRim_Color_1k_02.png"),
-	}});
-
-
-	//m_MaterialPtrMap.insert({ "tukTuk",new Material {
-	//	Texture::LoadFromFile("Resources/tuktuk.png"),
-	//} });
-
-
-	m_MaterialPtrMap.insert({"bike",new Material {
+	m_MaterialPtrMap.insert({ "bike",new Material {
 		Texture::LoadFromFile("Resources/vehicle_diffuse.png"),
 		nullptr,
 		Texture::LoadFromFile("Resources/vehicle_normal.png"),
 		Texture::LoadFromFile("Resources/vehicle_specular.png"),
 		Texture::LoadFromFile("Resources/vehicle_gloss.png"),
-	}});
+	} });
 
-
-
-
-
-	m_MaterialPtrMap.insert({"branches",new Material {
-		Texture::LoadFromFile("Resources/Diorama/T_Leaves_Color.png"),
-} });
-
-
-
-
-
-}
-
-void Renderer::InitializeScene()
-{
 
 	Mesh bikeMesh("Resources/vehicle.obj", { m_MaterialPtrMap["bike"] });
 	bikeMesh.SetPosition({ 0, 0, 50 });
 	m_WorldMeshes.push_back(bikeMesh);
+}
 
+void Renderer::InitializeSceneCar()
+{
+	m_CameraPtr->SetFovAngle(45);
+	m_CameraPtr->SetPosition(Vector3{ 0,20,-60 });
+	m_CameraPtr->SetPitch(-13.0f * TO_RADIANS);
 
-	Mesh carMesh("Resources/Car/car2.obj", { m_MaterialPtrMap["carBody"],m_MaterialPtrMap["carWheel"] });
-	carMesh.SetPosition({ 45, -7, 50 });
-	carMesh.SetScale(Vector3{1,1,1} * 15.0f);
+	Mesh carMesh("Resources/Car/Car.obj", "Resources/Car/Car.mtl", m_MaterialPtrMap);
+	carMesh.SetScale(Vector3{ 1,1,1 } *15.0f);
 	m_WorldMeshes.push_back(carMesh);
+}
 
-	Mesh diroama("Resources/Diorama2.obj", { m_MaterialPtrMap["branches"] });
-	diroama.SetPosition({ 100, 0, 400 });
+void Renderer::InitializeSceneDiorama()
+{
+	m_AmbientColor = { 0.1f,0.1f ,0.1f };
+
+	m_CameraPtr->SetFovAngle(42);
+	m_CameraPtr->SetPosition({ -167.749f, 158.555f, -359.077f });
+	m_CameraPtr->SetPitch(-0.10f);
+	m_CameraPtr->SetYaw(-0.40f);
+	spinSpeed = 0.0f;
+
+	Mesh diroama("Resources/Diorama/DioramaGP.obj", "Resources/Diorama/DioramaGP.mtl", m_MaterialPtrMap);
 	diroama.SetScale(Vector3{ 1,1,1 } * 15.0f);
 	m_WorldMeshes.push_back(diroama);
 }
@@ -130,15 +126,15 @@ void Renderer::InitializeScene()
 
 void Renderer::Update(const Timer& timer)
 {
-	if(m_HasToRotate)
-		m_WorldMeshes[0].AddYawRotation(timer.GetElapsed() * 0.5f);
+	if(m_HasToRotate && !m_WorldMeshes.empty())
+		m_WorldMeshes[0].AddYawRotation(timer.GetElapsed() * spinSpeed);
 }
 
 void Renderer::Render()
 {
 	//Lock BackBuffer
 	SDL_LockSurface(m_BackBufferPtr);
-
+	
 	// Clear depth buffer
 	std::fill_n(m_pDepthBufferPixels, m_ScreenWidth * m_ScreenHeight, std::numeric_limits<float>::max());
 	// Clear screen buffer
@@ -169,6 +165,12 @@ void Renderer::ToggleNormalMap()
 {
 	m_UseNormalMap = !m_UseNormalMap;
 	std::cout << std::boolalpha << "Normal Map -> " << m_UseNormalMap << std::endl;
+}
+
+void Renderer::ToggleLinearDepth()
+{
+	m_UseLinearDepth = !m_UseLinearDepth;
+	std::cout << std::boolalpha << "Linear Depth-> " << m_UseLinearDepth << std::endl;
 }
 
 void Renderer::SetRenderMode(DebugRenderMode mode)
@@ -213,14 +215,8 @@ void Renderer::TransformMesh(Mesh& mesh) const
 
 	const Matrix worldToViewProjectionMatrix = m_CameraPtr->m_InvViewMatrix * m_CameraPtr->m_ProjectionMatrix;
 
-#ifdef MULTI_THREAD_TRANSFORM
-	std::for_each(std::execution::par, mesh.m_VerticesTransformed.begin(), mesh.m_VerticesTransformed.end(), [this, mesh, worldToViewProjectionMatrix](const std::shared_ptr<VertexTransformed>& vertex)
-		{
-#else
 	for (const std::shared_ptr<VertexTransformed>& vertex : mesh.m_VerticesTransformed)
 	{
-#endif
-
 		// Convert vertex to world
 		vertex->pos = mesh.m_WorldMatrix.TransformPoint(vertex->pos);
 
@@ -243,13 +239,7 @@ void Renderer::TransformMesh(Mesh& mesh) const
 		// Convert from NDC to screen
 		vertex->pos.x = (vertex->pos.x + 1.0f) / 2.0f * static_cast<float>(m_ScreenWidth);
 		vertex->pos.y = (1.0f - vertex->pos.y) / 2.0f * static_cast<float>(m_ScreenHeight);
-
-#ifdef MULTI_THREAD_TRANSFORM
-		});
-#else
-		}
-#endif
-
+	}
 }
 
 
@@ -257,8 +247,33 @@ void Renderer::RasterizeMesh(Mesh& mesh) const
 {
 	TransformMesh(mesh);
 
+#ifdef SORT_TRIANGLES
+	auto compareTriangles = [](const Triangle& triangle1, const Triangle& triangle2) {
+		// Assuming Vector4 has a member pos.z
+
+		const float triangle1Z
+		{
+				triangle1.vertex0->pos.z +
+				triangle1.vertex1->pos.z +
+				triangle1.vertex2->pos.z 
+		};
+
+		const float triangle2Z
+		{
+				triangle2.vertex0->pos.z +
+				triangle2.vertex1->pos.z +
+				triangle2.vertex2->pos.z
+		};
+
+		return triangle1Z >= triangle2Z;
+
+		};
+
+	std::ranges::sort(mesh.m_Triangles, compareTriangles);
+#endif
+
 #ifdef MULTI_THREAD_TRIANGLE
-	std::for_each(std::execution::par, mesh.m_Triangles.begin(), mesh.m_Triangles.end(), [this,mesh](Triangle& triangle)
+	std::for_each(std::execution::par, mesh.m_Triangles.begin(), mesh.m_Triangles.end(), [this,mesh](const Triangle& triangle)
 		{
 			RasterizeTriangle(triangle, mesh.m_MaterialPtrs);
 		});
@@ -287,8 +302,10 @@ void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Mat
 		triangle.vertex2->pos - triangle.vertex0->pos
 	);
 
+#ifndef DOUBLE_SIDED
 	if (normal.z <= 0.0f)
 		return;
+#endif
 
 	// Adding the 1 pixel is done to prevent gaps in the triangles
 	constexpr int boundingBoxPadding{1};
@@ -304,6 +321,10 @@ void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Mat
 	maxY = std::ranges::clamp(maxY, 0, m_ScreenHeight);
 
 
+	float signedAreaW0;
+	float signedAreaW1;
+	float signedAreaW2;
+
 	// Looping all pixels within the bounding box
 	// This is done for optimization
 	for (int pixelX{ minX }; pixelX < maxX; pixelX++)
@@ -312,13 +333,33 @@ void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Mat
 		{
 			const Vector2 pixelCenter{ static_cast<float>(pixelX) + 0.5f,static_cast<float>(pixelY) + 0.5f };
 
-			const float signedAreaW0 = Vector2::Cross(pixelCenter - triangle.vertex1->pos.GetXY(),triangle.vertex2->pos.GetXY() - triangle.vertex1->pos.GetXY());
+#ifdef DOUBLE_SIDED
+			if (normal.z > 0.0f)
+			{
+				signedAreaW0 = Vector2::Cross(pixelCenter - triangle.vertex1->pos.GetXY(), triangle.vertex2->pos.GetXY() - triangle.vertex1->pos.GetXY());
+				if (signedAreaW0 >= 0) continue;
+				signedAreaW1 = Vector2::Cross(pixelCenter - triangle.vertex2->pos.GetXY(), triangle.vertex0->pos.GetXY() - triangle.vertex2->pos.GetXY());
+				if (signedAreaW1 >= 0) continue;
+				signedAreaW2 = Vector2::Cross(pixelCenter - triangle.vertex0->pos.GetXY(), triangle.vertex1->pos.GetXY() - triangle.vertex0->pos.GetXY());
+				if (signedAreaW2 >= 0) continue;
+			}
+			else
+			{
+				signedAreaW0 = Vector2::Cross(triangle.vertex2->pos.GetXY() - triangle.vertex1->pos.GetXY(), pixelCenter - triangle.vertex1->pos.GetXY());
+				if (signedAreaW0 >= 0) continue;
+				signedAreaW1 = Vector2::Cross(triangle.vertex0->pos.GetXY() - triangle.vertex2->pos.GetXY(), pixelCenter - triangle.vertex2->pos.GetXY());
+				if (signedAreaW1 >= 0) continue;
+				signedAreaW2 = Vector2::Cross(triangle.vertex1->pos.GetXY() - triangle.vertex0->pos.GetXY(), pixelCenter - triangle.vertex0->pos.GetXY());
+				if (signedAreaW2 >= 0) continue;
+			}
+#else
+			signedAreaW0 = Vector2::Cross(pixelCenter - triangle.vertex1->pos.GetXY(), triangle.vertex2->pos.GetXY() - triangle.vertex1->pos.GetXY());
 			if (signedAreaW0 >= 0) continue;
-			const float signedAreaW1 = Vector2::Cross(pixelCenter - triangle.vertex2->pos.GetXY(),triangle.vertex0->pos.GetXY() - triangle.vertex2->pos.GetXY());
+			signedAreaW1 = Vector2::Cross(pixelCenter - triangle.vertex2->pos.GetXY(), triangle.vertex0->pos.GetXY() - triangle.vertex2->pos.GetXY());
 			if (signedAreaW1 >= 0) continue;
-			const float signedAreaW2 = Vector2::Cross(pixelCenter - triangle.vertex0->pos.GetXY(),triangle.vertex1->pos.GetXY() - triangle.vertex0->pos.GetXY());
+			signedAreaW2 = Vector2::Cross(pixelCenter - triangle.vertex0->pos.GetXY(), triangle.vertex1->pos.GetXY() - triangle.vertex0->pos.GetXY());
 			if (signedAreaW2 >= 0) continue;
-
+#endif
 
 			// Get total area before
 			const float totalArea = signedAreaW0 + signedAreaW1 + signedAreaW2;
@@ -354,7 +395,11 @@ void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Mat
 void Renderer::ShadePixel(const Triangle& triangle, const std::vector<Material*>& materialPtrs, const Vector3& weights, int pixelIndex, float nonLinearDepth) const
 {
 	ColorRGB finalPixelColor{};
-	const Material* material{ materialPtrs[triangle.vertex0->materialIndex] };
+
+	Material* material = defaultMaterial;
+
+	if (!materialPtrs.empty())
+		material = materialPtrs[triangle.vertex0->materialIndex];
 
 	const float linearPixelDepth = 1.0f / (
 		weights.x / triangle.vertex0->pos.w +
@@ -368,16 +413,31 @@ void Renderer::ShadePixel(const Triangle& triangle, const std::vector<Material*>
 		triangle.vertex2->uv / triangle.vertex2->pos.w * weights.z);
 
 
+
 	Vector3 normal = (
 		triangle.vertex0->normal * weights.x +
 		triangle.vertex1->normal * weights.y +
 		triangle.vertex2->normal * weights.z);
+	if(m_UseLinearDepth)
+	{
+		normal = linearPixelDepth * (
+			triangle.vertex0->normal / triangle.vertex0->pos.w * weights.x +
+			triangle.vertex1->normal / triangle.vertex1->pos.w * weights.y +
+			triangle.vertex2->normal / triangle.vertex2->pos.w * weights.z);
+	}
 
-
-	const Vector3 tangent = (
+	Vector3 tangent = (
 		triangle.vertex0->tangent * weights.x +
 		triangle.vertex1->tangent * weights.y +
 		triangle.vertex2->tangent * weights.z);
+
+	if (m_UseLinearDepth)
+	{
+		tangent = (
+			triangle.vertex0->tangent / triangle.vertex0->pos.w * weights.x +
+			triangle.vertex1->tangent / triangle.vertex1->pos.w * weights.y +
+			triangle.vertex2->tangent / triangle.vertex2->pos.w * weights.z);
+	}
 
 
 	Vector3 binormal = Vector3::Cross(normal, tangent);
@@ -406,7 +466,7 @@ void Renderer::ShadePixel(const Triangle& triangle, const std::vector<Material*>
 
 	float diffuseStrength{ 5.0f };//m_DiffuseReflectance
 	float specular{ 0.5f }; //m_SpecularReflectance
-	float phongExponent{ 10.0f }; // Shininess
+	float phongExponent{ 20.0f }; // Shininess
 
 	if (material->specular)
 		specular *= material->specular->Sample(uv).r;
@@ -414,8 +474,9 @@ void Renderer::ShadePixel(const Triangle& triangle, const std::vector<Material*>
 	if (material->gloss)
 		phongExponent *= material->gloss->Sample(uv).r;
 
-
-	ColorRGB diffuseColor = material->diffuse->Sample(uv);
+	ColorRGB diffuseColor;
+	if (material->diffuse)
+		diffuseColor = material->diffuse->Sample(uv);
 
 	//Diffuse Color * Diffuse Reflection Coefficient / pi
 	ColorRGB lambertDeffuse = diffuseColor * diffuseStrength / PI;
@@ -455,11 +516,42 @@ void Renderer::ShadePixel(const Triangle& triangle, const std::vector<Material*>
 		}break;
 		case DebugRenderMode::Combined:
 		{
-			finalPixelColor = (specularIntensity * colors::White + lambertDeffuse) * observedArea + AMBIENT_COLOR;
+
+#ifdef RENDER_OPACITY
+
+			ColorRGB color{ (specularIntensity * colors::White + lambertDeffuse) * observedArea + m_AmbientColor };
+
+			if (material->opacity)
+			{
+				const uint32_t pixel = m_BackBufferPixelsPtr[pixelIndex];
+				Uint8 red{};
+				Uint8 green{};
+				Uint8 blue{};
+				SDL_GetRGB(pixel, m_BackBufferPtr->format, &red, &green, &blue);
+
+				ColorRGB backColor
+				{
+					static_cast<float>(red) / 255.0f,
+					static_cast<float>(green) / 255.0f,
+					static_cast<float>(blue) / 255.0f,
+				};
+
+				ColorRGB opacityMask = material->opacity->Sample(uv);
+
+				const float alpha = std::ranges::clamp(opacityMask.r, 0.0f, 1.0f);
+				finalPixelColor = ColorRGB::Lerp(backColor, color, alpha);
+			}
+			else
+			{
+				finalPixelColor = color;
+			}
+#else
+			finalPixelColor = (specularIntensity * colors::White + lambertDeffuse) * observedArea + m_AmbientColor;
+#endif
 		} break;
 		case DebugRenderMode::UVColor:
 		{
-			finalPixelColor = m_MaterialPtrMap.at("uvGrid2")->diffuse->Sample(uv);
+			finalPixelColor = m_MaterialPtrMap.at("uvGrid")->diffuse->Sample(uv);
 		} break;
 		case DebugRenderMode::Weights:
 		{
@@ -491,29 +583,52 @@ void Renderer::ShadePixel(const Triangle& triangle, const std::vector<Material*>
 		}break;
 		case DebugRenderMode::MaterialIndex:
 		{
-			switch (triangle.vertex0->materialIndex)
+
+			srand(triangle.vertex0->materialIndex);
+
+			ColorRGB color
 			{
-			case 0:
-				finalPixelColor = colors::Red;
-				break;
-			case 1:
-				finalPixelColor = colors::Blue;
-				break;
-			case 2:
-				finalPixelColor = colors::Green;
-				break;
-			case 3:
-				finalPixelColor = colors::Cyan;
-				break;
-			case 4:
-				finalPixelColor = colors::Magenta;
-				break;
-			case 5:
-				finalPixelColor = colors::Yellow;
-				break;
-			default:
-				finalPixelColor = colors::White;
-			}
+				(std::rand() * (triangle.vertex0->materialIndex + 1) % 255) / 255.0f,
+				(std::rand() * (triangle.vertex0->materialIndex + 1) % 255) / 255.0f,
+				(std::rand() * (triangle.vertex0->materialIndex + 1) % 255) / 255.0f,
+			};
+
+
+			finalPixelColor = color;
+
+			//switch (triangle.vertex0->materialIndex)
+			//{
+			//case 0:
+			//	finalPixelColor = colors::Red;
+			//	break;
+			//case 1:
+			//	finalPixelColor = colors::Blue;
+			//	break;
+			//case 2:
+			//	finalPixelColor = colors::Green;
+			//	break;
+			//case 3:
+			//	finalPixelColor = colors::Cyan;
+			//	break;
+			//case 4:
+			//	finalPixelColor = colors::Magenta;
+			//	break;
+			//case 5:
+			//	finalPixelColor = colors::Yellow;
+			//	break;
+			//default:
+			//	finalPixelColor = colors::White;
+			//}
+
+		} break;
+		case DebugRenderMode::Opacity:
+		{
+			ColorRGB opacity{};
+
+			if(material->opacity)
+				opacity = material->opacity->Sample(uv);
+
+			finalPixelColor = opacity;
 
 		} break;
 	}

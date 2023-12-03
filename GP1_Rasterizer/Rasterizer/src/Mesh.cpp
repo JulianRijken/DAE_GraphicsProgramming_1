@@ -37,6 +37,40 @@ namespace dae
 		InitializeTriangles();
 	}
 
+	Mesh::Mesh(const std::string& objPath, const std::string& mtlPath, std::map<std::string, Material*>& materialMap, PrimitiveTopology primitiveTopology) :
+		m_MaterialPtrs{},
+		m_PrimitiveTopology(primitiveTopology),
+		m_YawRotation(0.0f),
+		m_Scale(1.0f, 1.0f, 1.0f),
+		m_Position(0.0f, 0.0f, 0.0f)
+	{
+
+		// Parse MTL
+		std::map<std::string, Material*> parsedMaterials{};
+		Utils::ParseMTL(mtlPath, parsedMaterials);
+
+		// Inset parsedMaterials
+		materialMap.insert(parsedMaterials.begin(), parsedMaterials.end());
+
+		// Parse OBJ
+		std::vector<std::string> mappedMaterials{};
+		Utils::ParseOBJ(objPath, m_VerticesModel, m_Indices, mappedMaterials);
+
+		// Insert material pointers based on the index given from mappedMaterials
+		m_MaterialPtrs.resize(mappedMaterials.size());
+
+		for (size_t i{}; i < mappedMaterials.size(); i++)
+		{
+			std::cout << std::boolalpha << "Index: " << i << " mapped to: " << mappedMaterials[i] << " Material Exists: " << (materialMap[mappedMaterials[i]] != nullptr) << std::endl;
+			m_MaterialPtrs[i] = materialMap[mappedMaterials[i]];
+		}
+		
+
+		InitializeVertices();
+		InitializeVertexColors();
+		InitializeTriangles();
+	}
+
 
 	void Mesh::SetPosition(Vector3 translate)
 	{
