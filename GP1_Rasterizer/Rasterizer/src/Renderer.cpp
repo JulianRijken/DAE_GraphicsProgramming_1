@@ -16,6 +16,7 @@
 #include "Texture.h"
 #include "Utils.h"
 
+//#define MULTI_THREAD_PIXELS
 //#define MULTI_THREAD_TRIANGLE
 //#define DOUBLE_SIDED
 //#define SORT_TRIANGLES
@@ -51,10 +52,17 @@ m_UseLinearDepth(true)
 	Texture::LoadFromFile("Resources/uv_grid_2.png"),
 	}});
 
+	const int maxPixelLength{ std::max(m_ScreenWidth, m_ScreenHeight) };
+	m_Integers.resize(maxPixelLength);
 
-	InitializeSceneAssignment();
+	// fill with incrementing values
+	std::iota(m_Integers.begin(), m_Integers.end(), 1);
+
+
+
+	//InitializeSceneAssignment();
 	//InitializeSceneCar();
-	//InitializeSceneDiorama();
+	InitializeSceneDiorama();
 }
 
 Renderer::~Renderer()
@@ -327,10 +335,18 @@ void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Mat
 
 	// Looping all pixels within the bounding box
 	// This is done for optimization
+
+#ifdef MULTI_THREAD_PIXELS
+
+	std::for_each(std::execution::par, m_Integers.begin() + minX, m_Integers.begin() + maxX, [&](uint32_t pixelX)
+		{
+#else
 	for (int pixelX{ minX }; pixelX < maxX; pixelX++)
 	{
+#endif
 		for (int pixelY{ minY }; pixelY < maxY; pixelY++)
 		{
+
 			const Vector2 pixelCenter{ static_cast<float>(pixelX) + 0.5f,static_cast<float>(pixelY) + 0.5f };
 
 #ifdef DOUBLE_SIDED
@@ -389,7 +405,12 @@ void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Mat
 
 			ShadePixel(triangle, materialPtrs, weights, pixelIndex, nonLinearDepth);
 		}
+#ifdef MULTI_THREAD_PIXELS
+		});
+#else
 	}
+#endif
+
 }
 
 void Renderer::ShadePixel(const Triangle& triangle, const std::vector<Material*>& materialPtrs, const Vector3& weights, int pixelIndex, float nonLinearDepth) const
@@ -464,7 +485,8 @@ void Renderer::ShadePixel(const Triangle& triangle, const std::vector<Material*>
 		normal = tangentSpaceAxis.TransformPoint(normal);
 	}
 
-	float diffuseStrength{ 5.0f };//m_DiffuseReflectance
+	//float diffuseStrength{ 5.0f };//m_DiffuseReflectance
+	float diffuseStrength{ 3.0f };//m_DiffuseReflectance
 	float specular{ 0.5f }; //m_SpecularReflectance
 	float phongExponent{ 20.0f }; // Shininess
 

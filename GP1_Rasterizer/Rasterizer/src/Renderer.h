@@ -110,5 +110,7 @@ namespace dae
 		bool m_UseLinearDepth;
 
 		float spinSpeed{ 0.5f };
+
+		std::vector<uint32_t> m_Integers{};
 	};
 }
