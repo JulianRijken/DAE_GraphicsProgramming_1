@@ -37,10 +37,12 @@ namespace dae
 	const std::map<DebugRenderMode, std::string> RENDER_MODE_NAMES
 	{
 		{DebugRenderMode::Diffuse,"Diffuse Color"},
+
 		{DebugRenderMode::ObservedArea,"Observed Area"},
 		{DebugRenderMode::DiffuseOA,"Diffuse + OA"},
 		{DebugRenderMode::SpecularOA,"Specular + OA"},
 		{DebugRenderMode::Combined,"Combined"},
+
 		{DebugRenderMode::UVColor,"UV Color"},
 		{DebugRenderMode::Weights,"Weights"},
 		{DebugRenderMode::DepthBuffer,"Depth Buffer"},
@@ -81,7 +83,7 @@ namespace dae
 
 		inline void RasterizeMesh(Mesh& mesh) const;
 		inline void RasterizeTriangle(const Triangle& triangle, const std::vector<Material*>& materialPtrs) const;
-		inline void ShadePixel       (const Triangle& triangle, const std::vector<Material*>& materialPtrs, const Vector3& weights, int pixelIndex, float nonLinearDepth) const;
+		inline void ShadePixel(const Material* material, int materialIndex, int pixelIndex, ColorRGB vertexColor, Vector2 uv, Vector3 normal, Vector3 tangent, Vector3 viewDirection, float nonLinearDepth) const;
 
 		void InitializeSceneAssignment();
 		void InitializeSceneCar();

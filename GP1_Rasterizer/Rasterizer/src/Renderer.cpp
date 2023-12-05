@@ -21,6 +21,7 @@
 //#define DOUBLE_SIDED
 //#define SORT_TRIANGLES
 //#define RENDER_OPACITY
+//#define RENDER_OPACITY_CUTOUT
 
 using namespace dae;
 
@@ -43,6 +44,15 @@ m_UseLinearDepth(true)
 	m_BackBufferPixelsPtr = static_cast<uint32_t*>(m_BackBufferPtr->pixels);
 	m_pDepthBufferPixels = new float[m_ScreenWidth * m_ScreenHeight];
 
+
+#ifdef MULTI_THREAD_PIXELS
+	const int maxPixelLength{ std::max(m_ScreenWidth, m_ScreenHeight) };
+	m_Integers.resize(maxPixelLength);
+	// fill with incrementing values
+	std::iota(m_Integers.begin(), m_Integers.end(), 1);
+#endif
+
+
 	m_MaterialPtrMap.insert({ "default",new Material {
 	}});
 
@@ -52,17 +62,11 @@ m_UseLinearDepth(true)
 	Texture::LoadFromFile("Resources/uv_grid_2.png"),
 	}});
 
-	const int maxPixelLength{ std::max(m_ScreenWidth, m_ScreenHeight) };
-	m_Integers.resize(maxPixelLength);
-
-	// fill with incrementing values
-	std::iota(m_Integers.begin(), m_Integers.end(), 1);
 
 
-
-	//InitializeSceneAssignment();
+	InitializeSceneAssignment();
 	//InitializeSceneCar();
-	InitializeSceneDiorama();
+	//InitializeSceneDiorama();
 }
 
 Renderer::~Renderer()
@@ -293,16 +297,6 @@ void Renderer::RasterizeMesh(Mesh& mesh) const
 
 void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Material*>& materialPtrs) const
 {
-	// early out culling
-	if (triangle.vertex0->pos.z < 0.0f or triangle.vertex0->pos.z > 1.0f and
-		triangle.vertex1->pos.z < 0.0f or triangle.vertex1->pos.z > 1.0f and
-		triangle.vertex2->pos.z < 0.0f or triangle.vertex2->pos.z > 1.0f) return;
-
-	if (triangle.vertex0->pos.w < 0.0f) return;
-	if (triangle.vertex1->pos.w < 0.0f) return;
-	if (triangle.vertex2->pos.w < 0.0f) return;
-
-
 	// Checking normal early for more performance
 	const Vector3 normal = Vector3::Cross
 	(
@@ -314,6 +308,17 @@ void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Mat
 	if (normal.z <= 0.0f)
 		return;
 #endif
+
+
+	// early out culling
+	if (triangle.vertex0->pos.z < 0.0f or triangle.vertex0->pos.z > 1.0f and
+		triangle.vertex1->pos.z < 0.0f or triangle.vertex1->pos.z > 1.0f and
+		triangle.vertex2->pos.z < 0.0f or triangle.vertex2->pos.z > 1.0f) return;
+
+	if (triangle.vertex0->pos.w < 0.0f) return;
+	if (triangle.vertex1->pos.w < 0.0f) return;
+	if (triangle.vertex2->pos.w < 0.0f) return;
+
 
 	// Adding the 1 pixel is done to prevent gaps in the triangles
 	constexpr int boundingBoxPadding{1};
@@ -348,6 +353,8 @@ void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Mat
 		{
 
 			const Vector2 pixelCenter{ static_cast<float>(pixelX) + 0.5f,static_cast<float>(pixelY) + 0.5f };
+			const int pixelIndex = pixelX + pixelY * m_ScreenWidth;
+
 
 #ifdef DOUBLE_SIDED
 			if (normal.z > 0.0f)
@@ -379,7 +386,7 @@ void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Mat
 
 			// Get total area before
 			const float totalArea = signedAreaW0 + signedAreaW1 + signedAreaW2;
-			Vector3 weights
+			const Vector3 weights
 			{
 				signedAreaW0 / totalArea,
 				signedAreaW1 / totalArea,
@@ -392,18 +399,83 @@ void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Mat
 				weights.y / triangle.vertex1->pos.z +
 				weights.z / triangle.vertex2->pos.z);
 
-			// Culling I DON"T KNOW IT DOES NOT SEEM CORRECT THE DEPTH THAT IS
+			// My nonLinearDepth is still not fully correct, as why it uses triangle clipping and not pixel
 			//if (nonLinearPixelDepth < 0.0f or nonLinearPixelDepth > 1.0f)
 			//	continue;
 
-			const int pixelIndex = pixelX + pixelY * m_ScreenWidth;
+
+			const Material* material = defaultMaterial;
+
+			if (!materialPtrs.empty())
+				material = materialPtrs[triangle.vertex0->materialIndex];
+
+
+#ifdef RENDER_OPACITY_CUTOUT
+
+			if (material->opacity)
+			{
+				const float linearPixelDepth = 1.0f / (
+					weights.x / triangle.vertex0->pos.w +
+					weights.y / triangle.vertex1->pos.w +
+					weights.z / triangle.vertex2->pos.w);
+
+
+				const Vector2 uv = linearPixelDepth * (
+					triangle.vertex0->uv / triangle.vertex0->pos.w * weights.x +
+					triangle.vertex1->uv / triangle.vertex1->pos.w * weights.y +
+					triangle.vertex2->uv / triangle.vertex2->pos.w * weights.z);
+
+
+				ColorRGB opacityMask = material->opacity->Sample(uv);
+				const float alpha = std::ranges::clamp(opacityMask.r, 0.0f, 1.0f);
+
+				if (alpha < 0.9f)
+					continue;
+			}
+#endif
+
+
 
 			// Depth check
 			if (nonLinearDepth > m_pDepthBufferPixels[pixelIndex])
 				continue;
 			m_pDepthBufferPixels[pixelIndex] = nonLinearDepth;
 
-			ShadePixel(triangle, materialPtrs, weights, pixelIndex, nonLinearDepth);
+
+
+			const float linearPixelDepth = 1.0f / (
+				weights.x / triangle.vertex0->pos.w +
+				weights.y / triangle.vertex1->pos.w +
+				weights.z / triangle.vertex2->pos.w);
+
+			const Vector2 interpUV = linearPixelDepth * (
+				triangle.vertex0->uv / triangle.vertex0->pos.w * weights.x +
+				triangle.vertex1->uv / triangle.vertex1->pos.w * weights.y +
+				triangle.vertex2->uv / triangle.vertex2->pos.w * weights.z);
+
+
+			const Vector3 interpNormal = linearPixelDepth * (
+				triangle.vertex0->normal / triangle.vertex0->pos.w * weights.x +
+				triangle.vertex1->normal / triangle.vertex1->pos.w * weights.y +
+				triangle.vertex2->normal / triangle.vertex2->pos.w * weights.z);
+
+			const Vector3 interpTangent = linearPixelDepth * (
+				triangle.vertex0->tangent / triangle.vertex0->pos.w * weights.x +
+				triangle.vertex1->tangent / triangle.vertex1->pos.w * weights.y +
+				triangle.vertex2->tangent / triangle.vertex2->pos.w * weights.z);
+
+			const Vector3 interpViewDirection =
+				triangle.vertex0->viewDirection * weights.x +
+				triangle.vertex1->viewDirection * weights.y +
+				triangle.vertex2->viewDirection * weights.z;
+
+
+			const ColorRGB interpVertexColor = 
+				triangle.vertex0->color* weights.x +
+				triangle.vertex1->color * weights.y +
+				triangle.vertex2->color * weights.z;
+
+			ShadePixel(material,triangle.vertex0->materialIndex,pixelIndex,interpVertexColor,interpUV,interpNormal,interpTangent,interpViewDirection,nonLinearDepth);
 		}
 #ifdef MULTI_THREAD_PIXELS
 		});
@@ -413,76 +485,30 @@ void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Mat
 
 }
 
-void Renderer::ShadePixel(const Triangle& triangle, const std::vector<Material*>& materialPtrs, const Vector3& weights, int pixelIndex, float nonLinearDepth) const
+void Renderer::ShadePixel(const Material* material, int materialIndex,int pixelIndex, ColorRGB vertexColor, Vector2 uv, Vector3 normal, Vector3 tangent, Vector3 viewDirection, float nonLinearDepth) const
 {
 	ColorRGB finalPixelColor{};
 
-	Material* material = defaultMaterial;
-
-	if (!materialPtrs.empty())
-		material = materialPtrs[triangle.vertex0->materialIndex];
-
-	const float linearPixelDepth = 1.0f / (
-		weights.x / triangle.vertex0->pos.w +
-		weights.y / triangle.vertex1->pos.w +
-		weights.z / triangle.vertex2->pos.w);
-
-
-	const Vector2 uv = linearPixelDepth * (
-		triangle.vertex0->uv / triangle.vertex0->pos.w * weights.x +
-		triangle.vertex1->uv / triangle.vertex1->pos.w * weights.y +
-		triangle.vertex2->uv / triangle.vertex2->pos.w * weights.z);
-
-
-
-	Vector3 normal = (
-		triangle.vertex0->normal * weights.x +
-		triangle.vertex1->normal * weights.y +
-		triangle.vertex2->normal * weights.z);
-	if(m_UseLinearDepth)
-	{
-		normal = linearPixelDepth * (
-			triangle.vertex0->normal / triangle.vertex0->pos.w * weights.x +
-			triangle.vertex1->normal / triangle.vertex1->pos.w * weights.y +
-			triangle.vertex2->normal / triangle.vertex2->pos.w * weights.z);
-	}
-
-	Vector3 tangent = (
-		triangle.vertex0->tangent * weights.x +
-		triangle.vertex1->tangent * weights.y +
-		triangle.vertex2->tangent * weights.z);
-
-	if (m_UseLinearDepth)
-	{
-		tangent = (
-			triangle.vertex0->tangent / triangle.vertex0->pos.w * weights.x +
-			triangle.vertex1->tangent / triangle.vertex1->pos.w * weights.y +
-			triangle.vertex2->tangent / triangle.vertex2->pos.w * weights.z);
-	}
-
-
-	Vector3 binormal = Vector3::Cross(normal, tangent);
-
-	Matrix tangentSpaceAxis =
-	{
-		tangent,
-		binormal,
-		normal,
-		Vector3::Zero
-	};
-
+	Vector3 normalMapNormal{ normal };
 	if (material->normal && m_UseNormalMap)
 	{
-		ColorRGB normalColor = material->normal->Sample(uv);
-		Vector3 sampledNormal
+		const Matrix tangentSpaceAxis =
+		{
+			tangent,
+			Vector3::Cross(normal, tangent),
+			normal,
+			Vector3::Zero
+		};
+
+		const ColorRGB normalColor = material->normal->Sample(uv);
+		const Vector3 sampledNormal
 		{
 			2.0f * normalColor.r - 1.0f,
 			2.0f * normalColor.g - 1.0f,
 			2.0f * normalColor.b - 1.0f
 		};
 
-		normal = sampledNormal;
-		normal = tangentSpaceAxis.TransformPoint(normal);
+		normalMapNormal = tangentSpaceAxis.TransformPoint(sampledNormal);
 	}
 
 	//float diffuseStrength{ 5.0f };//m_DiffuseReflectance
@@ -504,16 +530,13 @@ void Renderer::ShadePixel(const Triangle& triangle, const std::vector<Material*>
 	ColorRGB lambertDeffuse = diffuseColor * diffuseStrength / PI;
 
 	// Cosine Law
-	const float observedArea = std::max(0.0f, Vector3::Dot(normal, -LIGHT_DIRECTION));
+	const float observedArea = std::max(0.0f, Vector3::Dot(normalMapNormal, -LIGHT_DIRECTION));
 
 
-	const Vector3 viewDirection = (
-		triangle.vertex0->viewDirection * weights.x +
-		triangle.vertex1->viewDirection * weights.y +
-		triangle.vertex2->viewDirection * weights.z);
 
 
-	const Vector3 reflectedRay = Vector3::Reflect(LIGHT_DIRECTION, normal);
+
+	const Vector3 reflectedRay = Vector3::Reflect(LIGHT_DIRECTION, normalMapNormal);
 	const float cosAlpha{ std::max(Vector3::Dot(reflectedRay,-viewDirection),0.0f) };
 	const float specularIntensity{ specular * std::powf(cosAlpha,phongExponent) };
 
@@ -577,20 +600,11 @@ void Renderer::ShadePixel(const Triangle& triangle, const std::vector<Material*>
 		} break;
 		case DebugRenderMode::Weights:
 		{
-			finalPixelColor =
-				triangle.vertex0->color * weights.x +
-				triangle.vertex1->color * weights.y +
-				triangle.vertex2->color * weights.z;
+			finalPixelColor = vertexColor;
+		
 		} break;
 		case DebugRenderMode::DepthBuffer:
 		{
-			//finalPixelColor = colors::White * ;
-			//finalPixelColor = colors::White * std::lerp(0.985f, 1.0f, nonLinearPixelDepth);
-			//finalPixelColor = colors::White * std::clamp(triangle.vertex0.positionScreen.z,0.0f,1.0f);
-			//finalPixelColor = colors::White * std::clamp(nonLinearPixelDepth,0.0f,1.0f);
-			//finalPixelColor = colors::White * Utils::MapValueInRangeClamped(nonLinearPixelDepth,0.9f,1.0f,0.0f,1.0f);
-			//finalPixelColor = colors::White * std::ranges::clamp(nonLinearPixelDepth,0.0f,1.0f);
-
 			if (nonLinearDepth < 0.0f)
 			{
 				finalPixelColor = colors::Red;
@@ -606,42 +620,16 @@ void Renderer::ShadePixel(const Triangle& triangle, const std::vector<Material*>
 		case DebugRenderMode::MaterialIndex:
 		{
 
-			srand(triangle.vertex0->materialIndex);
+			srand(materialIndex);
 
 			ColorRGB color
 			{
-				(std::rand() * (triangle.vertex0->materialIndex + 1) % 255) / 255.0f,
-				(std::rand() * (triangle.vertex0->materialIndex + 1) % 255) / 255.0f,
-				(std::rand() * (triangle.vertex0->materialIndex + 1) % 255) / 255.0f,
+				(std::rand() * (materialIndex + 1) % 255) / 255.0f,
+				(std::rand() * (materialIndex + 1) % 255) / 255.0f,
+				(std::rand() * (materialIndex + 1) % 255) / 255.0f,
 			};
 
-
 			finalPixelColor = color;
-
-			//switch (triangle.vertex0->materialIndex)
-			//{
-			//case 0:
-			//	finalPixelColor = colors::Red;
-			//	break;
-			//case 1:
-			//	finalPixelColor = colors::Blue;
-			//	break;
-			//case 2:
-			//	finalPixelColor = colors::Green;
-			//	break;
-			//case 3:
-			//	finalPixelColor = colors::Cyan;
-			//	break;
-			//case 4:
-			//	finalPixelColor = colors::Magenta;
-			//	break;
-			//case 5:
-			//	finalPixelColor = colors::Yellow;
-			//	break;
-			//default:
-			//	finalPixelColor = colors::White;
-			//}
-
 		} break;
 		case DebugRenderMode::Opacity:
 		{
@@ -651,7 +639,6 @@ void Renderer::ShadePixel(const Triangle& triangle, const std::vector<Material*>
 				opacity = material->opacity->Sample(uv);
 
 			finalPixelColor = opacity;
-
 		} break;
 	}
 

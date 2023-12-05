@@ -10,7 +10,7 @@ map_Kd Resources/Diorama/T_CarLift_Color.png
 
 newmtl Car_mat
 map_Kd Resources/Diorama/T_FordGT40_Color.png
-map_d Resources/Diorama/T_FordGT40_Opacity.png
+# map_d Resources/Diorama/T_FordGT40_Opacity.png
 
 newmtl CleanWheel_Mat
 map_Kd Resources/Diorama/T_WheelClean_Color.png

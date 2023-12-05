@@ -30,16 +30,16 @@ int main(int argc, char* args[])
 	//Create window + surfaces
 	SDL_Init(SDL_INIT_VIDEO);
 
-	//const uint32_t width = 640;
-	//const uint32_t height = 480;
+	//constexpr uint32_t width = 640;
+	//constexpr uint32_t height = 480;
 
-	const uint32_t width = 1280;
-	const uint32_t height = 720;
+	constexpr uint32_t width = 1280;
+	constexpr uint32_t height = 720;
 
-	//const uint32_t width = 1920;
-	//const uint32_t height = 1080;
+	//constexpr uint32_t width = 1920;
+	//constexpr uint32_t height = 1080;
 
-	const float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
+	constexpr float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 
 	SDL_Window* pWindow = SDL_CreateWindow(
 		"Rasterizer - Julian Rijken",
@@ -55,7 +55,6 @@ int main(int argc, char* args[])
 
 	//Initialize "framework"
 	Timer timer{}; 
-	//Camera camera{ {0,2.5f,-6.0f},60.0f };
 	Camera camera{ {0,0,0.0f},90.0f,aspectRatio };
 	Renderer renderer{&camera, pWindow};
 
@@ -124,7 +123,6 @@ int main(int argc, char* args[])
 		}
 
 		//--------- Update ---------
-		//renderer.Update(timer);
 		camera.Update(timer);
 		renderer.Update(timer);
 
