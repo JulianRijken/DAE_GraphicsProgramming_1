@@ -50,11 +50,6 @@ namespace dae
 		{DebugRenderMode::Opacity,"Opacity"},
 	};
 
-
-	const Vector3 LIGHT_DIRECTION{ Vector3{0.577f,-0.577f,0.577f}.Normalized() };
-
-
-
 	class Renderer final
 	{
 	public:
@@ -103,6 +98,11 @@ namespace dae
 		Material* defaultMaterial;
 
 		ColorRGB m_AmbientColor{ 0.025f,0.025f ,0.025f };
+		Vector3 m_DirectionalLight{ Vector3{0.577f,-0.577f,0.577f}.Normalized() };
+
+		float m_DiffuseStrengthKd{ 3.0f }; //m_DiffuseReflectance Kd
+		float m_SpecularKs{ 0.5f }; //m_SpecularReflectance Ks
+		float m_PhongExponentExp{ 20.0f }; // Shininess exp
 
 		int m_ScreenWidth;
 		int m_ScreenHeight;

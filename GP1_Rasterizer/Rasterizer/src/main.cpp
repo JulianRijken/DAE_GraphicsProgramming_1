@@ -30,11 +30,11 @@ int main(int argc, char* args[])
 	//Create window + surfaces
 	SDL_Init(SDL_INIT_VIDEO);
 
-	//constexpr uint32_t width = 640;
-	//constexpr uint32_t height = 480;
+	constexpr uint32_t width = 640;
+	constexpr uint32_t height = 480;
 
-	constexpr uint32_t width = 1280;
-	constexpr uint32_t height = 720;
+	//constexpr uint32_t width = 1280;
+	//constexpr uint32_t height = 720;
 
 	//constexpr uint32_t width = 1920;
 	//constexpr uint32_t height = 1080;

@@ -90,10 +90,17 @@ Renderer::~Renderer()
 
 void Renderer::InitializeSceneAssignment()
 {
-	m_AmbientColor = { 0.025f,0.025f ,0.025f };
+	m_AmbientColor = { 0.03f,0.03f,0.03f };
+	m_DirectionalLight = Vector3(0.577f,-0.577f ,0.577f).Normalized();
 
 	m_CameraPtr->SetFovAngle(45);
-	m_CameraPtr->SetPosition(Vector3{ 0,0,0 });
+	m_CameraPtr->SetPosition(Vector3{ 0,5.0f,-64.0f });
+	m_CameraPtr->SetNearClipping(0.1f);
+	m_CameraPtr->SetFarClipping(100.0f);
+
+	m_DiffuseStrengthKd = 7.0f;
+	m_PhongExponentExp = 25.0f;
+	m_SpecularKs = 1.0f;
 
 	m_MaterialPtrMap.insert({ "bike",new Material {
 		Texture::LoadFromFile("Resources/vehicle_diffuse.png"),
@@ -105,7 +112,7 @@ void Renderer::InitializeSceneAssignment()
 
 
 	Mesh bikeMesh("Resources/vehicle.obj", { m_MaterialPtrMap["bike"] });
-	bikeMesh.SetPosition({ 0, 0, 50 });
+	//bikeMesh.SetPosition({ 0, 0, 50 });
 	m_WorldMeshes.push_back(bikeMesh);
 }
 
@@ -114,6 +121,9 @@ void Renderer::InitializeSceneCar()
 	m_CameraPtr->SetFovAngle(45);
 	m_CameraPtr->SetPosition(Vector3{ 0,20,-60 });
 	m_CameraPtr->SetPitch(-13.0f * TO_RADIANS);
+
+	m_CameraPtr->SetNearClipping(20);
+	m_CameraPtr->SetFarClipping(100);
 
 	Mesh carMesh("Resources/Car/Car.obj", "Resources/Car/Car.mtl", m_MaterialPtrMap);
 	carMesh.SetScale(Vector3{ 1,1,1 } *15.0f);
@@ -128,6 +138,9 @@ void Renderer::InitializeSceneDiorama()
 	m_CameraPtr->SetPosition({ -167.749f, 158.555f, -359.077f });
 	m_CameraPtr->SetPitch(-0.10f);
 	m_CameraPtr->SetYaw(-0.40f);
+	m_CameraPtr->SetNearClipping(100);
+	m_CameraPtr->SetFarClipping(1000);
+
 	spinSpeed = 0.0f;
 
 	Mesh diroama("Resources/Diorama/DioramaGP.obj", "Resources/Diorama/DioramaGP.mtl", m_MaterialPtrMap);
@@ -248,6 +261,8 @@ void Renderer::TransformMesh(Mesh& mesh) const
 		vertex->pos.y /= vertex->pos.w;
 		vertex->pos.z /= vertex->pos.w;
 
+		vertex->pos.z = 1.0f / vertex->pos.z;
+
 		// Convert from NDC to screen
 		vertex->pos.x = (vertex->pos.x + 1.0f) / 2.0f * static_cast<float>(m_ScreenWidth);
 		vertex->pos.y = (1.0f - vertex->pos.y) / 2.0f * static_cast<float>(m_ScreenHeight);
@@ -309,11 +324,6 @@ void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Mat
 		return;
 #endif
 
-
-	// early out culling
-	if (triangle.vertex0->pos.z < 0.0f or triangle.vertex0->pos.z > 1.0f and
-		triangle.vertex1->pos.z < 0.0f or triangle.vertex1->pos.z > 1.0f and
-		triangle.vertex2->pos.z < 0.0f or triangle.vertex2->pos.z > 1.0f) return;
 
 	if (triangle.vertex0->pos.w < 0.0f) return;
 	if (triangle.vertex1->pos.w < 0.0f) return;
@@ -394,14 +404,14 @@ void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Mat
 			};
 
 
-			const float nonLinearDepth = 1.0f / (
+			const float nonLinearDepth = (
 				weights.x / triangle.vertex0->pos.z +
 				weights.y / triangle.vertex1->pos.z +
 				weights.z / triangle.vertex2->pos.z);
 
 			// My nonLinearDepth is still not fully correct, as why it uses triangle clipping and not pixel
-			//if (nonLinearPixelDepth < 0.0f or nonLinearPixelDepth > 1.0f)
-			//	continue;
+			if (nonLinearDepth < 0.0f or nonLinearDepth > 1.0f)
+				continue;
 
 
 			const Material* material = defaultMaterial;
@@ -429,7 +439,7 @@ void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Mat
 				ColorRGB opacityMask = material->opacity->Sample(uv);
 				const float alpha = std::ranges::clamp(opacityMask.r, 0.0f, 1.0f);
 
-				if (alpha < 0.9f)
+				if (alpha < 0.75f)
 					continue;
 			}
 #endif
@@ -453,7 +463,6 @@ void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Mat
 				triangle.vertex1->uv / triangle.vertex1->pos.w * weights.y +
 				triangle.vertex2->uv / triangle.vertex2->pos.w * weights.z);
 
-
 			const Vector3 interpNormal = linearPixelDepth * (
 				triangle.vertex0->normal / triangle.vertex0->pos.w * weights.x +
 				triangle.vertex1->normal / triangle.vertex1->pos.w * weights.y +
@@ -464,11 +473,10 @@ void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Mat
 				triangle.vertex1->tangent / triangle.vertex1->pos.w * weights.y +
 				triangle.vertex2->tangent / triangle.vertex2->pos.w * weights.z);
 
-			const Vector3 interpViewDirection =
-				triangle.vertex0->viewDirection * weights.x +
-				triangle.vertex1->viewDirection * weights.y +
-				triangle.vertex2->viewDirection * weights.z;
-
+			const Vector3 interpViewDirection = linearPixelDepth * (
+				triangle.vertex0->viewDirection / triangle.vertex0->pos.w * weights.x +
+				triangle.vertex1->viewDirection / triangle.vertex1->pos.w * weights.y +
+				triangle.vertex2->viewDirection / triangle.vertex2->pos.w * weights.z);
 
 			const ColorRGB interpVertexColor = 
 				triangle.vertex0->color* weights.x +
@@ -489,7 +497,27 @@ void Renderer::ShadePixel(const Material* material, int materialIndex,int pixelI
 {
 	ColorRGB finalPixelColor{};
 
-	Vector3 normalMapNormal{ normal };
+	// Create locals for sampling
+	Vector3 sampledNormal{ normal };
+	float sampledSpecular{ m_SpecularKs }; 
+	float sampledPhongExponent{ m_PhongExponentExp };
+	ColorRGB sampledDiffuseColor{0,0,0}; // cd
+	ColorRGB sampledOpacity{0,0,0};
+
+
+	if (material->opacity)
+		sampledOpacity = material->opacity->Sample(uv);
+
+	if (material->specular)
+		sampledSpecular *= material->specular->Sample(uv).r; // NOTE Only using R
+
+	if (material->gloss)
+		sampledPhongExponent *= material->gloss->Sample(uv).r; // NOTE Only using R
+
+	if (material->diffuse)
+		sampledDiffuseColor = material->diffuse->Sample(uv);
+
+
 	if (material->normal && m_UseNormalMap)
 	{
 		const Matrix tangentSpaceAxis =
@@ -500,52 +528,35 @@ void Renderer::ShadePixel(const Material* material, int materialIndex,int pixelI
 			Vector3::Zero
 		};
 
-		const ColorRGB normalColor = material->normal->Sample(uv);
-		const Vector3 sampledNormal
+		const ColorRGB sampledNormalColor = material->normal->Sample(uv);
+		const Vector3 sampledNormalMapped
 		{
-			2.0f * normalColor.r - 1.0f,
-			2.0f * normalColor.g - 1.0f,
-			2.0f * normalColor.b - 1.0f
+			2.0f * sampledNormalColor.r - 1.0f,
+			2.0f * sampledNormalColor.g - 1.0f,
+			2.0f * sampledNormalColor.b - 1.0f
 		};
 
-		normalMapNormal = tangentSpaceAxis.TransformPoint(sampledNormal);
+		sampledNormal = tangentSpaceAxis.TransformPoint(sampledNormalMapped);
 	}
 
-	//float diffuseStrength{ 5.0f };//m_DiffuseReflectance
-	float diffuseStrength{ 3.0f };//m_DiffuseReflectance
-	float specular{ 0.5f }; //m_SpecularReflectance
-	float phongExponent{ 20.0f }; // Shininess
 
-	if (material->specular)
-		specular *= material->specular->Sample(uv).r;
+	// Get lambert diffuse
+	ColorRGB lambertDiffuse = sampledDiffuseColor * m_DiffuseStrengthKd / PI;
 
-	if (material->gloss)
-		phongExponent *= material->gloss->Sample(uv).r;
+	// Get Cosine Law
+	const float observedArea = std::max(0.0f, Vector3::Dot(sampledNormal, -m_DirectionalLight));
 
-	ColorRGB diffuseColor;
-	if (material->diffuse)
-		diffuseColor = material->diffuse->Sample(uv);
-
-	//Diffuse Color * Diffuse Reflection Coefficient / pi
-	ColorRGB lambertDeffuse = diffuseColor * diffuseStrength / PI;
-
-	// Cosine Law
-	const float observedArea = std::max(0.0f, Vector3::Dot(normalMapNormal, -LIGHT_DIRECTION));
-
-
-
-
-
-	const Vector3 reflectedRay = Vector3::Reflect(LIGHT_DIRECTION, normalMapNormal);
+	// Get Specular Intensity
+	const Vector3 reflectedRay = Vector3::Reflect(m_DirectionalLight, sampledNormal);
 	const float cosAlpha{ std::max(Vector3::Dot(reflectedRay,-viewDirection),0.0f) };
-	const float specularIntensity{ specular * std::powf(cosAlpha,phongExponent) };
+	const float specularIntensity{ sampledSpecular * std::powf(cosAlpha,sampledPhongExponent) };
 
 
 	switch (m_RenderMode)
 	{
 		case DebugRenderMode::Diffuse:
 		{
-			finalPixelColor = lambertDeffuse;
+			finalPixelColor = lambertDiffuse;
 		} break;
 		case DebugRenderMode::ObservedArea:
 		{
@@ -553,7 +564,7 @@ void Renderer::ShadePixel(const Material* material, int materialIndex,int pixelI
 		}break;
 		case DebugRenderMode::DiffuseOA:
 		{
-			finalPixelColor = lambertDeffuse * observedArea;
+			finalPixelColor = lambertDiffuse * observedArea;
 		}break;
 		case DebugRenderMode::SpecularOA:
 		{
@@ -591,8 +602,9 @@ void Renderer::ShadePixel(const Material* material, int materialIndex,int pixelI
 				finalPixelColor = color;
 			}
 #else
-			finalPixelColor = (specularIntensity * colors::White + lambertDeffuse) * observedArea + m_AmbientColor;
+			finalPixelColor = (specularIntensity * colors::White + lambertDiffuse) * observedArea + m_AmbientColor;
 #endif
+
 		} break;
 		case DebugRenderMode::UVColor:
 		{
@@ -605,7 +617,20 @@ void Renderer::ShadePixel(const Material* material, int materialIndex,int pixelI
 		} break;
 		case DebugRenderMode::DepthBuffer:
 		{
-			if (nonLinearDepth < 0.0f)
+			//if (nonLinearDepth < 0.0f)
+			//{
+			//	finalPixelColor = colors::Red;
+			//}
+			//else
+			//{
+			//	if (nonLinearDepth > 1.0f)
+			//		finalPixelColor = colors::Blue;
+			//	else
+			//		finalPixelColor = colors::Green * nonLinearDepth;
+			//}
+
+
+            if (nonLinearDepth < 0.0001f)
 			{
 				finalPixelColor = colors::Red;
 			}
@@ -619,7 +644,6 @@ void Renderer::ShadePixel(const Material* material, int materialIndex,int pixelI
 		}break;
 		case DebugRenderMode::MaterialIndex:
 		{
-
 			srand(materialIndex);
 
 			ColorRGB color
@@ -633,12 +657,7 @@ void Renderer::ShadePixel(const Material* material, int materialIndex,int pixelI
 		} break;
 		case DebugRenderMode::Opacity:
 		{
-			ColorRGB opacity{};
-
-			if(material->opacity)
-				opacity = material->opacity->Sample(uv);
-
-			finalPixelColor = opacity;
+				finalPixelColor = sampledOpacity;
 		} break;
 	}
 

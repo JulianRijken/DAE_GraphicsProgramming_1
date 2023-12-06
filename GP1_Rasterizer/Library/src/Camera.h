@@ -26,7 +26,7 @@ namespace dae
 		float m_FovAngle;
 		float m_FovValue;
 
-		float m_NearClippingPlane = 10.0f;
+		float m_NearClippingPlane = 3.0f;
 		float m_FarClippingPlane = 100.0f;
 
 		Vector3 m_Forward{ Vector3::UnitZ };
@@ -164,6 +164,16 @@ namespace dae
 
 			if(teleport)
 				m_Origin = position;
+		}
+
+		void SetNearClipping(float value)
+		{
+			m_NearClippingPlane = value;
+		}
+
+		void SetFarClipping(float value)
+		{
+			m_FarClippingPlane = value;
 		}
 
 		void SetPitch(float pitch)
