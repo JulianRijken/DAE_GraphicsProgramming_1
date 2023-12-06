@@ -20,6 +20,7 @@ namespace dae
 
 	struct VertexTransformed
 	{
+		Vector3 worldPos{};
 		Vector4 pos{};
 		Vector2 uv{};
 		Vector3 normal{};

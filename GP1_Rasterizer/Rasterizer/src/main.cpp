@@ -30,14 +30,17 @@ int main(int argc, char* args[])
 	//Create window + surfaces
 	SDL_Init(SDL_INIT_VIDEO);
 
-	constexpr uint32_t width = 640;
-	constexpr uint32_t height = 480;
+	//constexpr uint32_t width = 640;
+	//constexpr uint32_t height = 480;
 
-	//constexpr uint32_t width = 1280;
-	//constexpr uint32_t height = 720;
+	constexpr uint32_t width = 1280;
+	constexpr uint32_t height = 720;
 
 	//constexpr uint32_t width = 1920;
 	//constexpr uint32_t height = 1080;
+
+	//constexpr uint32_t width = 7680;
+	//constexpr uint32_t height = 4320;
 
 	constexpr float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 
@@ -64,7 +67,7 @@ int main(int argc, char* args[])
 
 	float printTimer = 0.f;
 	bool isLooping = true;
-	bool takeScreenshot = false;
+	bool takeScreenshotOfCurrentFrame = false;
 
 	while (isLooping)
 	{
@@ -78,9 +81,6 @@ int main(int argc, char* args[])
 				isLooping = false;
 				break;
 			case SDL_KEYDOWN:
-				if (e.key.keysym.scancode == SDL_SCANCODE_X)
-					takeScreenshot = true;
-
 				if (e.key.keysym.scancode == SDL_SCANCODE_F5)
 					renderer.ToggleRotation();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F6)
@@ -89,6 +89,10 @@ int main(int argc, char* args[])
 					renderer.CycleRenderMode();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F8)
 					renderer.ToggleLinearDepth();
+				if (e.key.keysym.scancode == SDL_SCANCODE_X)
+					takeScreenshotOfCurrentFrame = true;
+				if (e.key.keysym.scancode == SDL_SCANCODE_C)
+					camera.PrintInfo();
 
 				if (e.key.keysym.scancode == SDL_SCANCODE_1)
 					renderer.SetRenderMode(DebugRenderMode::Diffuse);
@@ -139,13 +143,14 @@ int main(int argc, char* args[])
 		}
 
 		//Save screenshot after full render
-		if (takeScreenshot)
+		if (takeScreenshotOfCurrentFrame)
 		{
+			takeScreenshotOfCurrentFrame = false;
+
 			if (!renderer.SaveBufferToImage())
 				std::cout << "Screenshot saved!" << std::endl;
 			else
 				std::cout << "Something went wrong. Screenshot not saved!" << std::endl;
-			takeScreenshot = false;
 		}
 	}
 

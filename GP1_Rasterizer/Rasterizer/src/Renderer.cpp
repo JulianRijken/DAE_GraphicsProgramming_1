@@ -4,6 +4,7 @@
 
 //Project includes
 #include "Renderer.h"
+#include "Renderer.h"
 
 #include <algorithm>
 #include <cassert>
@@ -13,6 +14,7 @@
 #include "Camera.h"
 #include "Maths.h"
 #include "Mesh.h"
+#include "Light.h"
 #include "Texture.h"
 #include "Utils.h"
 
@@ -64,8 +66,8 @@ m_UseLinearDepth(true)
 
 
 
-	InitializeSceneAssignment();
-	//InitializeSceneCar();
+	//InitializeSceneAssignment();
+	InitializeSceneCar();
 	//InitializeSceneDiorama();
 }
 
@@ -90,13 +92,14 @@ Renderer::~Renderer()
 
 void Renderer::InitializeSceneAssignment()
 {
-	m_AmbientColor = { 0.03f,0.03f,0.03f };
-	m_DirectionalLight = Vector3(0.577f,-0.577f ,0.577f).Normalized();
 
 	m_CameraPtr->SetFovAngle(45);
 	m_CameraPtr->SetPosition(Vector3{ 0,5.0f,-64.0f });
 	m_CameraPtr->SetNearClipping(0.1f);
 	m_CameraPtr->SetFarClipping(100.0f);
+
+	m_AmbientColor = { 0.03f,0.03f,0.03f };
+	m_DirectionalLight = Vector3(0.577f, -0.577f, 0.577f).Normalized();\
 
 	m_DiffuseStrengthKd = 7.0f;
 	m_PhongExponentExp = 25.0f;
@@ -111,7 +114,7 @@ void Renderer::InitializeSceneAssignment()
 	} });
 
 
-	Mesh bikeMesh("Resources/vehicle.obj", { m_MaterialPtrMap["bike"] });
+	const Mesh bikeMesh("Resources/vehicle.obj", { m_MaterialPtrMap["bike"] });
 	//bikeMesh.SetPosition({ 0, 0, 50 });
 	m_WorldMeshes.push_back(bikeMesh);
 }
@@ -121,18 +124,38 @@ void Renderer::InitializeSceneCar()
 	m_CameraPtr->SetFovAngle(45);
 	m_CameraPtr->SetPosition(Vector3{ 0,20,-60 });
 	m_CameraPtr->SetPitch(-13.0f * TO_RADIANS);
-
 	m_CameraPtr->SetNearClipping(20);
-	m_CameraPtr->SetFarClipping(100);
+	m_CameraPtr->SetFarClipping(200);
+
+	m_AmbientColor = { 0.03f,0.03f,0.03f };
+	m_DirectionalLight = Vector3(0.577f, -0.577f, 0.577f).Normalized();
+
+	m_DiffuseStrengthKd = 2.0f;
+	m_PhongExponentExp = 30.0f;
+	m_SpecularKs = 0.5f;
+
 
 	Mesh carMesh("Resources/Car/Car.obj", "Resources/Car/Car.mtl", m_MaterialPtrMap);
-	carMesh.SetScale(Vector3{ 1,1,1 } *15.0f);
-	m_WorldMeshes.push_back(carMesh);
+	carMesh.SetScale(Vector3{ 1,1,1 } *15);
+	AddMesh(carMesh);
+
+
+	// Lights
+	AddDirectionalLight({ 0.577f, -0.577f, 0.577f }, { 0.03f,0.03f,0.03f },1.0f);
+
+	//AddPointLight({ -10.1473f, 20.2765f, -61.4862f }, { 1.0f, 1.0f, 0.58f }, 600.0f); //Front Light Left
+	//AddPointLight({  62.7225f, 47.0482f, -7.69772f }, { 1.0f, 1.0f, 0.58f }, 500.0f); //Front Light right
+	//AddPointLight({ -11.7184f, 10.9686f,  57.3831f }, { 0.24f, 0.57f, 0.78f }, 400.0f); //Backlight
 }
 
 void Renderer::InitializeSceneDiorama()
 {
-	m_AmbientColor = { 0.1f,0.1f ,0.1f };
+	m_AmbientColor = { 0.03f,0.03f,0.03f };
+	m_DirectionalLight = Vector3(0.577f, -0.577f, 0.577f).Normalized();
+
+	m_DiffuseStrengthKd = 7.0f;
+	m_PhongExponentExp = 25.0f;
+	m_SpecularKs = 1.0f;
 
 	m_CameraPtr->SetFovAngle(42);
 	m_CameraPtr->SetPosition({ -167.749f, 158.555f, -359.077f });
@@ -147,6 +170,22 @@ void Renderer::InitializeSceneDiorama()
 	diroama.SetScale(Vector3{ 1,1,1 } * 15.0f);
 	m_WorldMeshes.push_back(diroama);
 }
+
+void Renderer::AddMesh(const Mesh& mesh)
+{
+	m_WorldMeshes.emplace_back(mesh);
+}
+
+void Renderer::AddPointLight(const Vector3& origin, const ColorRGB& color, float intensity)
+{
+	m_WorldLights.emplace_back(Light(origin,{},color,intensity,LightType::Point));
+}
+
+void Renderer::AddDirectionalLight(const Vector3& direction, const ColorRGB& color, float intensity)
+{
+	m_WorldLights.emplace_back(Light({}, direction, color, intensity, LightType::Directional));
+}
+
 
 
 void Renderer::Update(const Timer& timer)
@@ -245,13 +284,16 @@ void Renderer::TransformMesh(Mesh& mesh) const
 		// Convert vertex to world
 		vertex->pos = mesh.m_WorldMatrix.TransformPoint(vertex->pos);
 
+		// Store world pos, this is used later on for lighting
+		vertex->worldPos = vertex->pos.GetXYZ(); 
+
 		// Convert normal to world
 		// Note we use transform vector
 		vertex->normal  = mesh.m_WorldMatrix.TransformVector(vertex->normal ).Normalized();
 		vertex->tangent = mesh.m_WorldMatrix.TransformVector(vertex->tangent).Normalized();
 
 		// Calculate view direction based on vertex in world
-		vertex->viewDirection = (vertex->pos.GetXYZ() - m_CameraPtr->m_Origin).Normalized();
+		vertex->viewDirection = (vertex->worldPos - m_CameraPtr->m_Origin).Normalized();
 
 		// Transform vertex to view
 		vertex->pos = worldToViewProjectionMatrix.TransformPoint(vertex->pos);
@@ -478,12 +520,21 @@ void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Mat
 				triangle.vertex1->viewDirection / triangle.vertex1->pos.w * weights.y +
 				triangle.vertex2->viewDirection / triangle.vertex2->pos.w * weights.z);
 
+			const Vector3 interpPixelPosition = linearPixelDepth * (
+				triangle.vertex0->worldPos / triangle.vertex0->pos.w * weights.x +
+				triangle.vertex1->worldPos / triangle.vertex1->pos.w * weights.y +
+				triangle.vertex2->worldPos / triangle.vertex2->pos.w * weights.z);
+
+
+
 			const ColorRGB interpVertexColor = 
 				triangle.vertex0->color* weights.x +
 				triangle.vertex1->color * weights.y +
 				triangle.vertex2->color * weights.z;
 
-			ShadePixel(material,triangle.vertex0->materialIndex,pixelIndex,interpVertexColor,interpUV,interpNormal,interpTangent,interpViewDirection,nonLinearDepth);
+
+
+			ShadePixel(material,triangle.vertex0->materialIndex,pixelIndex,interpVertexColor,interpUV,interpNormal,interpTangent,interpViewDirection,interpPixelPosition, nonLinearDepth);
 		}
 #ifdef MULTI_THREAD_PIXELS
 		});
@@ -493,9 +544,9 @@ void Renderer::RasterizeTriangle(const Triangle& triangle, const std::vector<Mat
 
 }
 
-void Renderer::ShadePixel(const Material* material, int materialIndex,int pixelIndex, ColorRGB vertexColor, Vector2 uv, Vector3 normal, Vector3 tangent, Vector3 viewDirection, float nonLinearDepth) const
+void Renderer::ShadePixel(const Material* material, int materialIndex, int pixelIndex, ColorRGB vertexColor, Vector2 uv,
+                          Vector3 normal, Vector3 tangent, Vector3 viewDirection, Vector3 pixelPosition, float nonLinearDepth) const
 {
-	ColorRGB finalPixelColor{};
 
 	// Create locals for sampling
 	Vector3 sampledNormal{ normal };
@@ -552,11 +603,16 @@ void Renderer::ShadePixel(const Material* material, int materialIndex,int pixelI
 	const float specularIntensity{ sampledSpecular * std::powf(cosAlpha,sampledPhongExponent) };
 
 
+	ColorRGB finalPixelColor{};
 	switch (m_RenderMode)
 	{
 		case DebugRenderMode::Diffuse:
 		{
-			finalPixelColor = lambertDiffuse;
+			for (const Light& light : m_WorldLights)
+			{
+				finalPixelColor += light.GetRadiance(pixelPosition);
+			}
+
 		} break;
 		case DebugRenderMode::ObservedArea:
 		{

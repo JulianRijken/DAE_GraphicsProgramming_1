@@ -54,10 +54,6 @@ namespace dae
 
 		void Update(const Timer& timer)
 		{
-			//std::cout << "Origin: {" << m_Origin.x << ", " << m_Origin.y << ", " << m_Origin.z << "}" << std::endl;
-			//std::cout << "Pitch: " << m_Pitch << std::endl;
-			//std::cout << "Yaw: " << m_Yaw << std::endl;
-
 			constexpr float minFps{ 30.0f };
 			constexpr float maxElapsed{ 1.0f / minFps };
 			// using min to create a minimum delay
@@ -151,6 +147,12 @@ namespace dae
 			CalculateProjectionMatrix();
 		}
 
+		void PrintInfo() const
+		{
+			std::cout << "Origin: {" << m_Origin.x << ", " << m_Origin.y << ", " << m_Origin.z << "}" << std::endl;
+			std::cout << "Pitch: " << m_Pitch << std::endl;
+			std::cout << "Yaw: " << m_Yaw << std::endl;
+		}
 
 		void SetFovAngle(float fovAngle)
 		{

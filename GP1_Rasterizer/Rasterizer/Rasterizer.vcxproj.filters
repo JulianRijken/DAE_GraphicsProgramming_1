@@ -3,11 +3,13 @@
   <ItemGroup>
     <ClInclude Include="src\Renderer.h" />
     <ClInclude Include="src\Mesh.h" />
+    <ClInclude Include="src\Light.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
+    <ClCompile Include="src\Light.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Misc">

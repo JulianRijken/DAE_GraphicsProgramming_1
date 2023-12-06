@@ -8,6 +8,7 @@
 
 namespace dae
 {
+	class Light;
 	struct Camera;
 	class Timer;
 	class Texture;
@@ -78,11 +79,17 @@ namespace dae
 
 		inline void RasterizeMesh(Mesh& mesh) const;
 		inline void RasterizeTriangle(const Triangle& triangle, const std::vector<Material*>& materialPtrs) const;
-		inline void ShadePixel(const Material* material, int materialIndex, int pixelIndex, ColorRGB vertexColor, Vector2 uv, Vector3 normal, Vector3 tangent, Vector3 viewDirection, float nonLinearDepth) const;
+		inline void ShadePixel(const Material* material, int materialIndex, int pixelIndex, ColorRGB vertexColor,
+		                       Vector2 uv, Vector3 normal, Vector3 tangent, Vector3 viewDirection,
+		                       Vector3 pixelPosition, float nonLinearDepth) const;
 
 		void InitializeSceneAssignment();
 		void InitializeSceneCar();
 		void InitializeSceneDiorama();
+
+		void AddMesh(const Mesh& mesh);
+		void AddPointLight(const Vector3& origin, const ColorRGB& color, float intensity);
+		void AddDirectionalLight(const Vector3& direction, const ColorRGB& color, float intensity);
 
 		SDL_Window* m_WindowPtr{};
 		SDL_Surface* m_FrontBufferPtr{ nullptr };
@@ -94,6 +101,7 @@ namespace dae
 		DebugRenderMode m_RenderMode;
 
 		std::vector<Mesh> m_WorldMeshes;
+		std::vector<Light> m_WorldLights;
 		std::map <std::string, Material* > m_MaterialPtrMap;
 		Material* defaultMaterial;
 
@@ -112,6 +120,7 @@ namespace dae
 		bool m_UseLinearDepth;
 
 		float spinSpeed{ 0.5f };
+
 
 		std::vector<uint32_t> m_Integers{};
 	};
