@@ -4,6 +4,7 @@
     <ClInclude Include="src\Renderer.h" />
     <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\Light.h" />
+    <ClInclude Include="src\GlobalSettings.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />

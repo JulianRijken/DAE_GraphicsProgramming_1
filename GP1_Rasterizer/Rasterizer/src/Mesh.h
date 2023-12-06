@@ -18,10 +18,10 @@ namespace dae
 		Mesh(std::vector<VertexModel> vertices, std::vector<uint32_t> indices, std::vector<Material*> materials, PrimitiveTopology primitiveTopology = PrimitiveTopology::TriangleList);
 
 		// Loads mesh from obj file
-		Mesh(const std::string& name, std::vector<Material*> materials, PrimitiveTopology primitiveTopology = PrimitiveTopology::TriangleList);
+		Mesh(const std::string& objName, std::vector<Material*> materials, PrimitiveTopology primitiveTopology = PrimitiveTopology::TriangleList);
 
 		// Loads mesh from obj file and mtl file. Requires global material map to store material ptrs
-		Mesh(const std::string& objPath, const std::string& mtlPath, std::map<std::string,Material*>& materialMap, PrimitiveTopology primitiveTopology = PrimitiveTopology::TriangleList);
+		Mesh(const std::string& objName, const std::string& mtlName, std::map<std::string,Material*>& materialMap, PrimitiveTopology primitiveTopology = PrimitiveTopology::TriangleList);
 
 		void SetPosition(Vector3 translate);
 		void SetScale(Vector3 scale);

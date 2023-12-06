@@ -1,7 +1,5 @@
 //External includes
-#include "vld.h"
 #include "SDL.h"
-#include "SDL_surface.h"
 #undef main
 
 //Standard includes
@@ -14,6 +12,7 @@
 #include "Renderer.h"
 
 using namespace dae;
+
 
 void ShutDown(SDL_Window* pWindow)
 {
@@ -30,11 +29,11 @@ int main(int argc, char* args[])
 	//Create window + surfaces
 	SDL_Init(SDL_INIT_VIDEO);
 
-	//constexpr uint32_t width = 640;
-	//constexpr uint32_t height = 480;
+	constexpr uint32_t width = 640;
+	constexpr uint32_t height = 480;
 
-	constexpr uint32_t width = 1280;
-	constexpr uint32_t height = 720;
+	//constexpr uint32_t width = 1280;
+	//constexpr uint32_t height = 720;
 
 	//constexpr uint32_t width = 1920;
 	//constexpr uint32_t height = 1080;
@@ -67,7 +66,9 @@ int main(int argc, char* args[])
 
 	float printTimer = 0.f;
 	bool isLooping = true;
+
 	bool takeScreenshotOfCurrentFrame = false;
+	int screenshotRenderMode = 0;
 
 	while (isLooping)
 	{
@@ -81,6 +82,8 @@ int main(int argc, char* args[])
 				isLooping = false;
 				break;
 			case SDL_KEYDOWN:
+				if (e.key.keysym.scancode == SDL_SCANCODE_F4)
+					renderer.SetRenderMode(DebugRenderMode::DepthBuffer);
 				if (e.key.keysym.scancode == SDL_SCANCODE_F5)
 					renderer.ToggleRotation();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F6)
@@ -90,7 +93,10 @@ int main(int argc, char* args[])
 				if (e.key.keysym.scancode == SDL_SCANCODE_F8)
 					renderer.ToggleLinearDepth();
 				if (e.key.keysym.scancode == SDL_SCANCODE_X)
+				{
 					takeScreenshotOfCurrentFrame = true;
+					screenshotRenderMode = 0;
+				}
 				if (e.key.keysym.scancode == SDL_SCANCODE_C)
 					camera.PrintInfo();
 
@@ -145,12 +151,26 @@ int main(int argc, char* args[])
 		//Save screenshot after full render
 		if (takeScreenshotOfCurrentFrame)
 		{
-			takeScreenshotOfCurrentFrame = false;
+			if (screenshotRenderMode > 0)
+			{
+				if (!renderer.SaveBufferToImage())
+					std::cout << "Screenshot saved!" << std::endl;
+				else
+					std::cout << "Something went wrong. Screenshot not saved!" << std::endl;
+			}
 
-			if (!renderer.SaveBufferToImage())
-				std::cout << "Screenshot saved!" << std::endl;
+			if (screenshotRenderMode > static_cast<int>(RENDER_MODE_NAMES.size()))
+			{
+				takeScreenshotOfCurrentFrame = false;
+			}
 			else
-				std::cout << "Something went wrong. Screenshot not saved!" << std::endl;
+			{
+				auto iterator = RENDER_MODE_NAMES.begin();
+				std::advance(iterator, screenshotRenderMode);
+				renderer.SetRenderMode(iterator->first);
+			}
+
+			screenshotRenderMode++;
 		}
 	}
 

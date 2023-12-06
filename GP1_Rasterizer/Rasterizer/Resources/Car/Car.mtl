@@ -1,9 +1,9 @@
 newmtl CarTexture
-map_Kd Resources/Car/Tex_FordGT40_Color_2k_02_Clean.png
-map_d Resources/Car/Tex_FordGT40_Opacity_2k_02.png
+map_Kd Car/Tex_FordGT40_Color_2k_02_Clean.png
+map_d Car/Tex_FordGT40_Opacity_2k_02.png
 
 newmtl CarWheel
-map_Kd Resources/Car/Tex_TireAndRim_Color_1k_02.png
-map_d Resources/Car/Tex_WheelAndTires_Alpha_1k_00.png
+map_Kd Car/Tex_TireAndRim_Color_1k_02.png
+map_d Car/Tex_WheelAndTires_Alpha_1k_00.png
 
 newmtl none

@@ -6,6 +6,7 @@
 
 #include "Maths.h"
 #include "DataTypes.h"
+#include "../../Rasterizer/src/GlobalSettings.h"
 
 
 namespace dae
@@ -14,7 +15,7 @@ namespace dae
 	{
 		static bool ParseOBJ(const std::string& filename, std::vector<VertexModel>& vertices, std::vector<uint32_t>& indices, bool flipAxisAndWinding = true)
 		{
-			std::ifstream file(filename);
+			std::ifstream file(RESOURCES_PATH + filename);
 			if (!file)
 				return false;
 
@@ -178,7 +179,8 @@ namespace dae
 
 		static bool ParseOBJ(const std::string& filename, std::vector<VertexModel>& vertices, std::vector<uint32_t>& indices, std::vector<std::string>& mappedMaterials, bool flipAxisAndWinding = true)
 		{
-			std::ifstream file(filename);
+			std::ifstream file(RESOURCES_PATH + filename);
+
 			if (!file)
 				return false;
 
@@ -349,7 +351,7 @@ namespace dae
 
 		static bool ParseMTL(const std::string& filename, std::map<std::string, Material*>& materials)
 		{
-			std::ifstream file(filename);
+			std::ifstream file(RESOURCES_PATH + filename);
 
 			if (!file)
 				return false; 

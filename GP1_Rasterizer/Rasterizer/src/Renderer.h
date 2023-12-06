@@ -32,6 +32,7 @@ namespace dae
 		DepthBuffer,
 		MaterialIndex,
 		Opacity,
+		LightRadiance,
 		COUNT
 	};
 
@@ -39,16 +40,17 @@ namespace dae
 	{
 		{DebugRenderMode::Diffuse,"Diffuse Color"},
 
-		{DebugRenderMode::ObservedArea,"Observed Area"},
-		{DebugRenderMode::DiffuseOA,"Diffuse + OA"},
-		{DebugRenderMode::SpecularOA,"Specular + OA"},
+		{DebugRenderMode::ObservedArea,"Observed_Area"},
+		{DebugRenderMode::DiffuseOA,"Diffuse_OA"},
+		{DebugRenderMode::SpecularOA,"Specular_OA"},
 		{DebugRenderMode::Combined,"Combined"},
 
-		{DebugRenderMode::UVColor,"UV Color"},
+		{DebugRenderMode::UVColor,"UV_Color"},
 		{DebugRenderMode::Weights,"Weights"},
-		{DebugRenderMode::DepthBuffer,"Depth Buffer"},
-		{DebugRenderMode::MaterialIndex,"Material Index"},
+		{DebugRenderMode::DepthBuffer,"Depth_Buffer"},
+		{DebugRenderMode::MaterialIndex,"Material_Index"},
 		{DebugRenderMode::Opacity,"Opacity"},
+		{DebugRenderMode::LightRadiance,"Light_Radiance"},
 	};
 
 	class Renderer final
@@ -85,7 +87,7 @@ namespace dae
 
 		void InitializeSceneAssignment();
 		void InitializeSceneCar();
-		void InitializeSceneDiorama();
+		void InitializeSceneDioramaDay();
 
 		void AddMesh(const Mesh& mesh);
 		void AddPointLight(const Vector3& origin, const ColorRGB& color, float intensity);
@@ -106,7 +108,7 @@ namespace dae
 		Material* defaultMaterial;
 
 		ColorRGB m_AmbientColor{ 0.025f,0.025f ,0.025f };
-		Vector3 m_DirectionalLight{ Vector3{0.577f,-0.577f,0.577f}.Normalized() };
+		int m_ClearColor{ 20};
 
 		float m_DiffuseStrengthKd{ 3.0f }; //m_DiffuseReflectance Kd
 		float m_SpecularKs{ 0.5f }; //m_SpecularReflectance Ks
@@ -119,8 +121,7 @@ namespace dae
 		bool m_UseNormalMap;
 		bool m_UseLinearDepth;
 
-		float spinSpeed{ 0.5f };
-
+		float m_SpinSpeed{ 0.5f };
 
 		std::vector<uint32_t> m_Integers{};
 	};

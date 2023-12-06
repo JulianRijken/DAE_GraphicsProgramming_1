@@ -23,21 +23,21 @@ namespace dae
 		InitializeTriangles();
 	}
 
-	Mesh::Mesh(const std::string& name, std::vector<Material*> materials, PrimitiveTopology primitiveTopology) :
+	Mesh::Mesh(const std::string& objName, std::vector<Material*> materials, PrimitiveTopology primitiveTopology) :
 		m_MaterialPtrs(std::move(materials)),
 		m_PrimitiveTopology(primitiveTopology),
 		m_YawRotation(0.0f),
 		m_Scale(1.0f, 1.0f, 1.0f),
 		m_Position(0.0f, 0.0f, 0.0f)
 	{
-		Utils::ParseOBJ(name, m_VerticesModel, m_Indices);
+		Utils::ParseOBJ(objName, m_VerticesModel, m_Indices);
 
 		InitializeVertices();
 		InitializeVertexColors();
 		InitializeTriangles();
 	}
 
-	Mesh::Mesh(const std::string& objPath, const std::string& mtlPath, std::map<std::string, Material*>& materialMap, PrimitiveTopology primitiveTopology) :
+	Mesh::Mesh(const std::string& objName, const std::string& mtlName, std::map<std::string, Material*>& materialMap, PrimitiveTopology primitiveTopology) :
 		m_MaterialPtrs{},
 		m_PrimitiveTopology(primitiveTopology),
 		m_YawRotation(0.0f),
@@ -47,14 +47,14 @@ namespace dae
 
 		// Parse MTL
 		std::map<std::string, Material*> parsedMaterials{};
-		Utils::ParseMTL(mtlPath, parsedMaterials);
+		Utils::ParseMTL(mtlName, parsedMaterials);
 
 		// Inset parsedMaterials
 		materialMap.insert(parsedMaterials.begin(), parsedMaterials.end());
 
 		// Parse OBJ
 		std::vector<std::string> mappedMaterials{};
-		Utils::ParseOBJ(objPath, m_VerticesModel, m_Indices, mappedMaterials);
+		Utils::ParseOBJ(objName, m_VerticesModel, m_Indices, mappedMaterials);
 
 		// Insert material pointers based on the index given from mappedMaterials
 		m_MaterialPtrs.resize(mappedMaterials.size());

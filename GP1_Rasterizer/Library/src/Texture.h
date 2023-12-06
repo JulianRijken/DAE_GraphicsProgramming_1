@@ -12,7 +12,7 @@ namespace dae
 	public:
 		~Texture();
 
-		static Texture* LoadFromFile(const std::string& path);
+		static Texture* LoadFromFile(const std::string& fileName);
 		ColorRGB Sample(const Vector2& uv) const;
 
 	private:

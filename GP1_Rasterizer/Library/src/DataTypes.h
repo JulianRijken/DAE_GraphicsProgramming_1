@@ -51,6 +51,8 @@ namespace dae
 		Texture* normal = nullptr;
 		Texture* specular = nullptr;
 		Texture* gloss = nullptr;
+
+		ColorRGB diffuseColor{}; // Used when there is no diffuse texture in use
 	};
 
 }

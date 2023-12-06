@@ -27,7 +27,7 @@ namespace dae
 		float m_FovValue;
 
 		float m_NearClippingPlane = 3.0f;
-		float m_FarClippingPlane = 100.0f;
+		float m_FarClippingPlane = 200.0f;
 
 		Vector3 m_Forward{ Vector3::UnitZ };
 		Vector3 m_Up{ Vector3::UnitY };
@@ -45,7 +45,7 @@ namespace dae
 		Matrix m_ProjectionMatrix{};
 
 		inline static constexpr float KEY_MOVE_SPEED{ 50.0f };
-		inline static constexpr float MOUSE_MOVE_SPEED{ 0.5f };
+		inline static constexpr float MOUSE_MOVE_SPEED{ 0.07f };
 		inline static constexpr float ROTATE_SPEED{ 0.001f };
 
 		inline static constexpr float ROTATE_LERP_SPEED{ 20.0f };
@@ -70,16 +70,17 @@ namespace dae
 			const bool isLeftMouseDown{ (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0 };
 
 			Vector3 inputVector{};
+			Vector3 inputVectorMouse{};
 
 
 			if (isLeftMouseDown && isRightMouseDown)
 			{
-				inputVector.y -= mouseY * MOUSE_MOVE_SPEED;
+				inputVectorMouse.y -= mouseY * MOUSE_MOVE_SPEED;
 				SDL_SetRelativeMouseMode(SDL_TRUE);
 			}
 			else if (isLeftMouseDown)
 			{
-				inputVector.z -= mouseY * MOUSE_MOVE_SPEED;
+				inputVectorMouse.z -= mouseY * MOUSE_MOVE_SPEED;
 				m_TargetYaw -= mouseX * ROTATE_SPEED;
 				SDL_SetRelativeMouseMode(SDL_TRUE);
 			}
@@ -137,7 +138,7 @@ namespace dae
 
 
 			inputVector = pitchYawRotation.TransformVector(inputVector);
-			m_TargetOrigin += inputVector * deltaTime * KEY_MOVE_SPEED;
+			m_TargetOrigin += (inputVector * deltaTime * KEY_MOVE_SPEED) + inputVectorMouse;
 			//m_Origin = m_TargetOrigin;
 			m_Origin = Lerp(m_Origin, m_TargetOrigin, deltaTime * MOVE_LERP_SPEED);
 
@@ -225,7 +226,9 @@ namespace dae
 			const float distanceToTarget = (m_Origin - Vector3{0,0,0}).Magnitude(); // Assuming you have a function to get the length of a vector
 			const float offsetMagnitude = distanceToTarget * tanf((fovAngleChange * TO_RADIANS) / 2.f);
 			const Vector3 offset = pitchYawRotation.TransformVector({ 0,0,offsetMagnitude});
-			m_TargetOrigin += offset;
+
+			m_Origin += offset;
+			m_TargetOrigin = m_Origin;
 		}
 
 		void UpdateViewMatrix()
