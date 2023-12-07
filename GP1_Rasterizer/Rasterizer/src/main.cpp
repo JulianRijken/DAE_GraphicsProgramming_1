@@ -29,8 +29,8 @@ int main(int argc, char* args[])
 	//Create window + surfaces
 	SDL_Init(SDL_INIT_VIDEO);
 
-	constexpr uint32_t width = 640;
-	constexpr uint32_t height = 480;
+	//constexpr uint32_t width = 640;
+	//constexpr uint32_t height = 480;
 
 	//constexpr uint32_t width = 1280;
 	//constexpr uint32_t height = 720;
@@ -38,8 +38,8 @@ int main(int argc, char* args[])
 	//constexpr uint32_t width = 1920;
 	//constexpr uint32_t height = 1080;
 
-	//constexpr uint32_t width = 7680;
-	//constexpr uint32_t height = 4320;
+	constexpr uint32_t width = 7680;
+	constexpr uint32_t height = 4320;
 
 	constexpr float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 

@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Renderer.h"
 
+#include "Mesh.h"
+
 
 namespace dae {
 
@@ -21,6 +23,17 @@ namespace dae {
 		{
 			std::cout << "DirectX initialization failed!\n";
 		}
+
+		const std::vector<ModelVertex> vertices
+		{
+			{{ 0.0f, 0.5f, 0.5f}, {1.0f,0.0f,0.0f}},
+			{{ 0.5f,-0.5f, 0.5f}, {0.0f,0.0f,1.0f}},
+			{{-0.5f,-0.5f, 0.5f}, {0.0f,1.0f,0.0f}},
+		};
+
+		const std::vector<uint32_t> indices{ 0,1,2 };
+
+		testMeshPtr = new Mesh(m_DevicePtr, vertices, indices);
 	}
 
 	Renderer::~Renderer()
@@ -41,6 +54,8 @@ namespace dae {
 		}
 
 		m_DevicePtr->Release();
+
+		delete testMeshPtr;
 	};
 
 	void Renderer::Update(const Timer* pTimer)
@@ -58,21 +73,6 @@ namespace dae {
 		m_DeviceContextPtr->ClearDepthStencilView(m_DepthStencilViewPtr, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f,0.0f);
 
 		// Render
-
-		//static constexpr uint32_t vertexElementCount{ 2 };
-		//D3D11_INPUT_ELEMENT_DESC vertexDesc[vertexElementCount];
-
-		//vertexDesc[0].SemanticName = "POSITION";
-		//vertexDesc[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-		//vertexDesc[0].AlignedByteOffset = 0;
-		//vertexDesc[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-
-
-		//vertexDesc[1].SemanticName = "COLOR";
-		//vertexDesc[1].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-		//vertexDesc[1].AlignedByteOffset = 12;
-		//vertexDesc[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-
 
 
 

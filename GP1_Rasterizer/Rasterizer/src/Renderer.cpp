@@ -19,10 +19,10 @@
 #include "Utils.h"
 
 //#define MULTI_THREAD_PIXELS
-//#define MULTI_THREAD_TRIANGLE
-//#define DOUBLE_SIDED
+#define MULTI_THREAD_TRIANGLE
+#define DOUBLE_SIDED
 //#define SORT_TRIANGLES
-//#define RENDER_OPACITY_CUTOUT
+#define RENDER_OPACITY_CUTOUT
 
 using namespace dae;
 
@@ -66,9 +66,9 @@ m_UseLinearDepth(true)
 
 
 
-	InitializeSceneAssignment();
+	//InitializeSceneAssignment();
 	//InitializeSceneCar();
-	//InitializeSceneDioramaDay();
+	InitializeSceneDioramaDay();
 }
 
 Renderer::~Renderer()

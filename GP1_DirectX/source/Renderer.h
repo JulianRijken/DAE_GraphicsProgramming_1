@@ -1,5 +1,6 @@
 #pragma once
 
+class Mesh;
 struct SDL_Window;
 struct SDL_Surface;
 
@@ -26,6 +27,8 @@ namespace dae
 		int m_WindowHeight{};
 
 		bool m_IsInitialized{ false };
+
+		Mesh* testMeshPtr;
 
 		inline static constexpr float SCREEN_CLEAR_COLOR[4]{ 0.0f,0.0f,0.3f,1.0f };
 

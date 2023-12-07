@@ -37,6 +37,7 @@
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="Effect.h" />
+    <ClInclude Include="Mesh.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -58,6 +59,9 @@
     </ClCompile>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="Effect.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
       <Filter>Math</Filter>
     </ClCompile>
   </ItemGroup>
