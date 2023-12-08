@@ -6,13 +6,13 @@
 #include "Effect.h"
 
 
-Mesh::Mesh(ID3D11Device* devicePtr, std::vector<ModelVertex> modelVertices, std::vector<uint32_t> indices) :
+Mesh::Mesh(ID3D11Device* devicePtr, const std::vector<ModelVertex>& modelVertices, const std::vector<Uint32>& indices) :
 	m_EffectPtr(new Effect{ devicePtr, L"Resources/PosCol3D.fx" }),
 	m_InputLayoutPtr(nullptr),
 	m_VertexBuffer(nullptr),
 	m_IndexBuffer(nullptr),
-	m_ModelVertices(std::move(modelVertices)),
-	m_Indices(std::move(indices)),
+	m_ModelVertices(modelVertices),
+	m_Indices(indices),
 	m_IndicesCount(static_cast<UINT>(m_Indices.size()))
 {
 	///////////////////////
@@ -27,23 +27,18 @@ Mesh::Mesh(ID3D11Device* devicePtr, std::vector<ModelVertex> modelVertices, std:
 	// Create vertex layout
 	///////////////////////
 	static constexpr uint32_t vertexElementCount{ 2 };
-	D3D11_INPUT_ELEMENT_DESC vertexDesc[vertexElementCount];
+	D3D11_INPUT_ELEMENT_DESC vertexDesc[vertexElementCount]{};
 
 	vertexDesc[0].SemanticName = "POSITION";
-	vertexDesc[0].SemanticIndex = 0;
 	vertexDesc[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
 	vertexDesc[0].AlignedByteOffset = 0;
 	vertexDesc[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	vertexDesc[0].InputSlot = 0;
-	vertexDesc[0].InstanceDataStepRate = 0;
 
 	vertexDesc[1].SemanticName = "COLOR";
-	vertexDesc[1].SemanticIndex = 0;
 	vertexDesc[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
 	vertexDesc[1].AlignedByteOffset = sizeof(float) * 3;
 	vertexDesc[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	vertexDesc[1].InputSlot = 0;
-	vertexDesc[1].InstanceDataStepRate = 0;
+
 
 
 	///////////////////////
@@ -61,8 +56,8 @@ Mesh::Mesh(ID3D11Device* devicePtr, std::vector<ModelVertex> modelVertices, std:
 		&m_InputLayoutPtr
 	);
 
-	//if(FAILED(result))
-		//assert(S_OK(result));
+
+	assert(result == S_OK);
 
 
 	///////////////////////
@@ -76,8 +71,7 @@ Mesh::Mesh(ID3D11Device* devicePtr, std::vector<ModelVertex> modelVertices, std:
 	initData.pSysMem = modelVertices.data();
 	result = devicePtr->CreateBuffer(&bd, &initData, &m_VertexBuffer);
 
-	if (FAILED(result))
-		assert(S_OK(result) && "Creating vertex buffer failed");
+	assert(result == S_OK && "Creating vertex buffer failed");
 
 
 	///////////////////////
@@ -85,13 +79,13 @@ Mesh::Mesh(ID3D11Device* devicePtr, std::vector<ModelVertex> modelVertices, std:
 	///////////////////////
 	bd.Usage = D3D11_USAGE_IMMUTABLE;
 	bd.ByteWidth = sizeof(uint32_t) * m_IndicesCount;
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	bd.CPUAccessFlags = 0;
 	bd.MiscFlags = 0;
 	initData.pSysMem = m_Indices.data();
 	result = devicePtr->CreateBuffer(&bd, &initData, &m_IndexBuffer);
 
-	assert(S_OK(result) && "Creating index buffer failed");
+	assert(result == S_OK && "Creating index buffer failed");
 }
 
 Mesh::~Mesh()

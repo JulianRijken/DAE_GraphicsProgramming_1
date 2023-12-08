@@ -24,7 +24,7 @@ namespace dae {
 			std::cout << "DirectX initialization failed!\n";
 		}
 
-		const std::vector<ModelVertex> vertices
+		std::vector<ModelVertex> vertices
 		{
 			{{ 0.0f, 0.5f, 0.5f}, {1.0f,0.0f,0.0f}},
 			{{ 0.5f,-0.5f, 0.5f}, {0.0f,0.0f,1.0f}},
@@ -34,6 +34,7 @@ namespace dae {
 		const std::vector<uint32_t> indices{ 0,1,2 };
 
 		testMeshPtr = new Mesh(m_DevicePtr, vertices, indices);
+
 	}
 
 	Renderer::~Renderer()
@@ -73,7 +74,7 @@ namespace dae {
 		m_DeviceContextPtr->ClearDepthStencilView(m_DepthStencilViewPtr, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f,0.0f);
 
 		// Render
-
+		testMeshPtr->Render(m_DeviceContextPtr);
 
 
 		// Present Back buffer (Swap)
