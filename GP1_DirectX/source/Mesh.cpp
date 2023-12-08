@@ -6,12 +6,14 @@
 #include "Effect.h"
 
 
-Mesh::Mesh(ID3D11Device* devicePtr, const std::vector<ModelVertex>& modelVertices, const std::vector<uint32_t>& indices) :
+Mesh::Mesh(ID3D11Device* devicePtr, std::vector<ModelVertex> modelVertices, std::vector<uint32_t> indices) :
 	m_EffectPtr(new Effect{ devicePtr, L"Resources/PosCol3D.fx" }),
 	m_InputLayoutPtr(nullptr),
-	m_ModelVertices(modelVertices),
-	m_Indices(indices),
-	m_IndicesCount(m_Indices.size())
+	m_VertexBuffer(nullptr),
+	m_IndexBuffer(nullptr),
+	m_ModelVertices(std::move(modelVertices)),
+	m_Indices(std::move(indices)),
+	m_IndicesCount(static_cast<UINT>(m_Indices.size()))
 {
 	///////////////////////
 	// Create scoped variable used for setup
@@ -28,21 +30,28 @@ Mesh::Mesh(ID3D11Device* devicePtr, const std::vector<ModelVertex>& modelVertice
 	D3D11_INPUT_ELEMENT_DESC vertexDesc[vertexElementCount];
 
 	vertexDesc[0].SemanticName = "POSITION";
-	vertexDesc[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	vertexDesc[0].SemanticIndex = 0;
+	vertexDesc[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
 	vertexDesc[0].AlignedByteOffset = 0;
 	vertexDesc[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+	vertexDesc[0].InputSlot = 0;
+	vertexDesc[0].InstanceDataStepRate = 0;
 
 	vertexDesc[1].SemanticName = "COLOR";
-	vertexDesc[1].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	vertexDesc[1].AlignedByteOffset = 12;
+	vertexDesc[1].SemanticIndex = 0;
+	vertexDesc[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	vertexDesc[1].AlignedByteOffset = sizeof(float) * 3;
 	vertexDesc[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+	vertexDesc[1].InputSlot = 0;
+	vertexDesc[1].InstanceDataStepRate = 0;
 
 
 	///////////////////////
 	// Create input layout
 	///////////////////////
 	D3DX11_PASS_DESC passDesc{};
-	m_EffectPtr->GetTechniquePtr()->GetPassByIndex(0)->GetDesc(&passDesc);
+	ID3DX11EffectTechnique* techniquePtr = m_EffectPtr->GetTechniquePtr();
+	techniquePtr->GetPassByIndex(0)->GetDesc(&passDesc);
 
 	 result = devicePtr->CreateInputLayout(
 		vertexDesc,
@@ -52,7 +61,8 @@ Mesh::Mesh(ID3D11Device* devicePtr, const std::vector<ModelVertex>& modelVertice
 		&m_InputLayoutPtr
 	);
 
-	assert(S_OK(result) && "Creating input layout failed");
+	//if(FAILED(result))
+		//assert(S_OK(result));
 
 
 	///////////////////////
@@ -66,7 +76,8 @@ Mesh::Mesh(ID3D11Device* devicePtr, const std::vector<ModelVertex>& modelVertice
 	initData.pSysMem = modelVertices.data();
 	result = devicePtr->CreateBuffer(&bd, &initData, &m_VertexBuffer);
 
-	assert(S_OK(result) && "Creating vertex buffer failed");
+	if (FAILED(result))
+		assert(S_OK(result) && "Creating vertex buffer failed");
 
 
 	///////////////////////

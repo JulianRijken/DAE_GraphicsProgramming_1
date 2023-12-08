@@ -94,7 +94,8 @@ namespace dae {
 
 		// When in debug mode include the device debug flag
 		#if defined(DEBUG) or defined(_DEBUG)
-		createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;std::cout << "Release code" << std::endl;
+		createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+		std::cout << "Debug code" << std::endl;
 		#endif
 
 		// Create device and context

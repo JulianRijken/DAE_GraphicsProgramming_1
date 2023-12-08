@@ -13,7 +13,7 @@ Effect::Effect(ID3D11Device* devicePtr, const std::wstring& effectFileName)
 	m_TechniquePtr = m_EffectPtr->GetTechniqueByName(TECHNIQUE_NAME);
 
 	if(not m_TechniquePtr->IsValid())
-		std::wcout << "Technique is not valid" << std::endl;
+		std::wcout << L"Technique is not valid" << std::endl;
 }
 
 Effect::~Effect()
