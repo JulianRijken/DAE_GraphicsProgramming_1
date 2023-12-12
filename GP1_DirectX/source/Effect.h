@@ -13,13 +13,13 @@ public:
 	ID3DX11Effect* GetEffectPtr() const { return m_EffectPtr; }
 	ID3DX11EffectTechnique* GetTechniquePtr() const { return m_TechniquePtr; }
 
-	void UpdateViewProjectionMatrix(const Matrix* viewProjectionMatrix);
+	void UpdateViewProjectionMatrix(const Matrix& viewProjectionMatrix) const;
 
 private:
 
 	ID3DX11Effect* m_EffectPtr{};
 	ID3DX11EffectTechnique* m_TechniquePtr{};
-	ID3DX11EffectMatrixVariable* m_viewProjectionMatrix{};
+	ID3DX11EffectMatrixVariable* m_viewProjectionMatrixPtr{};
 
 
 	

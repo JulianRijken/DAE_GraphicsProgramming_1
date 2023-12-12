@@ -216,5 +216,5 @@ void dae::Camera::UpdateProjectionMatrix()
 
 void dae::Camera::CombineViewProjectionMatrix()
 {
-	m_ViewProjectionMatrix = m_ViewMatrix * m_ProjectionMatrix;
+	m_ViewProjectionMatrix = m_InvViewMatrix * m_ProjectionMatrix;
 }

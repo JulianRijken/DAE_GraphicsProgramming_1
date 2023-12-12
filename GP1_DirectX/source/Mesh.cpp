@@ -103,7 +103,7 @@ Mesh::~Mesh()
 	m_EffectPtr = nullptr;
 }
 
-void Mesh::Render(ID3D11DeviceContext* deviceContextPtr,const Matrix* viewProjectionMatrix) const
+void Mesh::Render(ID3D11DeviceContext* deviceContextPtr,const Matrix& viewProjectionMatrix) const
 {
 	m_EffectPtr->UpdateViewProjectionMatrix(viewProjectionMatrix);
 

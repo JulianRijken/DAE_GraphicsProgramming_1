@@ -17,9 +17,9 @@ namespace dae
 		void PrintInfo() const;
 
 
-		[[nodiscard]] const Matrix* GetProjectionMatrixPtr() const { return &m_ProjectionMatrix; }
-		[[nodiscard]] const Matrix* GetViewMatrixPtr() const { return &m_ViewMatrix; }
-		[[nodiscard]] const Matrix* GetViewProjectionMatrixPtr() const { return &m_ViewProjectionMatrix; }
+		[[nodiscard]] const Matrix& GetProjectionMatrixPtr() const { return m_ProjectionMatrix; }
+		[[nodiscard]] const Matrix& GetViewMatrixPtr() const { return m_ViewMatrix; }
+		[[nodiscard]] const Matrix& GetViewProjectionMatrixPtr() const { return m_ViewProjectionMatrix; }
 
 		void SetFovAngle(float fovAngle);
 
@@ -48,8 +48,8 @@ namespace dae
 		float m_FovAngle;
 		float m_FovValue;
 
-		float m_NearClippingPlane = 3.0f;
-		float m_FarClippingPlane = 200.0f;
+		float m_NearClippingPlane = 0.001f;
+		float m_FarClippingPlane = 100000.0f;
 
 		Vector3 m_Forward{ Vector3::UnitZ };
 		Vector3 m_Up{ Vector3::UnitY };
@@ -68,7 +68,7 @@ namespace dae
 
 		Matrix m_ViewProjectionMatrix{}; // Combined
 
-		inline static constexpr float KEY_MOVE_SPEED{ 50.0f };
+		inline static constexpr float KEY_MOVE_SPEED{ 10.0f };
 		inline static constexpr float MOUSE_MOVE_SPEED{ 0.07f };
 		inline static constexpr float ROTATE_SPEED{ 0.001f };
 

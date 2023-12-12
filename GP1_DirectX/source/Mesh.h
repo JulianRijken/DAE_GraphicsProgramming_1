@@ -12,7 +12,7 @@ public:
     Mesh(ID3D11Device* devicePtr, const std::vector<ModelVertex>& modelVertices, const std::vector<Uint32>& indices);
     ~Mesh();
 
-    void Render(ID3D11DeviceContext* deviceContextPtr,const Matrix* viewProjectionMatrix) const;
+    void Render(ID3D11DeviceContext* deviceContextPtr,const Matrix& viewProjectionMatrix) const;
 
 private:
 
