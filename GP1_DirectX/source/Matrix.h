@@ -36,6 +36,8 @@ namespace dae {
 		Vector3 GetAxisZ() const;
 		Vector3 GetTranslation() const;
 
+		float* GetMatrixAsFloatArray() const;
+
 		static Matrix CreateTranslation(float x, float y, float z);
 		static Matrix CreateTranslation(const Vector3& t);
 		static Matrix CreateRotationX(float pitch);

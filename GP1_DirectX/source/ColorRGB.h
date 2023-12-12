@@ -12,6 +12,7 @@ namespace dae
 		void MaxToOne()
 		{
 			const float maxValue = std::max(r, std::max(g, b));
+
 			if (maxValue > 1.f)
 				*this /= maxValue;
 		}
@@ -21,8 +22,7 @@ namespace dae
 			return { Lerpf(c1.r, c2.r, factor), Lerpf(c1.g, c2.g, factor), Lerpf(c1.b, c2.b, factor) };
 		}
 
-		#pragma region ColorRGB (Member) Operators
-		const ColorRGB& operator+=(const ColorRGB& c)
+		ColorRGB& operator+=(const ColorRGB& c)
 		{
 			r += c.r;
 			g += c.g;
@@ -30,13 +30,7 @@ namespace dae
 
 			return *this;
 		}
-
-		ColorRGB operator+(const ColorRGB& c) const
-		{
-			return { r + c.r, g + c.g, b + c.b };
-		}
-
-		const ColorRGB& operator-=(const ColorRGB& c)
+		ColorRGB& operator-=(const ColorRGB& c)
 		{
 			r -= c.r;
 			g -= c.g;
@@ -44,13 +38,7 @@ namespace dae
 
 			return *this;
 		}
-
-		ColorRGB operator-(const ColorRGB& c) const
-		{
-			return { r - c.r, g - c.g, b - c.b };
-		}
-
-		const ColorRGB& operator*=(const ColorRGB& c)
+		ColorRGB& operator*=(const ColorRGB& c)
 		{
 			r *= c.r;
 			g *= c.g;
@@ -58,22 +46,7 @@ namespace dae
 
 			return *this;
 		}
-
-		ColorRGB operator*(const ColorRGB& c) const
-		{
-			return { r * c.r, g * c.g, b * c.b };
-		}
-
-		const ColorRGB& operator/=(const ColorRGB& c)
-		{
-			r /= c.r;
-			g /= c.g;
-			b /= c.b;
-
-			return *this;
-		}
-
-		const ColorRGB& operator*=(float s)
+		ColorRGB& operator*=(float s)
 		{
 			r *= s;
 			g *= s;
@@ -81,13 +54,15 @@ namespace dae
 
 			return *this;
 		}
-
-		ColorRGB operator*(float s) const
+		ColorRGB& operator/=(const ColorRGB& c)
 		{
-			return { r * s, g * s,b * s };
-		}
+			r /= c.r;
+			g /= c.g;
+			b /= c.b;
 
-		const ColorRGB& operator/=(float s)
+			return *this;
+		}
+		ColorRGB& operator/=(float s)
 		{
 			r /= s;
 			g /= s;
@@ -95,30 +70,70 @@ namespace dae
 
 			return *this;
 		}
-
-		ColorRGB operator/(float s) const
-		{
-			return { r / s, g / s,b / s };
-		}
-		#pragma endregion
 	};
 
-	//ColorRGB (Global) Operators
-	inline ColorRGB operator*(float s, const ColorRGB& c)
+	inline ColorRGB operator*(float lhs, const ColorRGB& rhs)
 	{
-		return c * s;
+		return { lhs * rhs.r, lhs * rhs.g, lhs * rhs.b };
 	}
+
+	inline ColorRGB operator*(const ColorRGB& lhs, float rhs)
+	{
+		return { lhs.r * rhs, lhs.g * rhs, lhs.b * rhs };
+	}
+
+	inline ColorRGB operator*(const ColorRGB& lhs, const ColorRGB& rhs)
+	{
+		return { lhs.r * rhs.r, lhs.g * rhs.g, lhs.b * rhs.b };
+	}
+
+	inline ColorRGB operator/(const ColorRGB& lhs, float rhs)
+	{
+		return { lhs.r / rhs, lhs.g / rhs, lhs.b / rhs };
+	}
+
+	inline ColorRGB operator/(float lhs, const ColorRGB& rhs)
+	{
+		return { lhs / rhs.r, lhs / rhs.g, lhs / rhs.b };
+	}
+
+	inline ColorRGB operator/(const ColorRGB& lhs, const ColorRGB& rhs)
+	{
+		return { lhs.r / rhs.r, lhs.g / rhs.g, lhs.b / rhs.b };
+	}
+
+	inline ColorRGB operator+(const ColorRGB& lhs, const ColorRGB& rhs)
+	{
+		return { lhs.r + rhs.r, lhs.g + rhs.g, lhs.b + rhs.b };
+	}
+
+	inline ColorRGB operator-(const ColorRGB& lhs, const ColorRGB& rhs)
+	{
+		return { lhs.r - rhs.r, lhs.g - rhs.g, lhs.b - rhs.b };
+	}
+
+	inline ColorRGB operator-(const float lhs, const ColorRGB& rhs)
+	{
+		return { lhs - rhs.r, lhs - rhs.g, lhs - rhs.b };
+	}
+
+	inline bool operator==(const ColorRGB& lhs, const ColorRGB& rhs)
+	{
+		return lhs.r == rhs.r and lhs.g == rhs.g and lhs.b == rhs.b;
+	}
+
+
 
 	namespace colors
 	{
-		static ColorRGB Red{ 1,0,0 };
-		static ColorRGB Blue{ 0,0,1 };
-		static ColorRGB Green{ 0,1,0 };
-		static ColorRGB Yellow{ 1,1,0 };
-		static ColorRGB Cyan{ 0,1,1 };
-		static ColorRGB Magenta{ 1,0,1 };
-		static ColorRGB White{ 1,1,1 };
-		static ColorRGB Black{ 0,0,0 };
-		static ColorRGB Gray{ 0.5f,0.5f,0.5f };
+		inline static constexpr ColorRGB Red    { 1,0,0 };
+		inline static constexpr ColorRGB Blue   { 0,0,1 };
+		inline static constexpr ColorRGB Green  { 0,1,0 };
+		inline static constexpr ColorRGB Yellow { 1,1,0 };
+		inline static constexpr ColorRGB Cyan   { 0,1,1 };
+		inline static constexpr ColorRGB Magenta{ 1,0,1 };
+		inline static constexpr ColorRGB White  { 1,1,1 };
+		inline static constexpr ColorRGB Black  { 0,0,0 };
+		inline static constexpr ColorRGB Gray   { 0.5f,0.5f,0.5f };
 	}
 }

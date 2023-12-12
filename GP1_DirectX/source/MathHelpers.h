@@ -1,4 +1,5 @@
 #pragma once
+#include <cfloat>
 #include <cmath>
 
 namespace dae
@@ -24,6 +25,11 @@ namespace dae
 	inline float Square(float a)
 	{
 		return a * a;
+	}
+
+	auto Lerp(auto a, auto b, float factor)
+	{
+		return (1.0f - factor) * a + factor * b;
 	}
 
 	inline float Lerpf(float a, float b, float factor)

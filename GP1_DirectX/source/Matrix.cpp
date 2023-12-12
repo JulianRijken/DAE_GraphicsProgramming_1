@@ -176,6 +176,25 @@ namespace dae {
 		return data[3];
 	}
 
+	float* Matrix::GetMatrixAsFloatArray() const
+	{
+		//return new float[]
+		//{
+		//	data[0].x, data[0].y, data[0].z, data[0].z,
+		//		data[1].x, data[1].y, data[1].z, data[1].z,
+		//		data[2].x, data[2].y, data[2].z, data[2].z,
+		//		data[3].x, data[3].y, data[3].z, data[3].z,
+		//};
+
+		return new float[]
+		{
+					data[0].x, data[1].x, data[2].x, data[3].x,
+					data[0].y, data[1].y, data[2].y, data[3].y,
+					data[0].z, data[1].z, data[2].z, data[3].z,
+					data[0].w, data[1].w, data[2].w, data[3].w,
+		};
+	}
+
 	Matrix Matrix::CreateTranslation(float x, float y, float z)
 	{
 		return CreateTranslation({ x, y, z });

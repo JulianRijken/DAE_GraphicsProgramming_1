@@ -103,8 +103,11 @@ Mesh::~Mesh()
 	m_EffectPtr = nullptr;
 }
 
-void Mesh::Render(ID3D11DeviceContext* deviceContextPtr) const
+void Mesh::Render(ID3D11DeviceContext* deviceContextPtr,const Matrix* viewProjectionMatrix) const
 {
+	m_EffectPtr->UpdateViewProjectionMatrix(viewProjectionMatrix);
+
+
 	deviceContextPtr->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	deviceContextPtr->IASetInputLayout(m_InputLayoutPtr);

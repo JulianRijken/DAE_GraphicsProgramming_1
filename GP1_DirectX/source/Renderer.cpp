@@ -1,16 +1,21 @@
 #include "pch.h"
 #include "Renderer.h"
 
+#include <cassert>
+#include <format>
+
+#include "Camera.h"
 #include "Mesh.h"
 
 
 namespace dae {
 
-	Renderer::Renderer(SDL_Window* pWindow) :
-		m_pWindow(pWindow)
+	Renderer::Renderer(Camera* cameraPtr, SDL_Window* windowPtr) :
+		m_pWindow(windowPtr),
+		m_CameraPtr(cameraPtr)
 	{
 		//Initialize
-		SDL_GetWindowSize(pWindow, &m_WindowWidth, &m_WindowHeight);
+		SDL_GetWindowSize(windowPtr, &m_WindowWidth, &m_WindowHeight);
 
 		//Initialize DirectX pipeline
 		const HRESULT result = InitializeDirectX();
@@ -59,7 +64,7 @@ namespace dae {
 		delete testMeshPtr;
 	};
 
-	void Renderer::Update(const Timer* pTimer)
+	void Renderer::Update(const Timer& timer)
 	{
 
 	}
@@ -74,7 +79,7 @@ namespace dae {
 		m_DeviceContextPtr->ClearDepthStencilView(m_DepthStencilViewPtr, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f,0.0f);
 
 		// Render
-		testMeshPtr->Render(m_DeviceContextPtr);
+		testMeshPtr->Render(m_DeviceContextPtr,m_CameraPtr->GetViewProjectionMatrixPtr());
 
 
 		// Present Back buffer (Swap)
@@ -86,7 +91,6 @@ namespace dae {
 		// Define check and result for readability
 		#define CHECK(result) if (FAILED(result)) return result;
 		HRESULT result{};
-
 
 
 		// Setup flags for device and context
@@ -152,6 +156,7 @@ namespace dae {
 
 		// Todo Not sure if this one can be released here ask teacher or make sure
 		dxgiFactoryPtr->Release();
+		dxgiFactoryPtr = nullptr;
 
 		// Create Depth Stencil
 		D3D11_TEXTURE2D_DESC depthStencilDesc{};
@@ -203,5 +208,36 @@ namespace dae {
 		m_DeviceContextPtr->RSSetViewports(1, &viewport);
 
 		return S_OK;
+	}
+
+	void Renderer::SetRenderMode(DebugRenderMode mode)
+	{
+		m_RenderMode = mode;
+
+		std::cout << std::endl;
+		std::cout << RENDER_MODE_NAMES.at(m_RenderMode).c_str() << std::endl;
+		std::cout << std::endl;
+	}
+
+	void Renderer::CycleRenderMode()
+	{
+		int current{ static_cast<int>(m_RenderMode) };
+		current++;
+
+		if (current >= static_cast<int>(DebugRenderMode::COUNT))
+			current = 0;
+
+		SetRenderMode(static_cast<DebugRenderMode>(current));
+	}
+
+
+	bool Renderer::SaveBufferToImage() const
+	{
+		//const std::string filename = std::format("Screenshot/Rasterizer_{}.bmp", RENDER_MODE_NAMES.at(m_RenderMode));
+		//return 	SDL_SaveBMP(m_BackBufferPtr, filename.c_str());
+
+		assert(false && "Not implemented SaveBufferToImage");
+		return false;
+
 	}
 }
