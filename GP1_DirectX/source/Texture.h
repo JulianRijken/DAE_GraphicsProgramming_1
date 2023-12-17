@@ -2,7 +2,6 @@
 
 #include <SDL_surface.h>
 #include <string>
-#include "ColorRGB.h"
 
 namespace dae
 {
@@ -13,12 +12,22 @@ namespace dae
 	public:
 		~Texture();
 
-		static Texture* LoadFromFile(const std::string& fileName);
+		// Returns nullptr if texture can't be loaded
+		static Texture* LoadFromFile(ID3D11Device* devicePtr, const std::string& fileName);
+
+		ID3D11ShaderResourceView* GetShaderResource() const
+		{
+			return m_ShaderResourcePtr;
+		}
 
 	private:
-		Texture(SDL_Surface* pSurface);
+		Texture(ID3D11Device* devicePtr, const SDL_Surface* sdlSurface);
 
-		SDL_Surface* m_SurfacePtr{ nullptr };
-		uint32_t* m_SurfacePixelsPtr{ nullptr };
+		ID3D11Texture2D* m_ResourcePtr;
+		ID3D11ShaderResourceView* m_ShaderResourcePtr;
+
+
+		//SDL_Surface* m_SurfacePtr{ nullptr };
+		//uint32_t* m_SurfacePixelsPtr{ nullptr };
 	};
 }

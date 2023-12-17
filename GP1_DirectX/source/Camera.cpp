@@ -163,25 +163,24 @@ void dae::Camera::ChangeFovAngle(float fovAngleChange)
 	}
 
 
-
 	m_FovValue = std::tan((m_FovAngle * TO_RADIANS) / 2.f);
 
 
-	// Extra to create effect that camera is not moving
-	const Matrix pitchYawRotation
-	{
-		Vector3{std::cos(m_Yaw), 0, std::sin(m_Yaw)},
-		Vector3{std::sin(m_Yaw) * std::sin(m_Pitch), std::cos(m_Pitch), -std::sin(m_Pitch) * std::cos(m_Yaw)},
-		Vector3{-std::cos(m_Pitch) * std::sin(m_Yaw), std::sin(m_Pitch),std::cos(m_Pitch) * std::cos(m_Yaw)},
-		Vector3::Zero
-	};
+	//// Extra to create effect that camera is not moving
+	//const Matrix pitchYawRotation
+	//{
+	//	Vector3{std::cos(m_Yaw), 0, std::sin(m_Yaw)},
+	//	Vector3{std::sin(m_Yaw) * std::sin(m_Pitch), std::cos(m_Pitch), -std::sin(m_Pitch) * std::cos(m_Yaw)},
+	//	Vector3{-std::cos(m_Pitch) * std::sin(m_Yaw), std::sin(m_Pitch),std::cos(m_Pitch) * std::cos(m_Yaw)},
+	//	Vector3::Zero
+	//};
 
-	const float distanceToTarget = (m_Origin - Vector3{ 0,0,0 }).Magnitude(); // Assuming you have a function to get the length of a vector
-	const float offsetMagnitude = distanceToTarget * tanf((fovAngleChange * TO_RADIANS) / 2.f);
-	const Vector3 offset = pitchYawRotation.TransformVector({ 0,0,offsetMagnitude });
+	//const float distanceToTarget = (m_Origin - Vector3{ 0,0,0 }).Magnitude(); // Assuming you have a function to get the length of a vector
+	//const float offsetMagnitude = distanceToTarget * tanf((fovAngleChange * TO_RADIANS) / 2.f);
+	//const Vector3 offset = pitchYawRotation.TransformVector({ 0,0,offsetMagnitude });
 
-	m_Origin += offset;
-	m_TargetOrigin = m_Origin;
+	//m_Origin += offset;
+	//m_TargetOrigin = m_Origin;
 }
 
 void dae::Camera::UpdateViewMatrix()

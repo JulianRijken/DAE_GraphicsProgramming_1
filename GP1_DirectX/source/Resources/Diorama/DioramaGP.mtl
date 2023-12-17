@@ -1,0 +1,128 @@
+newmtl Branshes
+map_Kd Diorama/T_Leaves_Color.png
+map_d Diorama/T_Leaves_Opacty.png
+
+newmtl Bricks
+map_Kd Diorama/T_SmallGrassRocks_Color.png
+
+newmtl CarLift
+map_Kd Diorama/T_CarLift_Color.png
+
+newmtl Car_mat
+map_Kd Diorama/T_FordGT40_Color.png
+# map_d Diorama/T_FordGT40_Opacity.png
+
+newmtl CleanWheel_Mat
+map_Kd Diorama/T_WheelClean_Color.png
+
+newmtl Clothing
+map_Kd Diorama/T_Clothing_Color.png
+map_d Diorama/T_Clothing_Opacty.png
+
+newmtl Curtains
+map_Kd Diorama/T_Curtains_Color.png
+
+newmtl Decals
+map_Kd Diorama/T_Decals_Color.png
+map_d Diorama/T_Decals_Opacty.png
+
+newmtl Dirt
+map_Kd Diorama/T_DirtGrassTrim_Color.png
+
+newmtl DirtyWheelMat
+map_Kd Diorama/T_WheelDirty_Color.png
+map_d Diorama/T_Wheel_Opacity.png
+
+newmtl Fance
+map_d Diorama/T_Fence_Opacty.png
+
+newmtl FireExtinguisher_Mat
+map_Kd Diorama/T_FireExtinguisher_Color.png
+
+newmtl Garage
+map_Kd Diorama/T_GarageDoorFloor_Color.png
+
+newmtl Garage_Box
+map_Kd Diorama/T_GarageDetails_Color.png
+
+newmtl Grass
+map_Kd Diorama/T_Grass_Color.png
+
+newmtl Hammock
+map_Kd Diorama/T_Hammock_Color.png
+map_d Diorama/T_Hammock_Opacty.png
+
+newmtl HouseDark
+map_Kd Diorama/T_HousePlanks_Color.png
+
+newmtl Ivy
+map_Kd Diorama/T_Ivy_Color.png
+map_d Diorama/T_Ivy_Opacty.png
+
+newmtl Konker
+map_Kd Diorama/T_Konker_Color.png
+
+newmtl MossBricks
+map_Kd Diorama/T_HouseBricks_Color.png
+
+newmtl PickNickTable
+map_Kd Diorama/T_PickNick_Color.png
+map_d Diorama/T_PickNick_Opacty.png
+
+newmtl PingPongTable
+map_Kd Diorama/T_PingPong_Color.png
+map_d Diorama/T_PingPong_Opacty.png
+
+newmtl Plants
+map_Kd Diorama/T_Plants_Color.png
+map_d Diorama/T_Plants_Opacty.png
+
+newmtl PlasticRoof
+map_Kd Diorama/T_PlasticRoof_Color.png
+# map_d Diorama/
+
+newmtl Raven
+map_Kd Diorama/T_Raven_Color.png
+map_d Diorama/T_Raven_Opacty.png
+
+newmtl RoadTrim
+map_Kd Diorama/T_RoadTrim_Color.png
+
+newmtl Rock
+map_Kd Diorama/T_Rock_Color.png
+
+newmtl Roof
+map_Kd Diorama/T_Roof_Color.png
+
+newmtl SataliteDish_Mat
+map_Kd Diorama/T_Satalite_Color.png
+
+newmtl TV_Mat
+map_Kd Diorama/T_TV_Tex_Color.png
+
+newmtl ToolBox_Mat
+map_Kd Diorama/T_ToolBox_Color.png
+
+newmtl ToolBox_NOAO_Mat
+map_Kd Diorama/T_ToolBoxSmall_Color.png
+
+newmtl Trophy_Mat
+map_Kd Diorama/T_Trophy_Color.png
+
+newmtl WindowMud
+map_Kd Diorama/T_WindowMud_Color.png
+map_d Diorama/T_WindowMud_Opacty.png
+
+newmtl XPlanks
+map_Kd Diorama/T_XPlanks_Color.png
+
+newmtl YPlanks
+map_Kd Diorama/T_YPlanks_Color.png
+
+newmtl lambert1
+map_Kd Diorama/Empty.png
+
+newmtl Logs
+map_Kd Diorama/T_Logs_Color.png
+
+newmtl none

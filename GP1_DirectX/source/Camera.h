@@ -48,8 +48,8 @@ namespace dae
 		float m_FovAngle;
 		float m_FovValue;
 
-		float m_NearClippingPlane = 0.001f;
-		float m_FarClippingPlane = 100000.0f;
+		float m_NearClippingPlane = 0.1f;
+		float m_FarClippingPlane = 50.0f;
 
 		Vector3 m_Forward{ Vector3::UnitZ };
 		Vector3 m_Up{ Vector3::UnitY };
@@ -68,7 +68,7 @@ namespace dae
 
 		Matrix m_ViewProjectionMatrix{}; // Combined
 
-		inline static constexpr float KEY_MOVE_SPEED{ 10.0f };
+		inline static constexpr float KEY_MOVE_SPEED{ 70.0f };
 		inline static constexpr float MOUSE_MOVE_SPEED{ 0.07f };
 		inline static constexpr float ROTATE_SPEED{ 0.001f };
 

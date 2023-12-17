@@ -1,12 +1,15 @@
 #pragma once
 #include <map>
 
+struct VertexModel;
+struct Material;
 class Mesh;
 struct SDL_Window;
 struct SDL_Surface;
 
 namespace dae
 {
+	class Texture;
 	class Camera;
 
 	enum class DebugRenderMode
@@ -42,6 +45,8 @@ namespace dae
 		{DebugRenderMode::LightRadiance,"Light_Radiance"},
 	};
 
+
+
 	class Renderer final
 	{
 	public:
@@ -61,7 +66,20 @@ namespace dae
 
 		bool SaveBufferToImage() const;
 
+
 	private:
+
+		HRESULT InitializeDirectX();
+
+		void InitializeSceneTriangle();
+		void InitializeSceneAssignment();
+		void InitializeSceneDiorama();
+
+		Mesh* AddMesh(const std::vector<VertexModel>& vertices, const std::vector<uint32_t>& indices, const std::vector<Material*>& materials);
+		Mesh* AddMesh(const std::string& objName, const std::vector<Material*>& materials);
+		Mesh* AddMesh(const std::string& objName, const std::string& mtlName);
+
+
 		SDL_Window* m_pWindow{};
 
 		int m_WindowWidth{};
@@ -69,14 +87,12 @@ namespace dae
 
 		bool m_IsInitialized{ false };
 
-		Mesh* testMeshPtr;
 		Camera* m_CameraPtr;
 		DebugRenderMode m_RenderMode;
 
-		inline static constexpr float SCREEN_CLEAR_COLOR[4]{ 0.0f,0.0f,0.3f,1.0f };
+		std::vector<Mesh*> m_WorldMeshes;
+		std::map <std::string, Material* > m_MaterialPtrMap;
 
-		//DIRECTX
-		HRESULT InitializeDirectX();
 
 		ID3D11Device*			m_DevicePtr{};
 		ID3D11DeviceContext*	m_DeviceContextPtr{};

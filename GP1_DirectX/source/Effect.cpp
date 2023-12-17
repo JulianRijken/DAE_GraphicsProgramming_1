@@ -3,6 +3,8 @@
 
 #include <fstream>
 
+#include "Texture.h"
+
 Effect::Effect(ID3D11Device* devicePtr, const std::wstring& effectFileName)
 {
 	const std::ifstream file(effectFileName);
@@ -12,9 +14,21 @@ Effect::Effect(ID3D11Device* devicePtr, const std::wstring& effectFileName)
 	m_EffectPtr = LoadEffect(devicePtr, effectFileName);
 	m_TechniquePtr = m_EffectPtr->GetTechniqueByName(TECHNIQUE_NAME);
 
-	m_viewProjectionMatrixPtr = m_EffectPtr->GetVariableByName("worldViewProjection")->AsMatrix();
-	if (not m_viewProjectionMatrixPtr->IsValid())
-		std::wcout << L"ViewProjectionMatrix is not valid" << std::endl;
+	// Get view matrix variable
+	m_ViewProjectionMatrixVarPtr = m_EffectPtr->GetVariableByName("g_WorldViewProjection")->AsMatrix();
+	if (not m_ViewProjectionMatrixVarPtr->IsValid())
+		std::wcout << L"g_WorldViewProjection is not valid" << std::endl;
+
+	// Get model matrix variable
+	m_MeshWorldMatrixVarPtr = m_EffectPtr->GetVariableByName("g_MeshWorldMatrix")->AsMatrix();
+	if (not m_MeshWorldMatrixVarPtr->IsValid())
+		std::wcout << L"g_MeshWorldMatrix is not valid" << std::endl;
+
+
+	// Get diffuse color variable
+	m_DiffuseMapVarPtr = m_EffectPtr->GetVariableByName("g_DiffuseMap")->AsShaderResource();
+	if (not m_DiffuseMapVarPtr->IsValid())
+		std::wcout << L"g_DiffuseMap is not valid" << std::endl;
 
 
 	if(not m_TechniquePtr->IsValid())
@@ -29,13 +43,26 @@ Effect::~Effect()
 
 void Effect::UpdateViewProjectionMatrix(const Matrix& viewProjectionMatrix) const
 {
-	if (m_EffectPtr == nullptr)
+	if (m_EffectPtr == nullptr || m_ViewProjectionMatrixVarPtr == nullptr) 
 		return;
 
-	if (m_viewProjectionMatrixPtr == nullptr)
+	m_ViewProjectionMatrixVarPtr->SetMatrix(reinterpret_cast<const float*>(&viewProjectionMatrix));
+}
+
+void Effect::UpdateMeshWorldMatrix(const Matrix& meshWorldMatrix) const
+{
+	if (m_EffectPtr == nullptr || m_MeshWorldMatrixVarPtr == nullptr)
 		return;
 
-	m_viewProjectionMatrixPtr->SetMatrix(reinterpret_cast<const float*>(&viewProjectionMatrix));
+	m_MeshWorldMatrixVarPtr->SetMatrix(reinterpret_cast<const float*>(&meshWorldMatrix));
+}
+
+void Effect::SetDiffuseMap(const Texture* texturePtr) const
+{
+	if (m_EffectPtr == nullptr || texturePtr == nullptr)
+		return;
+	
+	m_DiffuseMapVarPtr->SetResource(texturePtr->GetShaderResource());
 }
 
 
@@ -75,10 +102,6 @@ ID3DX11Effect* Effect::LoadEffect(ID3D11Device* devicePtr, const std::wstring& e
 			std::wstringstream stringStream;
 			for (unsigned int i = 0; i < errorBlobPtr->GetBufferSize(); i++)
 				stringStream << errorsPtr[i];
-
-			// TODO Test if this works otherwise remove it
-			//for (const char* getBufferPointer : errorBlobPtr->GetBufferPointer())
-			//	stringStream << getBufferPointer;
 
 			errorBlobPtr->Release();
 			errorBlobPtr = nullptr;

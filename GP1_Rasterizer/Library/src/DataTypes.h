@@ -3,7 +3,6 @@
 
 #include "Maths.h"
 #include "Texture.h"
-#include "vector"
 
 namespace dae
 {

@@ -33,14 +33,15 @@
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="pch.h" />
-    <ClInclude Include="ColorRGB.h">
-      <Filter>Math</Filter>
-    </ClInclude>
     <ClInclude Include="Effect.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Utils.h" />
+    <ClInclude Include="GlobalSettings.h" />
+    <ClInclude Include="ColorRGB.h">
+      <Filter>Misc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -61,17 +62,11 @@
       <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="Effect.cpp">
-      <Filter>Math</Filter>
-    </ClCompile>
     <ClCompile Include="Mesh.cpp">
       <Filter>Math</Filter>
     </ClCompile>
-    <ClCompile Include="Camera.cpp">
-      <Filter>Math</Filter>
-    </ClCompile>
-    <ClCompile Include="Texture.cpp">
-      <Filter>Math</Filter>
-    </ClCompile>
+    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Effect.cpp" />
+    <ClCompile Include="Texture.cpp" />
   </ItemGroup>
 </Project>
