@@ -11,36 +11,48 @@ using namespace dae;
 Effect::Effect(ID3D11Device* devicePtr, const std::wstring& effectFileName) :
 	m_DevicePtr(devicePtr)
 {
+	// Used for debugging validity 
+	#define ISVALID(var, name) if (!var->IsValid()) std::cout << name << " is not valid" << std::endl;
+
+
+	////////////////
+	// Load effect
+	////////////////
 	const std::ifstream file(effectFileName);
-	if (!file)
-		std::wcout << "File does not exist" << std::endl;
+	if (!file) std::wcout << "File does not exist" << std::endl;
 
 	m_EffectPtr = LoadEffect(devicePtr, effectFileName);
 	m_TechniquePtr = m_EffectPtr->GetTechniqueByName(TECHNIQUE_NAME);
+	ISVALID(m_TechniquePtr, "m_TechniquePtr")
 
-	// Get view matrix variable
+
+	////////////////
+	// Bind variable
+	////////////////
 	m_ViewProjectionMatrixVarPtr = m_EffectPtr->GetVariableByName("g_WorldViewProjection")->AsMatrix();
-	if (not m_ViewProjectionMatrixVarPtr->IsValid())
-		std::wcout << L"g_WorldViewProjection is not valid" << std::endl;
+	ISVALID(m_ViewProjectionMatrixVarPtr,"m_ViewProjectionMatrixVarPtr")
 
-	// Get model matrix variable
 	m_MeshWorldMatrixVarPtr = m_EffectPtr->GetVariableByName("g_MeshWorldMatrix")->AsMatrix();
-	if (not m_MeshWorldMatrixVarPtr->IsValid())
-		std::wcout << L"g_MeshWorldMatrix is not valid" << std::endl;
+	ISVALID(m_MeshWorldMatrixVarPtr, "m_MeshWorldMatrixVarPtr")
 
-	// Setup sample state
 	m_SampleStateVariable = m_EffectPtr->GetVariableByName("g_TextureSampler")->AsSampler();
-	if (not m_SampleStateVariable->IsValid())
-		std::wcout << L"g_TextureSampler is not valid" << std::endl;
+	ISVALID(m_SampleStateVariable, "m_SampleStateVariable")
+
+	m_LightDirection = m_EffectPtr->GetVariableByName("g_LightDirection")->AsVector();
+	ISVALID(m_SampleStateVariable, "m_SampleStateVariable")
+
+
+	m_CameraOrigin = m_EffectPtr->GetVariableByName("g_CameraOrigin")->AsVector();
+	ISVALID(m_CameraOrigin, "g_CameraOrigin")
+
+	//m_PiVariable = m_EffectPtr->GetVariableByName("g_PI");
+	//ISVALID(m_PiVariable, "g_PI")
+
 
 	BindTexture(m_DiffuseMapVarPtr, "g_DiffuseMap");
 	BindTexture(m_NormalMapVarPtr, "g_NormalMap");
 	BindTexture(m_SpecularMapVarPtr, "g_SpecularMap");
 	BindTexture(m_GlossMapVarPtr, "g_GlossMap");
-
-
-	if(not m_TechniquePtr->IsValid())
-		std::wcout << L"Technique is not valid" << std::endl;
 }
 
 void Effect::BindTexture(ID3DX11EffectShaderResourceVariable*& target, const std::string& name) const
@@ -92,6 +104,16 @@ void Effect::SetGlossMap(const Texture* texturePtr) const
 {
 	if (m_EffectPtr == nullptr || texturePtr == nullptr) return;
 	m_GlossMapVarPtr->SetResource(texturePtr->GetShaderResource());
+}
+
+void Effect::SetLightDirection(const Vector3& lightDirection) const
+{
+	m_LightDirection->SetFloatVector(reinterpret_cast<const float*>(&lightDirection));
+}
+
+void Effect::SetCameraOrigin(const dae::Vector3& origin) const
+{
+	m_CameraOrigin->SetFloatVector(reinterpret_cast<const float*>(&origin));
 }
 
 void Effect::SetSampleState(int state) const

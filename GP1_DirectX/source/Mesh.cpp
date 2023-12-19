@@ -15,7 +15,10 @@ Mesh::Mesh(ID3D11Device* devicePtr, Effect* effect, const std::vector<VertexMode
 	m_EffectPtr(effect),
 	m_ModelVertices(vertices),
 	m_Indices(indices),
-	m_IndicesCount(static_cast<UINT>(m_Indices.size()))
+	m_IndicesCount(static_cast<UINT>(m_Indices.size())),
+	m_YawRotation(0.0f),
+	m_Scale(1.0f, 1.0f, 1.0f),
+	m_Position(0.0f, 0.0f, 0.0f)
 {
 	InitializeMesh(devicePtr);
 }
@@ -23,10 +26,13 @@ Mesh::Mesh(ID3D11Device* devicePtr, Effect* effect, const std::vector<VertexMode
 // Mesh parse
 Mesh::Mesh(ID3D11Device* devicePtr, Effect* effect, const std::string& objName, const std::vector<Material*>& materials) :
 	m_MaterialPtrs(materials),
-	m_EffectPtr(effect)
+	m_EffectPtr(effect),
+	m_YawRotation(0.0f),
+	m_Scale(1.0f, 1.0f, 1.0f),
+	m_Position(0.0f, 0.0f, 0.0f)
 {
 	// Retrieves the vertices and indices
-	Utils::ParseOBJ(devicePtr, objName, m_ModelVertices, m_Indices);
+	Utils::ParseOBJ(objName, m_ModelVertices, m_Indices);
 
 	// Update indices count
 	m_IndicesCount = static_cast<UINT>(m_Indices.size());
@@ -36,7 +42,10 @@ Mesh::Mesh(ID3D11Device* devicePtr, Effect* effect, const std::string& objName, 
 
 // Mesh and materials parse
 Mesh::Mesh(ID3D11Device* devicePtr, Effect* effect, const std::string& objName, const std::string& mtlName,std::map<std::string, Material*>& materialMap) :
-m_EffectPtr(effect)
+m_EffectPtr(effect),
+m_YawRotation(0.0f),
+m_Scale(1.0f, 1.0f, 1.0f),
+m_Position(0.0f, 0.0f, 0.0f)
 {
 	// Parse MTL
 	std::map<std::string, Material*> parsedMaterials{};
@@ -47,7 +56,7 @@ m_EffectPtr(effect)
 
 	// Parse OBJ
 	std::vector<std::string> mappedMaterials{};
-	Utils::ParseOBJ(devicePtr, objName, m_ModelVertices, m_Indices, mappedMaterials);
+	Utils::ParseOBJ(objName, m_ModelVertices, m_Indices, mappedMaterials);
 
 	// Update indices count
 	m_IndicesCount = static_cast<UINT>(m_Indices.size());
@@ -129,26 +138,19 @@ void Mesh::InitializeMesh(ID3D11Device* devicePtr)
 	///////////////////////
 	// Create vertex layout
 	///////////////////////
-	static constexpr uint32_t vertexElementCount{ 3 };
-	D3D11_INPUT_ELEMENT_DESC vertexDesc[vertexElementCount]{};
-
-	vertexDesc[0].SemanticName = "POSITION";
-	vertexDesc[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	vertexDesc[0].AlignedByteOffset = 0;
-	vertexDesc[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-
-	vertexDesc[1].SemanticName = "COLOR";
-	vertexDesc[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	vertexDesc[1].AlignedByteOffset = sizeof(float) * 3;
-	vertexDesc[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-
-	vertexDesc[2].SemanticName = "TEXCOORD";
-	vertexDesc[2].Format = DXGI_FORMAT_R32G32_FLOAT;
-	vertexDesc[2].AlignedByteOffset = sizeof(float) * 6;
-	vertexDesc[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+	static constexpr uint32_t vertexElementCount{ 6};
+	const D3D11_INPUT_ELEMENT_DESC vertexDesc[vertexElementCount]
+	{
+		{"POSITION", 0,DXGI_FORMAT_R32G32B32_FLOAT, 0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
+		{"COLOR", 0,DXGI_FORMAT_R32G32B32_FLOAT, 0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
+		{"TEXCOORD", 0,DXGI_FORMAT_R32G32_FLOAT, 0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
+		{"NORMAL", 0,DXGI_FORMAT_R32G32B32_FLOAT, 0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
+		{"TANGENT", 0,DXGI_FORMAT_R32G32B32_FLOAT, 0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0},
+		{"MATERIAL_INDEX", 0,DXGI_FORMAT_R32_UINT, 0,D3D11_APPEND_ALIGNED_ELEMENT,D3D11_INPUT_PER_VERTEX_DATA,0}
+	};
 
 
-	///////////////////////
+	/////////////////////
 	// Create input layout
 	///////////////////////
 	D3DX11_PASS_DESC passDesc{};

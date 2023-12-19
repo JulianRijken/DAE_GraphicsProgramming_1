@@ -20,6 +20,7 @@ namespace dae
 		[[nodiscard]] const Matrix& GetProjectionMatrixPtr() const { return m_ProjectionMatrix; }
 		[[nodiscard]] const Matrix& GetViewMatrixPtr() const { return m_ViewMatrix; }
 		[[nodiscard]] const Matrix& GetViewProjectionMatrixPtr() const { return m_ViewProjectionMatrix; }
+		[[nodiscard]] const Vector3& GetOrigin() const { return m_Origin; }
 
 		void SetFovAngle(float fovAngle);
 

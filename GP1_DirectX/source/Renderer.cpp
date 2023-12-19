@@ -36,6 +36,7 @@ namespace dae
 
 		m_DefaultEffectPtr = new Effect(m_DevicePtr, EFFECT_FILE_PATH);
 
+
 		//InitializeSceneTriangle();
 		InitializeSceneAssignment();
 		//InitializeSceneDiorama();
@@ -86,7 +87,7 @@ namespace dae
 	HRESULT Renderer::InitializeDirectX()
 	{
 		// Define check and result for readability
-		#define CHECK(result) if (FAILED(result)) return result;
+		#define ISVALID(result) if (FAILED(result)) return result;
 		HRESULT result{};
 
 
@@ -114,14 +115,14 @@ namespace dae
 			nullptr,
 			&m_DeviceContextPtr
 		);
-		CHECK(result)
+		ISVALID(result)
 
 
 
 			// Create DXGI Factory
 			IDXGIFactory1* dxgiFactoryPtr{ nullptr };
 		result = CreateDXGIFactory1(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(&dxgiFactoryPtr));
-		CHECK(result)
+		ISVALID(result)
 
 
 
@@ -149,7 +150,7 @@ namespace dae
 		swapChainDesc.OutputWindow = sysWMInfo.info.win.window;
 
 		result = dxgiFactoryPtr->CreateSwapChain(m_DevicePtr, &swapChainDesc, &m_SwapChainPtr);
-		CHECK(result)
+		ISVALID(result)
 
 
 		// RELEASE EARLY!
@@ -171,7 +172,7 @@ namespace dae
 		depthStencilDesc.MiscFlags = 0;
 
 		result = m_DevicePtr->CreateTexture2D(&depthStencilDesc, nullptr, &m_DepthStencilBufferPtr);
-		CHECK(result)
+		ISVALID(result)
 
 			// Create Depth Stencil View
 			D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc{};
@@ -180,17 +181,17 @@ namespace dae
 		depthStencilViewDesc.Texture2D.MipSlice = 0;
 
 		result = m_DevicePtr->CreateDepthStencilView(m_DepthStencilBufferPtr, &depthStencilViewDesc, &m_DepthStencilViewPtr);
-		CHECK(result)
+		ISVALID(result)
 
 
 			// Create Render Target and 
 			result = m_SwapChainPtr->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&m_RenderTargetBufferPtr));
-		CHECK(result)
+		ISVALID(result)
 
 
 			// Create Render Target View
 			result = m_DevicePtr->CreateRenderTargetView(m_RenderTargetBufferPtr, nullptr, &m_RenderTargetViewPtr);
-		CHECK(result)
+		ISVALID(result)
 
 			// Bind RTV (Render Target View) and DSV (Depth Stencil View)
 			m_DeviceContextPtr->OMSetRenderTargets(1, &m_RenderTargetViewPtr, m_DepthStencilViewPtr);
@@ -218,9 +219,9 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 
 		const std::vector<VertexModel> vertices
 		{
-			{{ 0.0f, 0.5f, 0.5f}, {1.0f,0.0f,0.0f}, {0,0}},
-			{{ 0.5f,-0.5f, 0.5f}, {0.0f,0.0f,1.0f}, {1,0}},
-			{{-0.5f,-0.5f, 0.5f}, {0.0f,1.0f,0.0f}, {1,1}},
+			{{ 0.0f, 0.5f, 0.5f},{1,0,0}, {0,0}},
+			{{ 0.5f,-0.5f, 0.5f},{0,1,0}, {1,0}},
+			{{-0.5f,-0.5f, 0.5f},{0,0,1}, {1,1}},
 		};
 		const std::vector<uint32_t> indices{ 0,1,2 };
 
@@ -236,6 +237,9 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 		m_CameraPtr->SetFarClipping(100.0f);
 
 		//m_AmbientColor = { 0.03f,0.03f,0.03f };
+		m_DefaultEffectPtr->SetLightDirection({ 0.577f, -0.577f, 0.577f });
+
+		m_OrbitCameraDistance = 50.0f;
 
 		//m_DiffuseStrengthKd = 7.0f;
 		//m_PhongExponentExp = 25.0f;
@@ -252,7 +256,6 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 
 		AddMesh("vehicle.obj", { m_MaterialPtrMap["bike"] });
 
-		//AddDirectionalLight({ 0.577f, -0.577f, 0.577f }, { 1,1,1 }, 1.0f);
 	}
 
 	void Renderer::InitializeSceneCar()
@@ -312,7 +315,11 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 
 		//m_AmbientColor = { 0.001f,0.001f,0.001f };
 		//m_ClearColor = { 10 };
+
+
 		//AddDirectionalLight({ 0.577f, -0.577f, 0.577f }, { 0.8f,0.8f,1.0f }, 0.5f);
+		m_DefaultEffectPtr->SetLightDirection({ 0.577f, -0.577f, 0.577f });
+
 
 		//AddPointLight({ 135.7012f, 267.001f, -158.2f }, { 1.0f,0.9f,0.7f }, 10000.0f); // Fake sun
 
@@ -338,8 +345,7 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 
 		//m_SpinSpeed = 0.0f;
 
-		//Mesh* diorama = AddMesh("Diorama/DioramaGP.obj", "Diorama/DioramaGP.mtl");
-		Mesh* diorama = AddMesh("Diorama/DioramaGP.obj", { m_MaterialPtrMap["uvGrid"] });
+		Mesh* diorama = AddMesh("Diorama/DioramaGP.obj", "Diorama/DioramaGP.mtl");
 		diorama->SetScale(Vector3{ 1,1,1 } * 15.0f);
 	}
 
@@ -371,14 +377,16 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 	{
 		if (m_OrbitCamera)
 		{
-			const float angle = timer.GetTotal() / PI + PI;
-			const float distance = 400.0f;
-			const Vector3 position = { std::cos(angle) * distance,200,std::sin(angle) * distance };
+			const float angle = -timer.GetTotal() / PI + PI;
+			const Vector3 position = { std::cos(angle) * m_OrbitCameraDistance,m_OrbitCameraDistance / 5.0f,std::sin(angle) * m_OrbitCameraDistance };
 			m_CameraPtr->SetPosition(position);
 
 			m_CameraPtr->SetYaw(angle + PI / 2.0f);
 			m_CameraPtr->SetPitch(-0.23f);
 		}
+
+		m_WorldMeshes[0]->AddYawRotation(timer.GetElapsed() * 0.5f);
+
 	}
 
 	void Renderer::Render() const
@@ -389,6 +397,8 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 		// Clear RTV & DSV
 		m_DeviceContextPtr->ClearRenderTargetView(m_RenderTargetViewPtr, SCREEN_CLEAR_COLOR);
 		m_DeviceContextPtr->ClearDepthStencilView(m_DepthStencilViewPtr, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f,0.0f);
+
+		m_DefaultEffectPtr->SetCameraOrigin(m_CameraPtr->GetOrigin());
 
 		// Render
 		for (const Mesh* worldMesh : m_WorldMeshes)

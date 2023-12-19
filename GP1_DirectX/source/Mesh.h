@@ -75,8 +75,8 @@ struct VertexModel
 	dae::Vector3 position;
 	dae::Vector3 color;
 	dae::Vector2 textureUV;
-	dae::Vector3 tangent;
 	dae::Vector3 normal;
+	dae::Vector3 tangent;
 	int materialIndex;
 };
 

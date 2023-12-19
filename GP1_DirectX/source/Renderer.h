@@ -93,6 +93,7 @@ namespace dae
 
 		bool m_IsInitialized{ false };
 		bool m_OrbitCamera{ false };
+		float m_OrbitCameraDistance{ 400.0f };
 
 		Camera* m_CameraPtr;
 		DebugRenderMode m_RenderMode;

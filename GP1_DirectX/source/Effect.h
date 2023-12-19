@@ -25,6 +25,8 @@ public:
 	void SetSpecularMap(const dae::Texture* texturePtr) const;
 	void SetGlossMap(const dae::Texture* texturePtr) const;
 
+	void SetLightDirection(const dae::Vector3& lightDirection) const;
+	void SetCameraOrigin(const dae::Vector3& origin) const;
 
 	void SetSampleState(int state) const;
 
@@ -49,6 +51,12 @@ private:
 	ID3DX11EffectShaderResourceVariable* m_NormalMapVarPtr{};
 	ID3DX11EffectShaderResourceVariable* m_SpecularMapVarPtr{};
 	ID3DX11EffectShaderResourceVariable* m_GlossMapVarPtr{};
+
+	ID3DX11EffectVectorVariable* m_LightDirection{};
+	ID3DX11EffectVectorVariable* m_CameraOrigin{};
+	//ID3DX11EffectVariable* m_PiVariable{};
+
+
 
 
 	static ID3DX11Effect* LoadEffect(ID3D11Device* devicePtr, const std::wstring& effectFileName);

@@ -66,9 +66,9 @@ m_UseLinearDepth(true)
 
 
 
-	//InitializeSceneAssignment();
+	InitializeSceneAssignment();
 	//InitializeSceneCar();
-	InitializeSceneDioramaDay();
+	//InitializeSceneDioramaDay();
 }
 
 Renderer::~Renderer()
@@ -682,7 +682,7 @@ void Renderer::ShadePixel(const Material* material, int materialIndex, int pixel
 		}break;
 		case DebugRenderMode::SpecularOA:
 		{
-			finalPixelColor += specularIntensity * colors::White * observedArea;
+			finalPixelColor += specularIntensity * colors::White;
 		}break;
 		case DebugRenderMode::Combined:
 		{

@@ -13,7 +13,7 @@ namespace dae
 {
 	namespace Utils
 	{
-		static bool ParseOBJ(ID3D11Device* devicePtr, const std::string& filename, std::vector<VertexModel>& vertices, std::vector<uint32_t>& indices, bool flipAxisAndWinding = true)
+		static bool ParseOBJ(const std::string& filename, std::vector<VertexModel>& vertices, std::vector<uint32_t>& indices, bool flipAxisAndWinding = true)
 		{
 			std::ifstream file(RESOURCES_PATH + filename);
 			if (!file)
@@ -177,7 +177,7 @@ namespace dae
 			return true;
 		}
 
-		static bool ParseOBJ(ID3D11Device* devicePtr, const std::string& filename, std::vector<VertexModel>& vertices, std::vector<uint32_t>& indices, std::vector<std::string>& mappedMaterials, bool flipAxisAndWinding = true)
+		static bool ParseOBJ(const std::string& filename, std::vector<VertexModel>& vertices, std::vector<uint32_t>& indices, std::vector<std::string>& mappedMaterials, bool flipAxisAndWinding = true)
 		{
 			std::ifstream file(RESOURCES_PATH + filename);
 
@@ -285,8 +285,7 @@ namespace dae
 						}
 
 						vertices.push_back(vertex);
-						tempIndices[iFace] = uint32_t(vertices.size()) - 1;
-						//indices.push_back(uint32_t(m_VerticesModel.size()) - 1);
+						tempIndices[iFace] = static_cast<uint32_t>(vertices.size()) - 1;
 					}
 
 					indices.push_back(tempIndices[0]);
