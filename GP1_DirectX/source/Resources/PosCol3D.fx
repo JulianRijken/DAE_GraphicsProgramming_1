@@ -5,7 +5,7 @@ float4x4 g_MeshWorldMatrix : MeshWorldMatrix;
 Texture2D g_DiffuseMap : DiffuseMap;
 Texture2D g_NormalMap : NormalMap;
 Texture2D g_SpecularMap : SpecularMap;
-Texture2D g_Gloss : GlossMap;
+Texture2D g_GlossMap : GlossMap;
 
 //float3 g_LightDirection;
 
@@ -13,7 +13,8 @@ Texture2D g_Gloss : GlossMap;
 // float g_LightIntensity;
 // float g_Shininess;
 
-SamplerState g_TextureSampler; // Manually in code set this up
+SamplerState g_TextureSampler : Sampler; // Manually in code set this up
+
 //{
 //    Filter = ANISOTROPIC;
 //    AddressU = Wrap;

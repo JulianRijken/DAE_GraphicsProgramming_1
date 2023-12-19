@@ -35,8 +35,8 @@ namespace dae
 		}
 
 		//InitializeSceneTriangle();
-		InitializeSceneAssignment();
-		//InitializeSceneDiorama();
+		//InitializeSceneAssignment();
+		InitializeSceneDiorama();
 		//InitializeSceneCar();
 	}
 

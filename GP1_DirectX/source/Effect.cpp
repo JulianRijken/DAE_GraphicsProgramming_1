@@ -1,13 +1,15 @@
 #include "pch.h"
 #include "Effect.h"
 
+#include <cassert>
 #include <fstream>
 
 #include "Texture.h"
 
 using namespace dae;
 
-Effect::Effect(ID3D11Device* devicePtr, const std::wstring& effectFileName)
+Effect::Effect(ID3D11Device* devicePtr, const std::wstring& effectFileName) :
+	m_DevicePtr(devicePtr)
 {
 	const std::ifstream file(effectFileName);
 	if (!file)
@@ -27,8 +29,8 @@ Effect::Effect(ID3D11Device* devicePtr, const std::wstring& effectFileName)
 		std::wcout << L"g_MeshWorldMatrix is not valid" << std::endl;
 
 	// Setup sample state
-	m_SampleState = m_EffectPtr->GetVariableByName("g_TextureSampler")->AsSampler();
-	if (not m_SampleState->IsValid())
+	m_SampleStateVariable = m_EffectPtr->GetVariableByName("g_TextureSampler")->AsSampler();
+	if (not m_SampleStateVariable->IsValid())
 		std::wcout << L"g_TextureSampler is not valid" << std::endl;
 
 	BindTexture(m_DiffuseMapVarPtr, "g_DiffuseMap");
@@ -92,7 +94,60 @@ void Effect::SetGlossMap(const Texture* texturePtr) const
 	m_GlossMapVarPtr->SetResource(texturePtr->GetShaderResource());
 }
 
+void Effect::SetSampleState(int state) const
+{
+	D3D11_SAMPLER_DESC samplerDesc{};
 
+
+	switch (state)
+	{
+	case 0:
+		samplerDesc =
+		{
+			.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT,
+			.AddressU = D3D11_TEXTURE_ADDRESS_WRAP,
+			.AddressV = D3D11_TEXTURE_ADDRESS_WRAP,
+			.ComparisonFunc = D3D11_COMPARISON_NEVER
+		};
+
+		break;
+
+	case 1:
+		samplerDesc =
+		{
+			.Filter = D3D11_FILTER_ANISOTROPIC,
+			.AddressU = D3D11_TEXTURE_ADDRESS_WRAP,
+			.AddressV = D3D11_TEXTURE_ADDRESS_WRAP,
+			.ComparisonFunc = D3D11_COMPARISON_NEVER
+		};
+
+		break;
+
+	case 2:
+		samplerDesc =
+		{
+			.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR,
+			.AddressU = D3D11_TEXTURE_ADDRESS_WRAP,
+			.AddressV = D3D11_TEXTURE_ADDRESS_WRAP,
+			.ComparisonFunc = D3D11_COMPARISON_NEVER
+		};
+
+		break;
+
+	}
+
+
+	ID3D11SamplerState* newSamplerState = nullptr;
+	const HRESULT result = m_DevicePtr->CreateSamplerState(&samplerDesc, &newSamplerState);
+
+	if (FAILED(result))
+	{
+		std::cout << "Failed to create sampler state: " << result << std::endl;
+		return;
+	}
+
+	m_SampleStateVariable->SetSampler(0, newSamplerState);
+}
 
 
 ID3DX11Effect* Effect::LoadEffect(ID3D11Device* devicePtr, const std::wstring& effectFileName)

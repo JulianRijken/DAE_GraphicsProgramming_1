@@ -26,9 +26,15 @@ public:
 	void SetGlossMap(const dae::Texture* texturePtr) const;
 
 
+	void SetSampleState() const;
+
+
 	void BindTexture(ID3DX11EffectShaderResourceVariable*& target,const std::string& name) const;
 
 private:
+
+	ID3D11Device* m_DevicePtr{};
+
 
 	ID3DX11Effect* m_EffectPtr{};
 	ID3DX11EffectTechnique* m_TechniquePtr{};
@@ -37,7 +43,7 @@ private:
 	ID3DX11EffectMatrixVariable* m_ViewProjectionMatrixVarPtr{};
 	ID3DX11EffectMatrixVariable* m_MeshWorldMatrixVarPtr{};
 
-	ID3DX11EffectSamplerVariable* m_SampleState{};
+	ID3DX11EffectSamplerVariable* m_SampleStateVariable{};
 
 	ID3DX11EffectShaderResourceVariable* m_DiffuseMapVarPtr{};
 	ID3DX11EffectShaderResourceVariable* m_NormalMapVarPtr{};

@@ -93,6 +93,9 @@ void Mesh::Render(ID3D11DeviceContext* deviceContextPtr,const Matrix& viewProjec
 	m_EffectPtr->SetSpecularMap(m_MaterialPtrs[0]->specular);
 	m_EffectPtr->SetGlossMap(m_MaterialPtrs[0]->gloss);
 
+	// TODO: REMOVE THIS 
+	m_EffectPtr->SetSampleState();
+
 	deviceContextPtr->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	deviceContextPtr->IASetInputLayout(m_InputLayoutPtr);
