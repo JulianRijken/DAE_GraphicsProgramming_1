@@ -81,6 +81,8 @@ int main(int argc, char* args[])
 			case SDL_KEYDOWN:
 				if (e.key.keysym.scancode == SDL_SCANCODE_F7)
 					renderer.CycleRenderMode();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F8)
+					renderer.ToggleCameraOrbit();
 				if (e.key.keysym.scancode == SDL_SCANCODE_X)
 				{
 					takeScreenshotOfCurrentFrame = true;

@@ -7,6 +7,8 @@
 #include "Utils.h"
 
 
+using namespace dae;
+
 // Direct load
 Mesh::Mesh(ID3D11Device* devicePtr, const std::vector<VertexModel>& vertices, const std::vector<uint32_t>& indices, const std::vector<Material*>& materials) :
 	m_MaterialPtrs(materials),
@@ -86,8 +88,10 @@ void Mesh::Render(ID3D11DeviceContext* deviceContextPtr,const Matrix& viewProjec
 	m_EffectPtr->UpdateViewProjectionMatrix(viewProjectionMatrix);
 	m_EffectPtr->UpdateMeshWorldMatrix(m_WorldMatrix);
 
-	// TODO For now only the diffuse map gets used
 	m_EffectPtr->SetDiffuseMap(m_MaterialPtrs[0]->diffuse);
+	m_EffectPtr->SetNormalMap(m_MaterialPtrs[0]->normal);
+	m_EffectPtr->SetSpecularMap(m_MaterialPtrs[0]->specular);
+	m_EffectPtr->SetGlossMap(m_MaterialPtrs[0]->gloss);
 
 	deviceContextPtr->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -144,6 +148,34 @@ void Mesh::InitializeMesh(ID3D11Device* devicePtr)
 	vertexDesc[2].AlignedByteOffset = sizeof(float) * 6;
 	vertexDesc[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 
+	vertexDesc[2].SemanticName = "TEXCOORD";
+	vertexDesc[2].Format = DXGI_FORMAT_R32G32_FLOAT;
+	vertexDesc[2].AlignedByteOffset = sizeof(float) * 6;
+	vertexDesc[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+
+	//vertexDesc[3].SemanticName = "TEXCOORD";
+	//vertexDesc[3].Format = DXGI_FORMAT_R32G32_FLOAT;
+	//vertexDesc[3].AlignedByteOffset = sizeof(float) * 6;
+	//vertexDesc[3].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+
+	//vertexDesc[4].SemanticName = "TEXCOORD";
+	//vertexDesc[4].Format = DXGI_FORMAT_R32G32_FLOAT;
+	//vertexDesc[4].AlignedByteOffset = sizeof(float) * 6;
+	//vertexDesc[4].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+
+	//vertexDesc[5].SemanticName = "TEXCOORD";
+	//vertexDesc[5].Format = DXGI_FORMAT_R32G32_FLOAT;
+	//vertexDesc[5].AlignedByteOffset = sizeof(float) * 6;
+	//vertexDesc[5].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+
+	//vertexDesc[5].SemanticName = "M";
+	//vertexDesc[5].Format = DXGI_FORMAT_R32G32_FLOAT;
+	//vertexDesc[5].AlignedByteOffset = sizeof(float) * 6;
+	//vertexDesc[5].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 
 
 	///////////////////////

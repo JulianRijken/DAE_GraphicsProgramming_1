@@ -15,7 +15,7 @@ namespace dae
 		// Returns nullptr if texture can't be loaded
 		static Texture* LoadFromFile(ID3D11Device* devicePtr, const std::string& fileName);
 
-		ID3D11ShaderResourceView* GetShaderResource() const
+		[[nodiscard]] ID3D11ShaderResourceView* GetShaderResource() const
 		{
 			return m_ShaderResourcePtr;
 		}

@@ -35,8 +35,9 @@ namespace dae
 		}
 
 		//InitializeSceneTriangle();
-		//InitializeSceneAssignment();
-		InitializeSceneDiorama();
+		InitializeSceneAssignment();
+		//InitializeSceneDiorama();
+		//InitializeSceneCar();
 	}
 
 	Renderer::~Renderer()
@@ -252,6 +253,54 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 		//AddDirectionalLight({ 0.577f, -0.577f, 0.577f }, { 1,1,1 }, 1.0f);
 	}
 
+	void Renderer::InitializeSceneCar()
+	{
+		m_MaterialPtrMap.insert({ "uvGrid",new Material {
+Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
+} });
+
+		m_CameraPtr->SetFovAngle(15);
+
+		m_CameraPtr->SetPosition(Vector3{ -53.4506f, 22.7297f, -118.892f });
+		m_CameraPtr->SetPitch(-0.104893f);
+		m_CameraPtr->SetYaw(-0.415f);
+
+
+		m_CameraPtr->SetNearClipping(1);
+		m_CameraPtr->SetFarClipping(500);
+
+		//m_AmbientColor = { 0,0,0 };
+
+		//m_DiffuseStrengthKd = 1.8f;
+		//m_PhongExponentExp = 10.0f;
+		//m_SpecularKs = 0.5f;
+
+
+		//Mesh* carMesh = AddMesh("Car/Car.obj", "Car/Car.mtl", m_MaterialPtrMap);
+		Mesh* carMesh = AddMesh("Car/Car.obj", { m_MaterialPtrMap["uvGrid"]});
+		carMesh->SetScale(Vector3{ 1,1,1 } *15);
+		carMesh->SetYawRotation(60.0f * TO_RADIANS);
+		
+
+
+
+
+		Mesh* backdrop = AddMesh("Backdrop.obj", { m_MaterialPtrMap["uvGrid"] });
+		backdrop->SetScale(Vector3{ 2,1,1 } *11);
+
+
+		//// Lights
+		//AddDirectionalLight({ 0.577f, -0.577f, 0.577f }, { 1,1,1 }, 0.3f);
+		//AddPointLight({ -30.0f, 60, -40.0f }, colors::White, 3000.0f); // Front left light
+		//AddPointLight({ 40.0f, -10, -20.0f }, colors::White, 1500.0f); // Right bottom light
+		//AddPointLight({ 10, 30, 10.0f }, colors::White, 500.0f); // Back light
+
+
+		//AddPointLight({ -10.1473f, 70.2765f, -61.4862f }, ColorRGB::Lerp(colors::White, { 1.0f, 1.0f, 0.58f }, 0.4f), 1000.0f); //Front Light Left
+		//AddPointLight({  62.7225f, 47.0482f, -7.69772f }, ColorRGB::Lerp(colors::White, { 1.0f, 1.0f, 0.58f }, 0.4f), 1000.0f); //Front Light right
+		//AddPointLight({ -11.7184f, 40.9686f,  57.3831f }, ColorRGB::Lerp(colors::White,{ 1.0f, 0.651f, 0.678f},0.4f), 800.0f); //Backlight
+	}
+
 	void Renderer::InitializeSceneDiorama()
 	{
 		m_MaterialPtrMap.insert({ "uvGrid",new Material {
@@ -318,14 +367,16 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 
 	void Renderer::Update(const Timer& timer)
 	{
+		if (m_OrbitCamera)
+		{
+			const float angle = timer.GetTotal() / PI + PI;
+			const float distance = 400.0f;
+			const Vector3 position = { std::cos(angle) * distance,200,std::sin(angle) * distance };
+			m_CameraPtr->SetPosition(position);
 
-		const float angle = timer.GetTotal() / PI + PI;
-		const float distance = 400.0f;
-		const Vector3 position = { std::cos(angle) * distance,200,std::sin(angle) * distance };
-		m_CameraPtr->SetPosition(position);
-
-		m_CameraPtr->SetYaw(angle + PI / 2.0f);
-		m_CameraPtr->SetPitch(-0.23f);
+			m_CameraPtr->SetYaw(angle + PI / 2.0f);
+			m_CameraPtr->SetPitch(-0.23f);
+		}
 	}
 
 	void Renderer::Render() const
@@ -365,6 +416,11 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 			current = 0;
 
 		SetRenderMode(static_cast<DebugRenderMode>(current));
+	}
+
+	void Renderer::ToggleCameraOrbit()
+	{
+		m_OrbitCamera = !m_OrbitCamera;
 	}
 
 

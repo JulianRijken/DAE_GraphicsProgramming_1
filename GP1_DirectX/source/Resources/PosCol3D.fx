@@ -1,29 +1,24 @@
 float4x4 g_WorldViewProjection : WorldViewProjection;
 float4x4 g_MeshWorldMatrix : MeshWorldMatrix;
+
+// Texture 3D for array maybe
 Texture2D g_DiffuseMap : DiffuseMap;
+Texture2D g_NormalMap : NormalMap;
+Texture2D g_SpecularMap : SpecularMap;
+Texture2D g_Gloss : GlossMap;
 
-SamplerState TextureSamplerAnisotropic
-{
-    Filter = ANISOTROPIC;
-    AddressU = Wrap;
-    AddressV = Wrap;
-};
+//float3 g_LightDirection;
 
+// float g_PI;
+// float g_LightIntensity;
+// float g_Shininess;
 
-SamplerState TextureSamplerPoint
-{
-    Filter = MIN_MAG_MIP_POINT;
-    AddressU = Wrap;
-    AddressV = Wrap;
-};
-
-SamplerState TextureSamplerLinear
-{
-    Filter = MIN_MAG_MIP_LINEAR;
-    AddressU = Wrap;
-    AddressV = Wrap;
-};
-
+SamplerState g_TextureSampler; // Manually in code set this up
+//{
+//    Filter = ANISOTROPIC;
+//    AddressU = Wrap;
+//    AddressV = Wrap;
+//};
 
 
 struct VS_INPUT
@@ -52,19 +47,14 @@ VS_OUTPUT VS(VS_INPUT input)
 }
 
 // PIXEL SHADER (PX)
-float4 PSA(VS_OUTPUT input) : SV_TARGET
+float4 PS(VS_OUTPUT input) : SV_TARGET
 {
-    return g_DiffuseMap.Sample(TextureSamplerAnisotropic, input.TextureUV);
-}
-
-float4 PSL(VS_OUTPUT input) : SV_TARGET
-{
-    return g_DiffuseMap.Sample(TextureSamplerLinear, input.TextureUV);
-}
-
-float4 PSP(VS_OUTPUT input) : SV_TARGET
-{
-    return g_DiffuseMap.Sample(TextureSamplerPoint, input.TextureUV);
+    
+    float4 diffuseColor = g_DiffuseMap.Sample(g_TextureSampler, input.TextureUV);
+    
+    
+    
+    return diffuseColor;
 }
 
 
@@ -75,27 +65,7 @@ technique11 DefaultTechnique
     {
         SetVertexShader( CompileShader(vs_5_0, VS()));
         SetGeometryShader(NULL);
-        SetPixelShader( CompileShader(ps_5_0, PSA()));
-    }
-}
-
-technique11 PointFiltering
-{
-    pass P0
-    {
-        SetVertexShader(CompileShader(vs_5_0, VS()));
-        SetGeometryShader(NULL);
-        SetPixelShader(CompileShader(ps_5_0, PSP()));
-    }
-}
-
-technique11 LinearFiltering
-{
-    pass P0
-    {
-        SetVertexShader(CompileShader(vs_5_0, VS()));
-        SetGeometryShader(NULL);
-        SetPixelShader(CompileShader(ps_5_0, PSL()));
+        SetPixelShader( CompileShader(ps_5_0, PS()));
     }
 }
 

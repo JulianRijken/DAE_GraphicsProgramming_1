@@ -63,6 +63,7 @@ namespace dae
 
 		void SetRenderMode(DebugRenderMode mode);
 		void CycleRenderMode();
+		void ToggleCameraOrbit();
 
 		bool SaveBufferToImage() const;
 
@@ -73,6 +74,7 @@ namespace dae
 
 		void InitializeSceneTriangle();
 		void InitializeSceneAssignment();
+		void InitializeSceneCar();
 		void InitializeSceneDiorama();
 
 		Mesh* AddMesh(const std::vector<VertexModel>& vertices, const std::vector<uint32_t>& indices, const std::vector<Material*>& materials);
@@ -86,6 +88,7 @@ namespace dae
 		int m_WindowHeight{};
 
 		bool m_IsInitialized{ false };
+		bool m_OrbitCamera{ false };
 
 		Camera* m_CameraPtr;
 		DebugRenderMode m_RenderMode;

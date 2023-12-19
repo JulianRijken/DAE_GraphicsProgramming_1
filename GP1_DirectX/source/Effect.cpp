@@ -5,6 +5,8 @@
 
 #include "Texture.h"
 
+using namespace dae;
+
 Effect::Effect(ID3D11Device* devicePtr, const std::wstring& effectFileName)
 {
 	const std::ifstream file(effectFileName);
@@ -24,15 +26,26 @@ Effect::Effect(ID3D11Device* devicePtr, const std::wstring& effectFileName)
 	if (not m_MeshWorldMatrixVarPtr->IsValid())
 		std::wcout << L"g_MeshWorldMatrix is not valid" << std::endl;
 
+	// Setup sample state
+	m_SampleState = m_EffectPtr->GetVariableByName("g_TextureSampler")->AsSampler();
+	if (not m_SampleState->IsValid())
+		std::wcout << L"g_TextureSampler is not valid" << std::endl;
 
-	// Get diffuse color variable
-	m_DiffuseMapVarPtr = m_EffectPtr->GetVariableByName("g_DiffuseMap")->AsShaderResource();
-	if (not m_DiffuseMapVarPtr->IsValid())
-		std::wcout << L"g_DiffuseMap is not valid" << std::endl;
+	BindTexture(m_DiffuseMapVarPtr, "g_DiffuseMap");
+	BindTexture(m_NormalMapVarPtr, "g_NormalMap");
+	BindTexture(m_SpecularMapVarPtr, "g_SpecularMap");
+	BindTexture(m_GlossMapVarPtr, "g_GlossMap");
 
 
 	if(not m_TechniquePtr->IsValid())
 		std::wcout << L"Technique is not valid" << std::endl;
+}
+
+void Effect::BindTexture(ID3DX11EffectShaderResourceVariable*& target, const std::string& name) const
+{
+	target = m_EffectPtr->GetVariableByName(name.c_str())->AsShaderResource();
+	if (not target->IsValid())
+		std::cout << "Bind texture failed! is not valid: " << name <<  std::endl;
 }
 
 Effect::~Effect()
@@ -51,19 +64,35 @@ void Effect::UpdateViewProjectionMatrix(const Matrix& viewProjectionMatrix) cons
 
 void Effect::UpdateMeshWorldMatrix(const Matrix& meshWorldMatrix) const
 {
-	if (m_EffectPtr == nullptr || m_MeshWorldMatrixVarPtr == nullptr)
-		return;
-
+	if (m_EffectPtr == nullptr || m_MeshWorldMatrixVarPtr == nullptr) return;
 	m_MeshWorldMatrixVarPtr->SetMatrix(reinterpret_cast<const float*>(&meshWorldMatrix));
 }
 
 void Effect::SetDiffuseMap(const Texture* texturePtr) const
 {
-	if (m_EffectPtr == nullptr || texturePtr == nullptr)
-		return;
-	
+	if (m_EffectPtr == nullptr || texturePtr == nullptr) return;
 	m_DiffuseMapVarPtr->SetResource(texturePtr->GetShaderResource());
 }
+
+void Effect::SetNormalMap(const Texture* texturePtr) const
+{
+	if (m_EffectPtr == nullptr || texturePtr == nullptr) return;
+	m_NormalMapVarPtr->SetResource(texturePtr->GetShaderResource());
+}
+
+void Effect::SetSpecularMap(const Texture* texturePtr) const
+{
+	if (m_EffectPtr == nullptr || texturePtr == nullptr) return;
+	m_SpecularMapVarPtr->SetResource(texturePtr->GetShaderResource());
+}
+
+void Effect::SetGlossMap(const Texture* texturePtr) const
+{
+	if (m_EffectPtr == nullptr || texturePtr == nullptr) return;
+	m_GlossMapVarPtr->SetResource(texturePtr->GetShaderResource());
+}
+
+
 
 
 ID3DX11Effect* Effect::LoadEffect(ID3D11Device* devicePtr, const std::wstring& effectFileName)

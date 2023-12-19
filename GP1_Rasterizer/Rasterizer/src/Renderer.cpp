@@ -66,9 +66,9 @@ m_UseLinearDepth(true)
 
 
 
-	InitializeSceneAssignment();
+	//InitializeSceneAssignment();
 	//InitializeSceneCar();
-	//InitializeSceneDioramaDay();
+	InitializeSceneDioramaDay();
 }
 
 Renderer::~Renderer()
