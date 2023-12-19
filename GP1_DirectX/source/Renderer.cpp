@@ -5,6 +5,7 @@
 #include <format>
 
 #include "Camera.h"
+#include "Effect.h"
 #include "GlobalSettings.h"
 #include "Mesh.h"
 #include "Texture.h"
@@ -32,6 +33,8 @@ namespace dae
 		{
 			std::cout << "DirectX initialization failed!\n";
 		}
+
+		m_DefaultEffectPtr = new Effect(m_DevicePtr, EFFECT_FILE_PATH);
 
 		//InitializeSceneTriangle();
 		InitializeSceneAssignment();
@@ -343,14 +346,14 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 
 	Mesh* Renderer::AddMesh(const std::vector<VertexModel>& vertices, const std::vector<uint32_t>& indices, const std::vector<Material*>& materials)
 	{
-		Mesh* newMesh = new Mesh(m_DevicePtr, vertices, indices, materials);
+		Mesh* newMesh = new Mesh(m_DevicePtr,m_DefaultEffectPtr, vertices, indices, materials);
 		m_WorldMeshes.push_back(newMesh);
 		return newMesh;
 	}
 
 	Mesh* Renderer::AddMesh(const std::string& objName, const std::vector<Material*>& materials)
 	{
-		Mesh* newMesh = new Mesh(m_DevicePtr, objName, materials);
+		Mesh* newMesh = new Mesh(m_DevicePtr, m_DefaultEffectPtr, objName, materials);
 		m_WorldMeshes.push_back(newMesh);
 		return newMesh;
 
@@ -358,7 +361,7 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 
 	Mesh* Renderer::AddMesh(const std::string& objName, const std::string& mtlName)
 	{
-		Mesh* newMesh = new Mesh(m_DevicePtr, objName, mtlName, m_MaterialPtrMap);
+		Mesh* newMesh = new Mesh(m_DevicePtr, m_DefaultEffectPtr, objName, mtlName, m_MaterialPtrMap);
 		m_WorldMeshes.push_back(newMesh);
 		return newMesh;
 	}
@@ -422,7 +425,10 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 		m_OrbitCamera = !m_OrbitCamera;
 	}
 
-
+	void Renderer::CycleSampleState()
+	{
+		m_DefaultEffectPtr->SetSampleState(++m_SampleState % 3);
+	}
 
 
 	bool Renderer::SaveBufferToImage() const

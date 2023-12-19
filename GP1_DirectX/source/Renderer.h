@@ -1,6 +1,7 @@
 #pragma once
 #include <map>
 
+class Effect;
 struct VertexModel;
 struct Material;
 class Mesh;
@@ -64,6 +65,7 @@ namespace dae
 		void SetRenderMode(DebugRenderMode mode);
 		void CycleRenderMode();
 		void ToggleCameraOrbit();
+		void CycleSampleState();
 
 		bool SaveBufferToImage() const;
 
@@ -87,11 +89,15 @@ namespace dae
 		int m_WindowWidth{};
 		int m_WindowHeight{};
 
+		int m_SampleState{};
+
 		bool m_IsInitialized{ false };
 		bool m_OrbitCamera{ false };
 
 		Camera* m_CameraPtr;
 		DebugRenderMode m_RenderMode;
+
+		Effect* m_DefaultEffectPtr;
 
 		std::vector<Mesh*> m_WorldMeshes;
 		std::map <std::string, Material* > m_MaterialPtrMap;

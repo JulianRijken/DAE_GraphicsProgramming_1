@@ -10,19 +10,20 @@
 using namespace dae;
 
 // Direct load
-Mesh::Mesh(ID3D11Device* devicePtr, const std::vector<VertexModel>& vertices, const std::vector<uint32_t>& indices, const std::vector<Material*>& materials) :
+Mesh::Mesh(ID3D11Device* devicePtr, Effect* effect, const std::vector<VertexModel>& vertices, const std::vector<uint32_t>& indices, const std::vector<Material*>& materials) :
 	m_MaterialPtrs(materials),
+	m_EffectPtr(effect),
 	m_ModelVertices(vertices),
 	m_Indices(indices),
 	m_IndicesCount(static_cast<UINT>(m_Indices.size()))
 {
-	InitializeEffect(devicePtr);
 	InitializeMesh(devicePtr);
 }
 
 // Mesh parse
-Mesh::Mesh(ID3D11Device* devicePtr, const std::string& objName, const std::vector<Material*>& materials) :
-	m_MaterialPtrs(materials)
+Mesh::Mesh(ID3D11Device* devicePtr, Effect* effect, const std::string& objName, const std::vector<Material*>& materials) :
+	m_MaterialPtrs(materials),
+	m_EffectPtr(effect)
 {
 	// Retrieves the vertices and indices
 	Utils::ParseOBJ(devicePtr, objName, m_ModelVertices, m_Indices);
@@ -30,12 +31,12 @@ Mesh::Mesh(ID3D11Device* devicePtr, const std::string& objName, const std::vecto
 	// Update indices count
 	m_IndicesCount = static_cast<UINT>(m_Indices.size());
 
-	InitializeEffect(devicePtr);
 	InitializeMesh(devicePtr);
 }
 
 // Mesh and materials parse
-Mesh::Mesh(ID3D11Device* devicePtr, const std::string& objName, const std::string& mtlName,std::map<std::string, Material*>& materialMap)
+Mesh::Mesh(ID3D11Device* devicePtr, Effect* effect, const std::string& objName, const std::string& mtlName,std::map<std::string, Material*>& materialMap) :
+m_EffectPtr(effect)
 {
 	// Parse MTL
 	std::map<std::string, Material*> parsedMaterials{};
@@ -60,8 +61,6 @@ Mesh::Mesh(ID3D11Device* devicePtr, const std::string& objName, const std::strin
 		m_MaterialPtrs[i] = materialMap[mappedMaterials[i]];
 	}
 
-
-	InitializeEffect(devicePtr);
 	InitializeMesh(devicePtr);
 }
 
@@ -115,10 +114,7 @@ void Mesh::Render(ID3D11DeviceContext* deviceContextPtr,const Matrix& viewProjec
 	}
 }
 
-void Mesh::InitializeEffect(ID3D11Device* devicePtr)
-{
-	m_EffectPtr = new Effect(devicePtr, EFFECT_FILE_PATH);
-}
+
 
 void Mesh::InitializeMesh(ID3D11Device* devicePtr)
 {
@@ -151,35 +147,6 @@ void Mesh::InitializeMesh(ID3D11Device* devicePtr)
 	vertexDesc[2].AlignedByteOffset = sizeof(float) * 6;
 	vertexDesc[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 
-	vertexDesc[2].SemanticName = "TEXCOORD";
-	vertexDesc[2].Format = DXGI_FORMAT_R32G32_FLOAT;
-	vertexDesc[2].AlignedByteOffset = sizeof(float) * 6;
-	vertexDesc[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-
-
-	//vertexDesc[3].SemanticName = "TEXCOORD";
-	//vertexDesc[3].Format = DXGI_FORMAT_R32G32_FLOAT;
-	//vertexDesc[3].AlignedByteOffset = sizeof(float) * 6;
-	//vertexDesc[3].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-
-
-	//vertexDesc[4].SemanticName = "TEXCOORD";
-	//vertexDesc[4].Format = DXGI_FORMAT_R32G32_FLOAT;
-	//vertexDesc[4].AlignedByteOffset = sizeof(float) * 6;
-	//vertexDesc[4].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-
-
-	//vertexDesc[5].SemanticName = "TEXCOORD";
-	//vertexDesc[5].Format = DXGI_FORMAT_R32G32_FLOAT;
-	//vertexDesc[5].AlignedByteOffset = sizeof(float) * 6;
-	//vertexDesc[5].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-
-
-	//vertexDesc[5].SemanticName = "M";
-	//vertexDesc[5].Format = DXGI_FORMAT_R32G32_FLOAT;
-	//vertexDesc[5].AlignedByteOffset = sizeof(float) * 6;
-	//vertexDesc[5].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-
 
 	///////////////////////
 	// Create input layout
@@ -195,7 +162,6 @@ void Mesh::InitializeMesh(ID3D11Device* devicePtr)
 		passDesc.IAInputSignatureSize,
 		&m_InputLayoutPtr
 	);
-
 
 	assert(result == S_OK);
 

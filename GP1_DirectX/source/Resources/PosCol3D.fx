@@ -46,7 +46,7 @@ VS_OUTPUT VS(VS_INPUT input)
 float4 PS(VS_OUTPUT input) : SV_TARGET
 {
     
-    float4 diffuseColor = g_DiffuseMap.Sample(g_TextureSampler, input.TextureUV);
+    float4 diffuseColor = g_NormalMap.Sample(g_TextureSampler, input.TextureUV);
     return diffuseColor;
 }
 

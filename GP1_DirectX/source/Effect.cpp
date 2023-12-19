@@ -97,43 +97,25 @@ void Effect::SetGlossMap(const Texture* texturePtr) const
 void Effect::SetSampleState(int state) const
 {
 	D3D11_SAMPLER_DESC samplerDesc{};
-
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 
 	switch (state)
 	{
 	case 0:
-		samplerDesc =
-		{
-			.Filter = D3D11_FILTER_ANISOTROPIC,
-			.AddressU = D3D11_TEXTURE_ADDRESS_WRAP,
-			.AddressV = D3D11_TEXTURE_ADDRESS_WRAP,
-			.ComparisonFunc = D3D11_COMPARISON_NEVER
-		};
-
+		std::cout << "filtering: ANISOTROPIC" << std::endl;
+		samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
 		break;
-
 	case 1:
-		samplerDesc =
-		{
-			.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT,
-			.AddressU = D3D11_TEXTURE_ADDRESS_WRAP,
-			.AddressV = D3D11_TEXTURE_ADDRESS_WRAP,
-			.ComparisonFunc = D3D11_COMPARISON_NEVER
-		};
-
+		std::cout << "filtering: POINT" << std::endl;
+		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
 		break;
-
 	case 2:
-		samplerDesc =
-		{
-			.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR,
-			.AddressU = D3D11_TEXTURE_ADDRESS_WRAP,
-			.AddressV = D3D11_TEXTURE_ADDRESS_WRAP,
-			.ComparisonFunc = D3D11_COMPARISON_NEVER
-		};
-
+		std::cout << "filtering: LINEAR" << std::endl;
+		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 		break;
-
 	}
 
 

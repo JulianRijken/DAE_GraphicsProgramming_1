@@ -18,13 +18,13 @@ class Mesh
 public:
 
 	// Loads mesh from obj file
-	Mesh(ID3D11Device* devicePtr, const std::string& objName,const std::vector<Material*>& materials);
+	Mesh(ID3D11Device* devicePtr,Effect* effect, const std::string& objName,const std::vector<Material*>& materials);
 
 	// Loads mesh from obj file and mtl file. Requires global material map to store material ptrs
-	Mesh(ID3D11Device* devicePtr, const std::string& objName, const std::string& mtlName, std::map<std::string, Material*>& materialMap);
+	Mesh(ID3D11Device* devicePtr, Effect* effect, const std::string& objName, const std::string& mtlName, std::map<std::string, Material*>& materialMap);
 
 	// Used for basic hand made vertices and indices
-	Mesh(ID3D11Device* devicePtr, const std::vector<VertexModel>& vertices, const std::vector<uint32_t>& indices, const std::vector<Material*>& materials);
+	Mesh(ID3D11Device* devicePtr, Effect* effect, const std::vector<VertexModel>& vertices, const std::vector<uint32_t>& indices, const std::vector<Material*>& materials);
 
 
     ~Mesh();
@@ -39,13 +39,12 @@ public:
 
 private:
 
-	void InitializeEffect(ID3D11Device* devicePtr);
 	void InitializeMesh(ID3D11Device* devicePtr);
 
 	void UpdateWorldMatrix();
 
 
-	std::vector<Material*> m_MaterialPtrs;
+	std::vector<Material*> m_MaterialPtrs{};
 
     Effect* m_EffectPtr{ nullptr };
 

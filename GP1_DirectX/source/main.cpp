@@ -79,6 +79,8 @@ int main(int argc, char* args[])
 				isLooping = false;
 				break;
 			case SDL_KEYDOWN:
+				if (e.key.keysym.scancode == SDL_SCANCODE_F2)
+					renderer.CycleSampleState();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F7)
 					renderer.CycleRenderMode();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F8)
