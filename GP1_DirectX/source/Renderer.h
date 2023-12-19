@@ -96,7 +96,6 @@ namespace dae
 		std::vector<Mesh*> m_WorldMeshes;
 		std::map <std::string, Material* > m_MaterialPtrMap;
 
-
 		ID3D11Device*			m_DevicePtr{};
 		ID3D11DeviceContext*	m_DeviceContextPtr{};
 		IDXGISwapChain*			m_SwapChainPtr{};
@@ -104,6 +103,5 @@ namespace dae
 		ID3D11DepthStencilView* m_DepthStencilViewPtr{};
 		ID3D11Resource*			m_RenderTargetBufferPtr{};
 		ID3D11RenderTargetView* m_RenderTargetViewPtr{};
-
 	};
 }

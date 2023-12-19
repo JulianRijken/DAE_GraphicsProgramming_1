@@ -17,7 +17,7 @@ namespace dae
 		HRESULT result{};
 
 		// Use SDL surface to create the DX11 Texture
-		const DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		constexpr DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		D3D11_TEXTURE2D_DESC desc{};
 		desc.Width = sdlSurface->w;
 		desc.Height = sdlSurface->h;

@@ -10,7 +10,6 @@
 #include "Texture.h"
 
 
-
 namespace dae
 {
 
@@ -35,8 +34,8 @@ namespace dae
 		}
 
 		//InitializeSceneTriangle();
-		//InitializeSceneAssignment();
-		InitializeSceneDiorama();
+		InitializeSceneAssignment();
+		//InitializeSceneDiorama();
 		//InitializeSceneCar();
 	}
 
@@ -422,6 +421,8 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 	{
 		m_OrbitCamera = !m_OrbitCamera;
 	}
+
+
 
 
 	bool Renderer::SaveBufferToImage() const

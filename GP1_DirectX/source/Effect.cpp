@@ -104,7 +104,7 @@ void Effect::SetSampleState(int state) const
 	case 0:
 		samplerDesc =
 		{
-			.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT,
+			.Filter = D3D11_FILTER_ANISOTROPIC,
 			.AddressU = D3D11_TEXTURE_ADDRESS_WRAP,
 			.AddressV = D3D11_TEXTURE_ADDRESS_WRAP,
 			.ComparisonFunc = D3D11_COMPARISON_NEVER
@@ -115,7 +115,7 @@ void Effect::SetSampleState(int state) const
 	case 1:
 		samplerDesc =
 		{
-			.Filter = D3D11_FILTER_ANISOTROPIC,
+			.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT,
 			.AddressU = D3D11_TEXTURE_ADDRESS_WRAP,
 			.AddressV = D3D11_TEXTURE_ADDRESS_WRAP,
 			.ComparisonFunc = D3D11_COMPARISON_NEVER

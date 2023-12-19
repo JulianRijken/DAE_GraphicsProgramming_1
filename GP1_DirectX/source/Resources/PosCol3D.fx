@@ -7,19 +7,14 @@ Texture2D g_NormalMap : NormalMap;
 Texture2D g_SpecularMap : SpecularMap;
 Texture2D g_GlossMap : GlossMap;
 
+SamplerState g_TextureSampler : Sampler;
+
+
 //float3 g_LightDirection;
 
 // float g_PI;
 // float g_LightIntensity;
 // float g_Shininess;
-
-SamplerState g_TextureSampler : Sampler; // Manually in code set this up
-
-//{
-//    Filter = ANISOTROPIC;
-//    AddressU = Wrap;
-//    AddressV = Wrap;
-//};
 
 
 struct VS_INPUT
@@ -52,9 +47,6 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
 {
     
     float4 diffuseColor = g_DiffuseMap.Sample(g_TextureSampler, input.TextureUV);
-    
-    
-    
     return diffuseColor;
 }
 

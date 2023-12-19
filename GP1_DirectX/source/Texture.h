@@ -7,7 +7,7 @@ namespace dae
 {
 	struct Vector2;
 
-	class Texture
+	class Texture final
 	{
 	public:
 		~Texture();
@@ -25,9 +25,5 @@ namespace dae
 
 		ID3D11Texture2D* m_ResourcePtr;
 		ID3D11ShaderResourceView* m_ShaderResourcePtr;
-
-
-		//SDL_Surface* m_SurfacePtr{ nullptr };
-		//uint32_t* m_SurfacePixelsPtr{ nullptr };
 	};
 }

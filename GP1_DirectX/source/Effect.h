@@ -26,7 +26,7 @@ public:
 	void SetGlossMap(const dae::Texture* texturePtr) const;
 
 
-	void SetSampleState() const;
+	void SetSampleState(int state) const;
 
 
 	void BindTexture(ID3DX11EffectShaderResourceVariable*& target,const std::string& name) const;
