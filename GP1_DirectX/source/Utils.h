@@ -280,7 +280,7 @@ namespace dae
 
 								// Optional vertex normal
 								file >> iNormal;
-								vertex.normal = normals[iNormal - 1];
+								vertex.normal = normals[iNormal - 1].Normalized();
 							}
 						}
 

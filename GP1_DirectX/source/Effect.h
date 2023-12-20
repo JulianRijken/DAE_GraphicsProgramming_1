@@ -1,6 +1,9 @@
 #pragma once
+struct Material;
+
 namespace dae
 {
+	struct DefaultTextures;
 	class Texture;
 }
 
@@ -20,10 +23,11 @@ public:
 	void UpdateViewProjectionMatrix(const dae::Matrix& viewProjectionMatrix) const;
 	void UpdateMeshWorldMatrix(const dae::Matrix& meshWorldMatrix) const;
 
-	void SetDiffuseMap(const dae::Texture* texturePtr) const;
-	void SetNormalMap(const dae::Texture* texturePtr) const;
-	void SetSpecularMap(const dae::Texture* texturePtr) const;
-	void SetGlossMap(const dae::Texture* texturePtr) const;
+
+	void SetDiffuseMaps(const std::vector<Material*>& materialPtr, const dae::DefaultTextures& defaultTextures);
+	void SetNormalMap(const dae::Texture* texturePtr, int materialIndex) const;
+	void SetSpecularMap(const dae::Texture* texturePtr, int materialIndex) const;
+	void SetGlossMap(const dae::Texture* texturePtr, int materialIndex) const;
 
 	void SetLightDirection(const dae::Vector3& lightDirection) const;
 	void SetCameraOrigin(const dae::Vector3& origin) const;
@@ -57,6 +61,7 @@ private:
 	//ID3DX11EffectVariable* m_PiVariable{};
 
 
+	std::vector<ID3D11ShaderResourceView*> m_ShaderResources{};
 
 
 	static ID3DX11Effect* LoadEffect(ID3D11Device* devicePtr, const std::wstring& effectFileName);

@@ -29,6 +29,14 @@ namespace dae
 		COUNT
 	};
 
+
+	struct DefaultTextures
+	{
+		Texture* defaultWhiteTexture;
+		Texture* defaultBlackTexture;
+		Texture* defaultNormalTexture;
+	};
+
 	const std::map<DebugRenderMode, std::string> RENDER_MODE_NAMES
 	{
 		{DebugRenderMode::Diffuse,"Diffuse Color"},
@@ -59,12 +67,13 @@ namespace dae
 		Renderer& operator=(const Renderer&) = delete;
 		Renderer& operator=(Renderer&&) noexcept = delete;
 
-		void Update(const Timer& timer);
+		void Update(const Timer& timer) const;
 		void Render() const;
 
 		void SetRenderMode(DebugRenderMode mode);
 		void CycleRenderMode();
 		void ToggleCameraOrbit();
+		void ToggleMeshRotation();
 		void CycleSampleState();
 
 		bool SaveBufferToImage() const;
@@ -93,6 +102,7 @@ namespace dae
 
 		bool m_IsInitialized{ false };
 		bool m_OrbitCamera{ false };
+		bool m_RotateMesh{ false };
 		float m_OrbitCameraDistance{ 400.0f };
 
 		Camera* m_CameraPtr;
@@ -103,6 +113,8 @@ namespace dae
 		std::vector<Mesh*> m_WorldMeshes;
 		std::map <std::string, Material* > m_MaterialPtrMap;
 
+		DefaultTextures m_DefaultTextures;
+		
 		ID3D11Device*			m_DevicePtr{};
 		ID3D11DeviceContext*	m_DeviceContextPtr{};
 		IDXGISwapChain*			m_SwapChainPtr{};
@@ -111,4 +123,5 @@ namespace dae
 		ID3D11Resource*			m_RenderTargetBufferPtr{};
 		ID3D11RenderTargetView* m_RenderTargetViewPtr{};
 	};
+
 }

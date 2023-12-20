@@ -36,10 +36,13 @@ namespace dae
 
 		m_DefaultEffectPtr = new Effect(m_DevicePtr, EFFECT_FILE_PATH);
 
+		m_DefaultTextures.defaultBlackTexture = Texture::LoadFromFile(m_DevicePtr,"defaultBlack.png");
+		m_DefaultTextures.defaultWhiteTexture = Texture::LoadFromFile(m_DevicePtr, "defaultWhite.png");
+		m_DefaultTextures.defaultNormalTexture = Texture::LoadFromFile(m_DevicePtr, "defaultNormal.png");
 
 		//InitializeSceneTriangle();
-		InitializeSceneAssignment();
-		//InitializeSceneDiorama();
+		//InitializeSceneAssignment();
+		InitializeSceneDiorama();
 		//InitializeSceneCar();
 	}
 
@@ -63,6 +66,8 @@ namespace dae
 		{
 			delete worldMesh;
 		}
+
+
 
 
 		m_RenderTargetViewPtr->Release();
@@ -92,7 +97,7 @@ namespace dae
 
 
 		// Setup flags for device and context
-		const D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_1;
+		constexpr D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_1;
 		uint32_t createDeviceFlags = 0;
 
 		// When in debug mode include the device debug flag
@@ -373,19 +378,23 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 	}
 
 
-	void Renderer::Update(const Timer& timer)
+	void Renderer::Update(const Timer& timer) const
 	{
+		const float angle = timer.GetTotal() / PI + PI;
+
 		if (m_OrbitCamera)
 		{
-			const float angle = -timer.GetTotal() / PI + PI;
-			const Vector3 position = { std::cos(angle) * m_OrbitCameraDistance,m_OrbitCameraDistance / 5.0f,std::sin(angle) * m_OrbitCameraDistance };
+			const Vector3 position = { std::cos(angle) * m_OrbitCameraDistance,m_OrbitCameraDistance / 2.0f,std::sin(angle) * m_OrbitCameraDistance };
 			m_CameraPtr->SetPosition(position);
 
 			m_CameraPtr->SetYaw(angle + PI / 2.0f);
 			m_CameraPtr->SetPitch(-0.23f);
 		}
 
-		m_WorldMeshes[0]->AddYawRotation(timer.GetElapsed() * 0.5f);
+		if (m_RotateMesh)
+		{
+			m_WorldMeshes[0]->AddYawRotation(-timer.GetElapsed() / PI);
+		}
 
 	}
 
@@ -402,7 +411,7 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 
 		// Render
 		for (const Mesh* worldMesh : m_WorldMeshes)
-			worldMesh->Render(m_DeviceContextPtr, m_CameraPtr->GetViewProjectionMatrixPtr());
+			worldMesh->Render(m_DeviceContextPtr,m_DefaultTextures, m_CameraPtr->GetViewProjectionMatrixPtr());
 
 		// Present Back buffer (Swap)
 		m_SwapChainPtr->Present(0, 0);
@@ -433,6 +442,11 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 	void Renderer::ToggleCameraOrbit()
 	{
 		m_OrbitCamera = !m_OrbitCamera;
+	}
+
+	void Renderer::ToggleMeshRotation()
+	{
+		m_RotateMesh = !m_RotateMesh;
 	}
 
 	void Renderer::CycleSampleState()

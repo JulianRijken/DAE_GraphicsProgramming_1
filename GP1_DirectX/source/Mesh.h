@@ -3,6 +3,7 @@
 
 namespace dae
 {
+	struct DefaultTextures;
 	class Texture;
 }
 
@@ -29,7 +30,7 @@ public:
 
     ~Mesh();
 
-    void Render(ID3D11DeviceContext* deviceContextPtr,const dae::Matrix& viewProjectionMatrix) const;
+    void Render(ID3D11DeviceContext* deviceContextPtr, const dae::DefaultTextures& defaultTextures, const dae::Matrix& viewProjectionMatrix) const;
 
 	void SetPosition(dae::Vector3 translate);
 	void SetScale(dae::Vector3 scale);

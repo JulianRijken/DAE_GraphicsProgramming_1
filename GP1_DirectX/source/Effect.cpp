@@ -4,6 +4,8 @@
 #include <cassert>
 #include <fstream>
 
+#include "Mesh.h"
+#include "Renderer.h"
 #include "Texture.h"
 
 using namespace dae;
@@ -49,10 +51,12 @@ Effect::Effect(ID3D11Device* devicePtr, const std::wstring& effectFileName) :
 	//ISVALID(m_PiVariable, "g_PI")
 
 
-	BindTexture(m_DiffuseMapVarPtr, "g_DiffuseMap");
-	BindTexture(m_NormalMapVarPtr, "g_NormalMap");
-	BindTexture(m_SpecularMapVarPtr, "g_SpecularMap");
-	BindTexture(m_GlossMapVarPtr, "g_GlossMap");
+	BindTexture(m_DiffuseMapVarPtr, "g_DiffuseMapArray");
+	BindTexture(m_NormalMapVarPtr, "g_NormalMapArray");
+	BindTexture(m_SpecularMapVarPtr, "g_SpecularMapArray");
+	BindTexture(m_GlossMapVarPtr, "g_GlossMapArray");
+
+	SetSampleState(0);
 }
 
 void Effect::BindTexture(ID3DX11EffectShaderResourceVariable*& target, const std::string& name) const
@@ -82,28 +86,48 @@ void Effect::UpdateMeshWorldMatrix(const Matrix& meshWorldMatrix) const
 	m_MeshWorldMatrixVarPtr->SetMatrix(reinterpret_cast<const float*>(&meshWorldMatrix));
 }
 
-void Effect::SetDiffuseMap(const Texture* texturePtr) const
+
+void Effect::SetDiffuseMaps(const std::vector<Material*>& materialPtr, const DefaultTextures& defaultTextures)
 {
-	if (m_EffectPtr == nullptr || texturePtr == nullptr) return;
-	m_DiffuseMapVarPtr->SetResource(texturePtr->GetShaderResource());
+	m_ShaderResources.clear();
+	m_ShaderResources.reserve(materialPtr.size());
+
+	for (int materialIndex = 0; materialIndex < materialPtr.size() - 1; ++materialIndex)
+	{
+		const Texture* texture = materialPtr[materialIndex]->diffuse;
+
+		if(texture == nullptr)
+		{
+			m_ShaderResources.emplace_back(defaultTextures.defaultWhiteTexture->GetShaderResource());
+		}
+		else
+		{
+			m_ShaderResources.emplace_back(texture->GetShaderResource());
+		}
+	}
+
+	m_DiffuseMapVarPtr->SetResourceArray(m_ShaderResources.data(), 0, m_ShaderResources.size());
 }
 
-void Effect::SetNormalMap(const Texture* texturePtr) const
+void Effect::SetNormalMap(const Texture* texturePtr, int materialIndex) const
 {
 	if (m_EffectPtr == nullptr || texturePtr == nullptr) return;
-	m_NormalMapVarPtr->SetResource(texturePtr->GetShaderResource());
+	ID3D11ShaderResourceView* resourceView = texturePtr->GetShaderResource();
+	m_NormalMapVarPtr->SetResourceArray(&resourceView, 0, materialIndex);
 }
 
-void Effect::SetSpecularMap(const Texture* texturePtr) const
+void Effect::SetSpecularMap(const Texture* texturePtr, int materialIndex) const
 {
 	if (m_EffectPtr == nullptr || texturePtr == nullptr) return;
-	m_SpecularMapVarPtr->SetResource(texturePtr->GetShaderResource());
+	ID3D11ShaderResourceView* resourceView = texturePtr->GetShaderResource();
+	m_SpecularMapVarPtr->SetResourceArray(&resourceView, 0, materialIndex);
 }
 
-void Effect::SetGlossMap(const Texture* texturePtr) const
+void Effect::SetGlossMap(const Texture* texturePtr, int materialIndex) const
 {
 	if (m_EffectPtr == nullptr || texturePtr == nullptr) return;
-	m_GlossMapVarPtr->SetResource(texturePtr->GetShaderResource());
+	ID3D11ShaderResourceView* resourceView = texturePtr->GetShaderResource();
+	m_GlossMapVarPtr->SetResourceArray(&resourceView, 0, materialIndex);
 }
 
 void Effect::SetLightDirection(const Vector3& lightDirection) const

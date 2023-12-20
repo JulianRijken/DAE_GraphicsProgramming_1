@@ -4,6 +4,7 @@
 #include <cassert>
 
 #include "Effect.h"
+#include "Renderer.h"
 #include "Utils.h"
 
 
@@ -91,15 +92,18 @@ Mesh::~Mesh()
 	m_EffectPtr = nullptr;
 }
 
-void Mesh::Render(ID3D11DeviceContext* deviceContextPtr,const Matrix& viewProjectionMatrix) const
+void Mesh::Render(ID3D11DeviceContext* deviceContextPtr, const DefaultTextures& defaultTextures, const Matrix& viewProjectionMatrix) const
 {
 	m_EffectPtr->UpdateViewProjectionMatrix(viewProjectionMatrix);
 	m_EffectPtr->UpdateMeshWorldMatrix(m_WorldMatrix);
 
-	m_EffectPtr->SetDiffuseMap(m_MaterialPtrs[0]->diffuse);
-	m_EffectPtr->SetNormalMap(m_MaterialPtrs[0]->normal);
-	m_EffectPtr->SetSpecularMap(m_MaterialPtrs[0]->specular);
-	m_EffectPtr->SetGlossMap(m_MaterialPtrs[0]->gloss);
+
+	m_EffectPtr->SetDiffuseMaps(m_MaterialPtrs, defaultTextures);
+
+
+	//m_EffectPtr->SetNormalMap(m_MaterialPtrs[0]->normal == nullptr ? defaultTextures.defaultNormalTexture : m_MaterialPtrs[0]->normal, 0);
+	//m_EffectPtr->SetSpecularMap(m_MaterialPtrs[0]->specular == nullptr ? defaultTextures.defaultWhiteTexture : m_MaterialPtrs[0]->specular, 0);
+	//m_EffectPtr->SetGlossMap(m_MaterialPtrs[0]->gloss == nullptr ? defaultTextures.defaultWhiteTexture : m_MaterialPtrs[0]->gloss, 0);
 
 	// TODO: REMOVE THIS 
 	//m_EffectPtr->SetSampleState();
