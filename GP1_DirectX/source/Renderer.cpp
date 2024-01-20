@@ -5,7 +5,9 @@
 #include <format>
 
 #include "Camera.h"
-#include "Effect.h"
+#include "EffectBase.h"
+#include "EffectOpaque.h"
+#include "EffectPartialCoverage.h"
 #include "GlobalSettings.h"
 #include "Mesh.h"
 #include "Texture.h"
@@ -16,8 +18,7 @@ namespace dae
 
 	Renderer::Renderer(Camera* cameraPtr, SDL_Window* windowPtr) :
 		m_pWindow(windowPtr),
-		m_CameraPtr(cameraPtr),
-		m_WorldMeshes{}
+		m_CameraPtr(cameraPtr)
 	{
 		//Initialize Window
 		SDL_GetWindowSize(windowPtr, &m_WindowWidth, &m_WindowHeight);
@@ -34,7 +35,8 @@ namespace dae
 			std::cout << "DirectX initialization failed!\n";
 		}
 
-		m_DefaultEffectPtr = new Effect(m_DevicePtr, DEFAULT_EFFECT_FILE_PATH);
+		m_OpaqueEffectPtr = new EffectOpaque(m_DevicePtr, OPAQUE_SHADER_EFFECT_FILE_PATH);
+		m_PartialCoverageEffectPtr = new EffectPartialCoverage(m_DevicePtr, PARTIAL_COVERAGE_EFFECT_FILE_PATH);
 
 
 		//InitializeSceneTriangle();
@@ -45,6 +47,7 @@ namespace dae
 
 	Renderer::~Renderer()
 	{
+
 		// Delete materials
 		for (const std::pair<const std::string, Material*>& pair : m_MaterialPtrMap)
 		{
@@ -64,6 +67,8 @@ namespace dae
 			delete worldMesh;
 		}
 
+		delete m_PartialCoverageEffectPtr;
+		delete m_OpaqueEffectPtr;
 
 		m_RenderTargetViewPtr->Release();
 		m_RenderTargetBufferPtr->Release();
@@ -73,7 +78,7 @@ namespace dae
 
 		m_SwapChainPtr->Release();
 
-		if(m_DeviceContextPtr)
+		if (m_DeviceContextPtr)
 		{
 			m_DeviceContextPtr->ClearState();
 			m_DeviceContextPtr->Flush();
@@ -87,12 +92,12 @@ namespace dae
 	HRESULT Renderer::InitializeDirectX()
 	{
 		// Define check and result for readability
-		#define ISVALID(result) if (FAILED(result)) return result;
+#define IS_VALID(result) if (FAILED(result)) return result;
 		HRESULT result{};
 
 
 		// Setup flags for device and context
-		const D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_1;
+		constexpr D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_1;
 		uint32_t createDeviceFlags = 0;
 
 		// When in debug mode include the device debug flag
@@ -115,14 +120,14 @@ namespace dae
 			nullptr,
 			&m_DeviceContextPtr
 		);
-		ISVALID(result)
+		IS_VALID(result)
 
 
 
 			// Create DXGI Factory
 			IDXGIFactory1* dxgiFactoryPtr{ nullptr };
 		result = CreateDXGIFactory1(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(&dxgiFactoryPtr));
-		ISVALID(result);
+		IS_VALID(result);
 
 
 
@@ -150,7 +155,7 @@ namespace dae
 		swapChainDesc.OutputWindow = sysWMInfo.info.win.window;
 
 		result = dxgiFactoryPtr->CreateSwapChain(m_DevicePtr, &swapChainDesc, &m_SwapChainPtr);
-		ISVALID(result);
+		IS_VALID(result);
 
 
 		// RELEASE EARLY!
@@ -172,7 +177,7 @@ namespace dae
 		depthStencilDesc.MiscFlags = 0;
 
 		result = m_DevicePtr->CreateTexture2D(&depthStencilDesc, nullptr, &m_DepthStencilBufferPtr);
-		ISVALID(result);
+		IS_VALID(result);
 
 		// Create Depth Stencil View
 		D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc{};
@@ -181,17 +186,17 @@ namespace dae
 		depthStencilViewDesc.Texture2D.MipSlice = 0;
 
 		result = m_DevicePtr->CreateDepthStencilView(m_DepthStencilBufferPtr, &depthStencilViewDesc, &m_DepthStencilViewPtr);
-		ISVALID(result);
+		IS_VALID(result);
 
 
 		// Create Render Target and 
 		result = m_SwapChainPtr->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&m_RenderTargetBufferPtr));
-		ISVALID(result);
+		IS_VALID(result);
 
 
 		// Create Render Target View
 		result = m_DevicePtr->CreateRenderTargetView(m_RenderTargetBufferPtr, nullptr, &m_RenderTargetViewPtr);
-		ISVALID(result);
+		IS_VALID(result);
 
 		// Bind RTV (Render Target View) and DSV (Depth Stencil View)
 		m_DeviceContextPtr->OMSetRenderTargets(1, &m_RenderTargetViewPtr, m_DepthStencilViewPtr);
@@ -225,7 +230,7 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 		};
 		const std::vector<uint32_t> indices{ 0,1,2 };
 
-		AddMesh(vertices, indices, { m_MaterialPtrMap["uvGrid"] });
+		AddMesh(m_OpaqueEffectPtr, vertices, indices, { m_MaterialPtrMap["uvGrid"] });
 
 	}
 
@@ -235,37 +240,34 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 		m_CameraPtr->SetPosition(Vector3{ 0,0.0f,-50.0f });
 		m_CameraPtr->SetNearClipping(0.1f);
 		m_CameraPtr->SetFarClipping(1000.0f);
-
-		//m_AmbientColor = { 0.03f,0.03f,0.03f };
-		m_DefaultEffectPtr->SetLightDirection({ 0.577f, -0.577f, 0.577f });
-		m_DefaultEffectPtr->SetUseNormalMap(true);
-		m_DefaultEffectPtr->SetSampleState(0);
-
 		m_OrbitCameraDistance = 50.0f;
 
-		//m_DiffuseStrengthKd = 7.0f;
-		//m_PhongExponentExp = 25.0f;
-		//m_SpecularKs = 1.0f;
+		//m_AmbientColor = { 0.03f,0.03f,0.03f };
+		m_OpaqueEffectPtr->SetLightDirection({ 0.577f, -0.577f, 0.577f });
+		m_OpaqueEffectPtr->SetUseNormalMap(true);
+		m_OpaqueEffectPtr->SetSampleState(0);
+
+
 
 		m_MaterialPtrMap.insert({ "bike",new Material {
-			Texture::LoadFromFile(m_DevicePtr,"vehicle_diffuse.png"),
-			nullptr,
-			Texture::LoadFromFile(m_DevicePtr,"vehicle_normal.png"),
-			Texture::LoadFromFile(m_DevicePtr,"vehicle_specular.png"),
-			Texture::LoadFromFile(m_DevicePtr,"vehicle_gloss.png"),
+		   Texture::LoadFromFile(m_DevicePtr,"vehicle_diffuse.png"),
+		   nullptr,
+		   Texture::LoadFromFile(m_DevicePtr,"vehicle_normal.png"),
+		   Texture::LoadFromFile(m_DevicePtr,"vehicle_specular.png"),
+		   Texture::LoadFromFile(m_DevicePtr,"vehicle_gloss.png"),
 		} });
-		AddMesh("vehicle.obj", { m_MaterialPtrMap["bike"] });
 
-		
+		AddMesh("vehicle.obj", m_OpaqueEffectPtr, { m_MaterialPtrMap["bike"] });
+
 		m_MaterialPtrMap.insert({ "fire",new Material {
-			Texture::LoadFromFile(m_DevicePtr,"fireFX_diffuse.png"),
-			nullptr,
-			nullptr,
-			nullptr,
-			nullptr,
+		   Texture::LoadFromFile(m_DevicePtr,"fireFX_diffuse.png"),
+		   nullptr,
+		   nullptr,
+		   nullptr,
+		   nullptr,
 		} });
-		AddMesh("fireFX.obj", { m_MaterialPtrMap["fire"] });
-		
+
+		AddMesh("fireFX.obj", m_PartialCoverageEffectPtr, { m_MaterialPtrMap["fire"] });
 	}
 
 	void Renderer::InitializeSceneCar()
@@ -292,15 +294,15 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 
 
 		//Mesh* carMesh = AddMesh("Car/Car.obj", "Car/Car.mtl", m_MaterialPtrMap);
-		Mesh* carMesh = AddMesh("Car/Car.obj", { m_MaterialPtrMap["uvGrid"]});
+		Mesh* carMesh = AddMesh("Car/Car.obj", m_OpaqueEffectPtr, { m_MaterialPtrMap["uvGrid"] });
 		carMesh->SetScale(Vector3{ 1,1,1 } *15);
 		carMesh->SetYawRotation(60.0f * TO_RADIANS);
-		
 
 
 
 
-		Mesh* backdrop = AddMesh("Backdrop.obj", { m_MaterialPtrMap["uvGrid"] });
+
+		Mesh* backdrop = AddMesh("Backdrop.obj", m_OpaqueEffectPtr, { m_MaterialPtrMap["uvGrid"] });
 		backdrop->SetScale(Vector3{ 2,1,1 } *11);
 
 
@@ -328,7 +330,7 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 
 
 		//AddDirectionalLight({ 0.577f, -0.577f, 0.577f }, { 0.8f,0.8f,1.0f }, 0.5f);
-		m_DefaultEffectPtr->SetLightDirection({ 0.577f, -0.577f, 0.577f });
+		m_OpaqueEffectPtr->SetLightDirection({ 0.577f, -0.577f, 0.577f });
 
 
 		//AddPointLight({ 135.7012f, 267.001f, -158.2f }, { 1.0f,0.9f,0.7f }, 10000.0f); // Fake sun
@@ -355,28 +357,28 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 
 		//m_SpinSpeed = 0.0f;
 
-		Mesh* diorama = AddMesh("Diorama/DioramaGP.obj", "Diorama/DioramaGP.mtl");
-		diorama->SetScale(Vector3{ 1,1,1 } * 15.0f);
+		Mesh* diorama = AddMesh("Diorama/DioramaGP.obj", m_OpaqueEffectPtr, "Diorama/DioramaGP.mtl");
+		diorama->SetScale(Vector3{ 1,1,1 } *15.0f);
 	}
 
 
-	Mesh* Renderer::AddMesh(const std::vector<VertexModel>& vertices, const std::vector<uint32_t>& indices, const std::vector<Material*>& materials)
+	Mesh* Renderer::AddMesh(EffectBase* effect, const std::vector<VertexModel>& vertices, const std::vector<uint32_t>& indices, const std::vector<Material*>& materials)
 	{
-		Mesh* newMesh = new Mesh(m_DevicePtr,m_DefaultEffectPtr, vertices, indices, materials);
+		Mesh* newMesh = new Mesh(m_DevicePtr, effect, vertices, indices, materials);
 		m_WorldMeshes.push_back(newMesh);
 		return newMesh;
 	}
 
-	Mesh* Renderer::AddMesh(const std::string& objName, const std::vector<Material*>& materials)
+	Mesh* Renderer::AddMesh(const std::string& objName, EffectBase* effect, const std::vector<Material*>& materials)
 	{
-		Mesh* newMesh = new Mesh(m_DevicePtr, m_DefaultEffectPtr, objName, materials);
+		Mesh* newMesh = new Mesh(m_DevicePtr, effect, objName, materials);
 		m_WorldMeshes.push_back(newMesh);
 		return newMesh;
 	}
 
-	Mesh* Renderer::AddMesh(const std::string& objName, const std::string& mtlName)
+	Mesh* Renderer::AddMesh(const std::string& objName, EffectBase* effect, const std::string& mtlName)
 	{
-		Mesh* newMesh = new Mesh(m_DevicePtr, m_DefaultEffectPtr, objName, mtlName, m_MaterialPtrMap);
+		Mesh* newMesh = new Mesh(m_DevicePtr, effect, objName, mtlName, m_MaterialPtrMap);
 		m_WorldMeshes.push_back(newMesh);
 		return newMesh;
 	}
@@ -394,9 +396,9 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 			m_CameraPtr->SetPitch(-0.23f);
 		}
 
-		if(m_RotateMesh)
+		if (m_RotateMesh)
 		{
-			for(Mesh* mesh : m_WorldMeshes)
+			for (Mesh* mesh : m_WorldMeshes)
 				mesh->AddYawRotation(PI * 2 * timer.GetElapsed() * ROTATIONS_PER_SECOND);
 		}
 	}
@@ -408,9 +410,9 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 
 		// Clear RTV & DSV
 		m_DeviceContextPtr->ClearRenderTargetView(m_RenderTargetViewPtr, SCREEN_CLEAR_COLOR);
-		m_DeviceContextPtr->ClearDepthStencilView(m_DepthStencilViewPtr, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f,0.0f);
+		m_DeviceContextPtr->ClearDepthStencilView(m_DepthStencilViewPtr, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0.0f);
 
-		m_DefaultEffectPtr->SetCameraOrigin(m_CameraPtr->GetOrigin());
+		m_OpaqueEffectPtr->SetCameraOrigin(m_CameraPtr->GetOrigin());
 
 		// Render
 		for (const Mesh* worldMesh : m_WorldMeshes)
@@ -453,12 +455,18 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 
 	void Renderer::CycleSampleState()
 	{
-		m_DefaultEffectPtr->SetSampleState(++m_SampleState % 3);
+		m_OpaqueEffectPtr->SetSampleState(++m_SampleState % 3);
 	}
 	void Renderer::ToggleUseNormalMap()
 	{
 		m_UseNormalMap = !m_UseNormalMap;
-		m_DefaultEffectPtr->SetUseNormalMap(m_UseNormalMap);
+
+		if (m_UseNormalMap)
+			std::cout << "Normal Map Enabled" << std::endl;
+		else
+			std::cout << "Normal Map Disabled" << std::endl;
+
+		m_OpaqueEffectPtr->SetUseNormalMap(m_UseNormalMap);
 	}
 
 

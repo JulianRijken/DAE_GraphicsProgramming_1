@@ -1,9 +1,9 @@
+
 float4x4 g_WorldViewProjection : WorldViewProjection;
 float4x4 g_MeshWorldMatrix : MeshWorldMatrix;
 float3 g_CameraOrigin : CameraOrigin;
+float3 g_LightDirection : Light_Direction;
 
-
-// Texture 3D for array maybe
 Texture2D g_DiffuseMap : DiffuseMap;
 Texture2D g_NormalMap : NormalMap;
 Texture2D g_SpecularMap : SpecularMap;
@@ -11,22 +11,11 @@ Texture2D g_GlossMap : GlossMap;
 
 SamplerState g_TextureSampler : Sampler;
 
-
-float3 g_LightDirection : Light_Direction;
-bool g_UseNormalMap: UseNormalMap;
-
-
 RasterizerState g_RasterizerState
 {
     CullMode = none;
     FrontCounterClockwise = false;
 };
-
-
-// float g_PI;
-// float g_LightIntensity;
-// float g_Shininess;
-
 
 struct VS_INPUT
 {
@@ -54,7 +43,6 @@ VS_OUTPUT VS(VS_INPUT input)
 {
     VS_OUTPUT output = (VS_OUTPUT)0;
     
-    
     // Transform output to world space (Using mesh matrix)
     output.Position = mul(float4(input.Position, 1.f), g_MeshWorldMatrix);
     output.Normal = mul(input.Normal, (float3x3) g_MeshWorldMatrix);
@@ -66,19 +54,13 @@ VS_OUTPUT VS(VS_INPUT input)
     // Get positon in view space
     output.Position = mul(output.Position, g_WorldViewProjection);
     
-    
     output.Color = input.Color;
     output.TextureUV = input.TextureUV;
     output.MaterialIndex = input.MaterialIndex;
     
-
     return output;
 }
 
-float nrand(int random)
-{
-    return frac(sin(dot(random, float2(12.9898f, 78.233f))) * 43758.5453f);
-}
 
 // PIXEL SHADER (PX)
 float4 PS(VS_OUTPUT input) : SV_TARGET
@@ -90,19 +72,14 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
     float sampledPhongExponent = 25.0f;
     float diffuseStrengthKd = 7.0f;
     
-    // HINT: Does not check if texture is null
     sampledPhongExponent *= g_GlossMap.Sample(g_TextureSampler, input.TextureUV).r;
     sampledSpecular *= g_SpecularMap.Sample(g_TextureSampler, input.TextureUV).r;
     sampleDiffuseColor *= g_DiffuseMap.Sample(g_TextureSampler, input.TextureUV);
    
 
-    float3 sampledNormal = input.Normal;
-    if (g_UseNormalMap)  // Transforms normal based on normal map
-    {
-        float3 sampledNormalColor = g_NormalMap.Sample(g_TextureSampler, input.TextureUV).xyz;
-        float3x3 tbnMatrix = float3x3(input.Tangent, cross(input.Normal, input.Tangent), input.Normal);
-        sampledNormal = mul(sampledNormalColor * 2.0f - 1.0f, tbnMatrix);
-    }
+    float3 sampledNormalColor = g_NormalMap.Sample(g_TextureSampler, input.TextureUV).xyz;
+    float3x3 tbnMatrix = float3x3(input.Tangent, cross(input.Normal, input.Tangent), input.Normal);
+    float3 sampledNormal = mul(sampledNormalColor * 2.0f - 1.0f, tbnMatrix);
     
     // Get lambert diffuse
     float4 lambertDiffuse = sampleDiffuseColor * diffuseStrengthKd / 3.16f;
@@ -116,11 +93,7 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
     float specularIntensity = sampledSpecular * pow(cosAlpha, sampledPhongExponent);
     float4 specularColor = specularIntensity * float4(1, 1, 1, 1);
     
-    
     return saturate((specularColor + lambertDiffuse) * observedArea + ambientColor);
-    
-    // Show material index
-    //return float4(nrand(input.MaterialIndex), nrand(input.MaterialIndex + 1), nrand(input.MaterialIndex + 2), 1);
 }
 
 

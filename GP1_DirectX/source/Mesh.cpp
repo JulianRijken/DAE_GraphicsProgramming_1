@@ -3,14 +3,14 @@
 
 #include <cassert>
 
-#include "Effect.h"
+#include "EffectBase.h"
 #include "Utils.h"
 
 
 using namespace dae;
 
 // Direct load
-Mesh::Mesh(ID3D11Device* devicePtr, Effect* effect, const std::vector<VertexModel>& vertices, const std::vector<uint32_t>& indices, const std::vector<Material*>& materials) :
+Mesh::Mesh(ID3D11Device* devicePtr, EffectBase* effect, const std::vector<VertexModel>& vertices, const std::vector<uint32_t>& indices, const std::vector<Material*>& materials) :
 	m_MaterialPtrs(materials),
 	m_EffectPtr(effect),
 	m_ModelVertices(vertices),
@@ -24,7 +24,7 @@ Mesh::Mesh(ID3D11Device* devicePtr, Effect* effect, const std::vector<VertexMode
 }
 
 // Mesh parse
-Mesh::Mesh(ID3D11Device* devicePtr, Effect* effect, const std::string& objName, const std::vector<Material*>& materials) :
+Mesh::Mesh(ID3D11Device* devicePtr, EffectBase* effect, const std::string& objName, const std::vector<Material*>& materials) :
 	m_MaterialPtrs(materials),
 	m_EffectPtr(effect),
 	m_YawRotation(0.0f),
@@ -41,7 +41,7 @@ Mesh::Mesh(ID3D11Device* devicePtr, Effect* effect, const std::string& objName, 
 }
 
 // Mesh and materials parse
-Mesh::Mesh(ID3D11Device* devicePtr, Effect* effect, const std::string& objName, const std::string& mtlName,std::map<std::string, Material*>& materialMap) :
+Mesh::Mesh(ID3D11Device* devicePtr, EffectBase* effect, const std::string& objName, const std::string& mtlName,std::map<std::string, Material*>& materialMap) :
 m_EffectPtr(effect),
 m_YawRotation(0.0f),
 m_Scale(1.0f, 1.0f, 1.0f),
@@ -86,23 +86,22 @@ Mesh::~Mesh()
 
 	m_IndexBufferPtr->Release();
 	m_IndexBufferPtr = nullptr;
-
-	delete m_EffectPtr;
-	m_EffectPtr = nullptr;
 }
 
 void Mesh::Render(ID3D11DeviceContext* deviceContextPtr,const Matrix& viewProjectionMatrix) const
 {
-	m_EffectPtr->UpdateViewProjectionMatrix(viewProjectionMatrix);
-	m_EffectPtr->UpdateMeshWorldMatrix(m_WorldMatrix);
+	m_EffectPtr->SetViewProjectionMatrix(viewProjectionMatrix);
+	m_EffectPtr->SetMeshWorldMatrix(m_WorldMatrix);
 
-	m_EffectPtr->SetDiffuseMap(m_MaterialPtrs[0]->diffuse);
-	m_EffectPtr->SetNormalMap(m_MaterialPtrs[0]->normal);
-	m_EffectPtr->SetSpecularMap(m_MaterialPtrs[0]->specular);
-	m_EffectPtr->SetGlossMap(m_MaterialPtrs[0]->gloss);
-
-	// TODO: REMOVE THIS 
-	//m_EffectPtr->SetSampleState();
+	if(m_MaterialPtrs[0]->diffuse)
+		m_EffectPtr->SetDiffuseMap(m_MaterialPtrs[0]->diffuse);
+	if(m_MaterialPtrs[0]->normal)
+		m_EffectPtr->SetNormalMap(m_MaterialPtrs[0]->normal);
+	if(m_MaterialPtrs[0]->specular)
+		m_EffectPtr->SetSpecularMap(m_MaterialPtrs[0]->specular);
+	if(m_MaterialPtrs[0]->gloss)
+		m_EffectPtr->SetGlossMap(m_MaterialPtrs[0]->gloss);
+	
 
 	deviceContextPtr->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 

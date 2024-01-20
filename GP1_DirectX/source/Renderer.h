@@ -1,7 +1,9 @@
 #pragma once
 #include <map>
 
-class Effect;
+class EffectPartialCoverage;
+class EffectOpaque;
+class EffectBase;
 struct VertexModel;
 struct Material;
 class Mesh;
@@ -81,9 +83,9 @@ namespace dae
 		void InitializeSceneCar();
 		void InitializeSceneDiorama();
 
-		Mesh* AddMesh(const std::vector<VertexModel>& vertices, const std::vector<uint32_t>& indices, const std::vector<Material*>& materials);
-		Mesh* AddMesh(const std::string& objName, const std::vector<Material*>& materials);
-		Mesh* AddMesh(const std::string& objName, const std::string& mtlName);
+		Mesh* AddMesh(EffectBase* effect, const std::vector<VertexModel>& vertices, const std::vector<uint32_t>& indices, const std::vector<Material*>& materials);
+		Mesh* AddMesh(const std::string& objName, EffectBase* effect,const std::vector<Material*>& materials);
+		Mesh* AddMesh(const std::string& objName,EffectBase* effect, const std::string& mtlName);
 
 		inline static float ROTATIONS_PER_SECOND{0.125f /* (45 / 360) */};
 		
@@ -103,7 +105,8 @@ namespace dae
 		Camera* m_CameraPtr;
 		DebugRenderMode m_RenderMode;
 
-		Effect* m_DefaultEffectPtr;
+		EffectOpaque* m_OpaqueEffectPtr;
+		EffectPartialCoverage* m_PartialCoverageEffectPtr;
 
 		std::vector<Mesh*> m_WorldMeshes;
 		std::map <std::string, Material* > m_MaterialPtrMap;

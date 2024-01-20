@@ -6,7 +6,7 @@ namespace dae
 	class Texture;
 }
 
-class Effect;
+class EffectBase;
 
 struct VertexModel;
 struct TransformedVertex;
@@ -18,13 +18,13 @@ class Mesh
 public:
 
 	// Loads mesh from obj file
-	Mesh(ID3D11Device* devicePtr,Effect* effect, const std::string& objName,const std::vector<Material*>& materials);
+	Mesh(ID3D11Device* devicePtr, EffectBase* effect, const std::string& objName,const std::vector<Material*>& materials);
 
 	// Loads mesh from obj file and mtl file. Requires global material map to store material ptrs
-	Mesh(ID3D11Device* devicePtr, Effect* effect, const std::string& objName, const std::string& mtlName, std::map<std::string, Material*>& materialMap);
+	Mesh(ID3D11Device* devicePtr, EffectBase* effect, const std::string& objName, const std::string& mtlName, std::map<std::string, Material*>& materialMap);
 
 	// Used for basic hand made vertices and indices
-	Mesh(ID3D11Device* devicePtr, Effect* effect, const std::vector<VertexModel>& vertices, const std::vector<uint32_t>& indices, const std::vector<Material*>& materials);
+	Mesh(ID3D11Device* devicePtr, EffectBase* effect, const std::vector<VertexModel>& vertices, const std::vector<uint32_t>& indices, const std::vector<Material*>& materials);
 
 
     ~Mesh();
@@ -46,7 +46,8 @@ private:
 
 	std::vector<Material*> m_MaterialPtrs{};
 
-    Effect* m_EffectPtr{ nullptr };
+	// Mesh does not own effect!
+    EffectBase* m_EffectPtr{ nullptr };
 
     ID3D11Buffer* m_VertexBufferPtr{nullptr};
     ID3D11Buffer* m_IndexBufferPtr{ nullptr };
