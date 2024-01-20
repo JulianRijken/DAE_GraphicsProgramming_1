@@ -13,6 +13,7 @@ SamplerState g_TextureSampler : Sampler;
 
 
 float3 g_LightDirection : Light_Direction;
+bool g_UseNormalMap: UseNormalMap;
 
 
 RasterizerState g_RasterizerState
@@ -84,21 +85,24 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
 {
     
     float4 sampleDiffuseColor = float4(1, 1, 1, 1); // Optional add material color (Not the same as vertex color)
-    float4 ambientColor = float4(0.05f,0.05f,0.05f,1.0f);
-    float sampledSpecular = 0.5f;
-    float sampledPhongExponent = 20.0f;
-    float diffuseStrengthKd = 3.0f;
+    float4 ambientColor = float4(0.03f,0.03f,0.03f,1.0f);
+    float sampledSpecular = 1.0f;
+    float sampledPhongExponent = 25.0f;
+    float diffuseStrengthKd = 7.0f;
     
     // HINT: Does not check if texture is null
     sampledPhongExponent *= g_GlossMap.Sample(g_TextureSampler, input.TextureUV).r;
     sampledSpecular *= g_SpecularMap.Sample(g_TextureSampler, input.TextureUV).r;
     sampleDiffuseColor *= g_DiffuseMap.Sample(g_TextureSampler, input.TextureUV);
    
-    // Transforms normal based on normal map
-    float3 sampledNormalColor = g_NormalMap.Sample(g_TextureSampler, input.TextureUV).xyz;
-    float3x3 tbnMatrix = float3x3(input.Tangent, cross(input.Normal, input.Tangent), input.Normal);
-    float3 sampledNormal = mul(sampledNormalColor * 2.0f - 1.0f, tbnMatrix);
-   
+
+    float3 sampledNormal = input.Normal;
+    if (g_UseNormalMap)  // Transforms normal based on normal map
+    {
+        float3 sampledNormalColor = g_NormalMap.Sample(g_TextureSampler, input.TextureUV).xyz;
+        float3x3 tbnMatrix = float3x3(input.Tangent, cross(input.Normal, input.Tangent), input.Normal);
+        sampledNormal = mul(sampledNormalColor * 2.0f - 1.0f, tbnMatrix);
+    }
     
     // Get lambert diffuse
     float4 lambertDiffuse = sampleDiffuseColor * diffuseStrengthKd / 3.16f;

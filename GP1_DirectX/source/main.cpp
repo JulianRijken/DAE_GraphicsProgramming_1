@@ -79,8 +79,12 @@ int main(int argc, char* args[])
 				isLooping = false;
 				break;
 			case SDL_KEYDOWN:
-				if (e.key.keysym.scancode == SDL_SCANCODE_F2)
+				if (e.key.keysym.scancode == SDL_SCANCODE_F4)
 					renderer.CycleSampleState();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F5)
+					renderer.ToggleMeshRotation();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F6)
+					renderer.ToggleUseNormalMap();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F7)
 					renderer.CycleRenderMode();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F8)

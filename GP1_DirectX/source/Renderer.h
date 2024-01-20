@@ -65,8 +65,10 @@ namespace dae
 		void SetRenderMode(DebugRenderMode mode);
 		void CycleRenderMode();
 		void ToggleCameraOrbit();
+		void ToggleMeshRotation();
 		void CycleSampleState();
-
+		void ToggleUseNormalMap();
+		
 		bool SaveBufferToImage() const;
 
 
@@ -83,7 +85,8 @@ namespace dae
 		Mesh* AddMesh(const std::string& objName, const std::vector<Material*>& materials);
 		Mesh* AddMesh(const std::string& objName, const std::string& mtlName);
 
-
+		inline static float ROTATIONS_PER_SECOND{0.125f /* (45 / 360) */};
+		
 		SDL_Window* m_pWindow{};
 
 		int m_WindowWidth{};
@@ -94,7 +97,9 @@ namespace dae
 		bool m_IsInitialized{ false };
 		bool m_OrbitCamera{ false };
 		float m_OrbitCameraDistance{ 400.0f };
-
+	    bool m_RotateMesh{ false };
+		bool m_UseNormalMap{ true };
+		
 		Camera* m_CameraPtr;
 		DebugRenderMode m_RenderMode;
 

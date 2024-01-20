@@ -45,6 +45,9 @@ Effect::Effect(ID3D11Device* devicePtr, const std::wstring& effectFileName) :
 	m_CameraOrigin = m_EffectPtr->GetVariableByName("g_CameraOrigin")->AsVector();
 	ISVALID(m_CameraOrigin, "g_CameraOrigin")
 
+	m_UseNormalMap = m_EffectPtr->GetVariableByName("g_UseNormalMap");
+	ISVALID(m_UseNormalMap, "g_UseNormalMap")
+
 	//m_PiVariable = m_EffectPtr->GetVariableByName("g_PI");
 	//ISVALID(m_PiVariable, "g_PI")
 
@@ -103,7 +106,7 @@ void Effect::SetSpecularMap(const Texture* texturePtr) const
 void Effect::SetGlossMap(const Texture* texturePtr) const
 {
 	if (m_EffectPtr == nullptr || texturePtr == nullptr) return;
-	m_GlossMapVarPtr->SetResource(texturePtr->GetShaderResource());
+		m_GlossMapVarPtr->SetResource(texturePtr->GetShaderResource());
 }
 
 void Effect::SetLightDirection(const Vector3& lightDirection) const
@@ -114,6 +117,15 @@ void Effect::SetLightDirection(const Vector3& lightDirection) const
 void Effect::SetCameraOrigin(const dae::Vector3& origin) const
 {
 	m_CameraOrigin->SetFloatVector(reinterpret_cast<const float*>(&origin));
+}
+void Effect::SetUseNormalMap(bool useNormalMap) const
+{
+	if(useNormalMap)
+		std::cout << "Normal Map Enabled" << std::endl;
+	else
+		std::cout << "Normal Map Disabled" << std::endl;
+	
+	m_UseNormalMap->SetRawValue(&useNormalMap, 0, sizeof(bool));
 }
 
 void Effect::SetSampleState(int state) const

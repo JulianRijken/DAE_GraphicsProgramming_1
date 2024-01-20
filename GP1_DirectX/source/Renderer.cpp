@@ -34,7 +34,7 @@ namespace dae
 			std::cout << "DirectX initialization failed!\n";
 		}
 
-		m_DefaultEffectPtr = new Effect(m_DevicePtr, EFFECT_FILE_PATH);
+		m_DefaultEffectPtr = new Effect(m_DevicePtr, DEFAULT_EFFECT_FILE_PATH);
 
 
 		//InitializeSceneTriangle();
@@ -122,7 +122,7 @@ namespace dae
 			// Create DXGI Factory
 			IDXGIFactory1* dxgiFactoryPtr{ nullptr };
 		result = CreateDXGIFactory1(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(&dxgiFactoryPtr));
-		ISVALID(result)
+		ISVALID(result);
 
 
 
@@ -150,7 +150,7 @@ namespace dae
 		swapChainDesc.OutputWindow = sysWMInfo.info.win.window;
 
 		result = dxgiFactoryPtr->CreateSwapChain(m_DevicePtr, &swapChainDesc, &m_SwapChainPtr);
-		ISVALID(result)
+		ISVALID(result);
 
 
 		// RELEASE EARLY!
@@ -172,29 +172,29 @@ namespace dae
 		depthStencilDesc.MiscFlags = 0;
 
 		result = m_DevicePtr->CreateTexture2D(&depthStencilDesc, nullptr, &m_DepthStencilBufferPtr);
-		ISVALID(result)
+		ISVALID(result);
 
-			// Create Depth Stencil View
-			D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc{};
+		// Create Depth Stencil View
+		D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc{};
 		depthStencilViewDesc.Format = depthStencilDesc.Format;
 		depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 		depthStencilViewDesc.Texture2D.MipSlice = 0;
 
 		result = m_DevicePtr->CreateDepthStencilView(m_DepthStencilBufferPtr, &depthStencilViewDesc, &m_DepthStencilViewPtr);
-		ISVALID(result)
+		ISVALID(result);
 
 
-			// Create Render Target and 
-			result = m_SwapChainPtr->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&m_RenderTargetBufferPtr));
-		ISVALID(result)
+		// Create Render Target and 
+		result = m_SwapChainPtr->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&m_RenderTargetBufferPtr));
+		ISVALID(result);
 
 
-			// Create Render Target View
-			result = m_DevicePtr->CreateRenderTargetView(m_RenderTargetBufferPtr, nullptr, &m_RenderTargetViewPtr);
-		ISVALID(result)
+		// Create Render Target View
+		result = m_DevicePtr->CreateRenderTargetView(m_RenderTargetBufferPtr, nullptr, &m_RenderTargetViewPtr);
+		ISVALID(result);
 
-			// Bind RTV (Render Target View) and DSV (Depth Stencil View)
-			m_DeviceContextPtr->OMSetRenderTargets(1, &m_RenderTargetViewPtr, m_DepthStencilViewPtr);
+		// Bind RTV (Render Target View) and DSV (Depth Stencil View)
+		m_DeviceContextPtr->OMSetRenderTargets(1, &m_RenderTargetViewPtr, m_DepthStencilViewPtr);
 
 		// Setup viewport
 		D3D11_VIEWPORT viewport{};
@@ -232,12 +232,14 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 	void Renderer::InitializeSceneAssignment()
 	{
 		m_CameraPtr->SetFovAngle(45);
-		m_CameraPtr->SetPosition(Vector3{ 0,5.0f,-64.0f });
+		m_CameraPtr->SetPosition(Vector3{ 0,0.0f,-50.0f });
 		m_CameraPtr->SetNearClipping(0.1f);
-		m_CameraPtr->SetFarClipping(100.0f);
+		m_CameraPtr->SetFarClipping(1000.0f);
 
 		//m_AmbientColor = { 0.03f,0.03f,0.03f };
 		m_DefaultEffectPtr->SetLightDirection({ 0.577f, -0.577f, 0.577f });
+		m_DefaultEffectPtr->SetUseNormalMap(true);
+		m_DefaultEffectPtr->SetSampleState(0);
 
 		m_OrbitCameraDistance = 50.0f;
 
@@ -252,10 +254,18 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 			Texture::LoadFromFile(m_DevicePtr,"vehicle_specular.png"),
 			Texture::LoadFromFile(m_DevicePtr,"vehicle_gloss.png"),
 		} });
-
-
 		AddMesh("vehicle.obj", { m_MaterialPtrMap["bike"] });
 
+		
+		m_MaterialPtrMap.insert({ "fire",new Material {
+			Texture::LoadFromFile(m_DevicePtr,"fireFX_diffuse.png"),
+			nullptr,
+			nullptr,
+			nullptr,
+			nullptr,
+		} });
+		AddMesh("fireFX.obj", { m_MaterialPtrMap["fire"] });
+		
 	}
 
 	void Renderer::InitializeSceneCar()
@@ -362,7 +372,6 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 		Mesh* newMesh = new Mesh(m_DevicePtr, m_DefaultEffectPtr, objName, materials);
 		m_WorldMeshes.push_back(newMesh);
 		return newMesh;
-
 	}
 
 	Mesh* Renderer::AddMesh(const std::string& objName, const std::string& mtlName)
@@ -377,7 +386,7 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 	{
 		if (m_OrbitCamera)
 		{
-			const float angle = -timer.GetTotal() / PI + PI;
+			const float angle = -timer.GetTotal() * PI * 2 * ROTATIONS_PER_SECOND;
 			const Vector3 position = { std::cos(angle) * m_OrbitCameraDistance,m_OrbitCameraDistance / 5.0f,std::sin(angle) * m_OrbitCameraDistance };
 			m_CameraPtr->SetPosition(position);
 
@@ -385,13 +394,16 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 			m_CameraPtr->SetPitch(-0.23f);
 		}
 
-		m_WorldMeshes[0]->AddYawRotation(timer.GetElapsed() * 0.5f);
-
+		if(m_RotateMesh)
+		{
+			for(Mesh* mesh : m_WorldMeshes)
+				mesh->AddYawRotation(PI * 2 * timer.GetElapsed() * ROTATIONS_PER_SECOND);
+		}
 	}
 
 	void Renderer::Render() const
 	{
-		if (!m_IsInitialized)
+		if (not m_IsInitialized)
 			return;
 
 		// Clear RTV & DSV
@@ -434,10 +446,19 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 	{
 		m_OrbitCamera = !m_OrbitCamera;
 	}
+	void Renderer::ToggleMeshRotation()
+	{
+		m_RotateMesh = !m_RotateMesh;
+	}
 
 	void Renderer::CycleSampleState()
 	{
 		m_DefaultEffectPtr->SetSampleState(++m_SampleState % 3);
+	}
+	void Renderer::ToggleUseNormalMap()
+	{
+		m_UseNormalMap = !m_UseNormalMap;
+		m_DefaultEffectPtr->SetUseNormalMap(m_UseNormalMap);
 	}
 
 

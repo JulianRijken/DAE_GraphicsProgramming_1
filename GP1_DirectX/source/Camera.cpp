@@ -52,6 +52,7 @@ void dae::Camera::Update(const Timer& timer)
 		SDL_SetRelativeMouseMode(SDL_FALSE);
 	}
 
+	m_BoostingSpeed = pKeyboardState[SDL_SCANCODE_LSHIFT];
 
 	if (pKeyboardState[SDL_SCANCODE_A] || pKeyboardState[SDL_SCANCODE_LEFT])
 		inputVector.x -= 1;
@@ -65,10 +66,10 @@ void dae::Camera::Update(const Timer& timer)
 	if (pKeyboardState[SDL_SCANCODE_S] || pKeyboardState[SDL_SCANCODE_DOWN])
 		inputVector.z -= 1;
 
-	if (pKeyboardState[SDL_SCANCODE_Q] || pKeyboardState[SDL_SCANCODE_LSHIFT])
+	if (pKeyboardState[SDL_SCANCODE_Q])
 		inputVector.y -= 1;
 
-	if (pKeyboardState[SDL_SCANCODE_E] || pKeyboardState[SDL_SCANCODE_LCTRL])
+	if (pKeyboardState[SDL_SCANCODE_E])
 		inputVector.y += 1;
 
 
@@ -93,7 +94,7 @@ void dae::Camera::Update(const Timer& timer)
 
 
 	inputVector = pitchYawRotation.TransformVector(inputVector);
-	m_TargetOrigin += (inputVector * deltaTime * KEY_MOVE_SPEED) + inputVectorMouse;
+	m_TargetOrigin += (inputVector * deltaTime * KEY_MOVE_SPEED * (m_BoostingSpeed ? BOOST_SPEED_MULTIPLIER : 1.0f)) + inputVectorMouse;
 	m_Origin = Lerp(m_Origin, m_TargetOrigin, deltaTime * MOVE_LERP_SPEED);
 
 	//Update Matrices
@@ -145,6 +146,7 @@ void dae::Camera::SetYaw(float yaw)
 	m_Yaw = yaw;
 	m_TargetYaw = yaw;
 }
+
 
 void dae::Camera::ChangeFovAngle(float fovAngleChange)
 {

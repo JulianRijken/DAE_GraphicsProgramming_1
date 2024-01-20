@@ -34,7 +34,6 @@ namespace dae
 
 		void SetYaw(float yaw);
 
-
 		void ChangeFovAngle(float fovAngleChange);
 
 		void UpdateViewMatrix();
@@ -60,6 +59,8 @@ namespace dae
 		float m_TargetPitch{};
 		float m_Yaw{};
 		float m_TargetYaw{};
+		
+		bool m_BoostingSpeed{};
 
 		float m_AspectRatio{};
 
@@ -75,6 +76,8 @@ namespace dae
 
 		inline static constexpr float ROTATE_LERP_SPEED{ 20.0f };
 		inline static constexpr float MOVE_LERP_SPEED{ 10.0f };
+		
+		inline static constexpr float BOOST_SPEED_MULTIPLIER{ 3.0f };
 
 	};
 }

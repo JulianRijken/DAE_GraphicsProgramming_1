@@ -10,7 +10,7 @@ class Effect final
 	static inline constexpr char TECHNIQUE_NAME[] = "DefaultTechnique";
 
 public:
-
+	
 	Effect(ID3D11Device* devicePtr, const std::wstring& effectFileName);
 	~Effect();
 
@@ -27,7 +27,8 @@ public:
 
 	void SetLightDirection(const dae::Vector3& lightDirection) const;
 	void SetCameraOrigin(const dae::Vector3& origin) const;
-
+	void SetUseNormalMap(bool useNormalMap) const;
+	
 	void SetSampleState(int state) const;
 
 
@@ -54,6 +55,8 @@ private:
 
 	ID3DX11EffectVectorVariable* m_LightDirection{};
 	ID3DX11EffectVectorVariable* m_CameraOrigin{};
+
+	ID3DX11EffectVariable* m_UseNormalMap{};
 	//ID3DX11EffectVariable* m_PiVariable{};
 
 
