@@ -49,7 +49,7 @@ m_Position(0.0f, 0.0f, 0.0f)
 {
 	// Parse MTL
 	std::map<std::string, Material*> parsedMaterials{};
-	Utils::ParseMTL(devicePtr,mtlName, parsedMaterials);
+	Utils::ParseMTL(devicePtr,mtlName, parsedMaterials, "Hallway88/");
 
 	// Inset parsedMaterials
 	materialMap.insert(parsedMaterials.begin(), parsedMaterials.end());
@@ -93,14 +93,10 @@ void Mesh::Render(ID3D11DeviceContext* deviceContextPtr,const Matrix& viewProjec
 	m_EffectPtr->SetViewProjectionMatrix(viewProjectionMatrix);
 	m_EffectPtr->SetMeshWorldMatrix(m_WorldMatrix);
 
-	if(m_MaterialPtrs[0]->diffuse)
-		m_EffectPtr->SetDiffuseMap(m_MaterialPtrs[0]->diffuse);
-	if(m_MaterialPtrs[0]->normal)
-		m_EffectPtr->SetNormalMap(m_MaterialPtrs[0]->normal);
-	if(m_MaterialPtrs[0]->specular)
-		m_EffectPtr->SetSpecularMap(m_MaterialPtrs[0]->specular);
-	if(m_MaterialPtrs[0]->gloss)
-		m_EffectPtr->SetGlossMap(m_MaterialPtrs[0]->gloss);
+	m_EffectPtr->SetDiffuseMap(m_MaterialPtrs[0]->diffuse ? m_MaterialPtrs[0]->diffuse : Texture::Black());
+	m_EffectPtr->SetNormalMap(m_MaterialPtrs[0]->normal ? m_MaterialPtrs[0]->normal : Texture::Normal());
+	m_EffectPtr->SetSpecularMap(m_MaterialPtrs[0]->specular ? m_MaterialPtrs[0]->specular : Texture::White());
+	m_EffectPtr->SetGlossMap(m_MaterialPtrs[0]->gloss ? m_MaterialPtrs[0]->gloss : Texture::White());
 	
 
 	deviceContextPtr->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

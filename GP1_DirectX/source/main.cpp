@@ -29,14 +29,14 @@ int main(int argc, char* args[])
 	//constexpr uint32_t width = 640;
 	//constexpr uint32_t height = 480;
 
-	constexpr uint32_t width = 1280;
-	constexpr uint32_t height = 720;
+	 constexpr uint32_t width = 1280;
+	 constexpr uint32_t height = 720;
 
-	//constexpr uint32_t width = 1920;
-	//constexpr uint32_t height = 1080;
+	// constexpr uint32_t width = 1920;
+	// constexpr uint32_t height = 1080;
 
-	//constexpr uint32_t width = 7680;
-	//constexpr uint32_t height = 4320;
+	// constexpr uint32_t width = 7680;
+	// constexpr uint32_t height = 4320;
 
 	constexpr float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 
@@ -86,7 +86,7 @@ int main(int argc, char* args[])
 				if (e.key.keysym.scancode == SDL_SCANCODE_F6)
 					renderer.ToggleUseNormalMap();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F7)
-					renderer.CycleRenderMode();
+					renderer.ToggleShowFire();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F8)
 					renderer.ToggleCameraOrbit();
 				if (e.key.keysym.scancode == SDL_SCANCODE_X)

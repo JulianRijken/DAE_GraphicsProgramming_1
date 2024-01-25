@@ -1,0 +1,155 @@
+newmtl M_PanelPillar
+	map_Kd M_PanelPillar_D.png
+	map_Ks M_PanelPillar_S.png
+	bump M_PanelPillar_N.png
+
+newmtl mi_BaseWhite
+	map_Kd mi_BaseWhite_D.png
+	map_Ks mi_BaseWhite_S.png
+	bump mi_BaseWhite_N.png
+
+newmtl m_MetalBase
+	map_Kd m_MetalBase_D.png
+	map_Ks m_MetalBase_S.png
+	bump m_MetalBase_N.png
+
+newmtl M_PillarTrim_Flat
+	map_Kd M_PillarTrim_Flat_D.png
+	map_Ks M_PillarTrim_Flat_S.png
+	bump M_PillarTrim_Flat_N.png
+
+newmtl M_PillarTrim
+	map_Kd M_PillarTrim_D.png
+	map_Ks M_PillarTrim_S.png
+	bump M_PillarTrim_N.png
+
+newmtl TestTrimPillar
+	map_Kd TestTrimPillar_D.png
+	map_Ks TestTrimPillar_S.png
+	bump TestTrimPillar_N.png
+
+newmtl M_EmissiveLamp
+	map_Kd M_EmissiveLamp_D.png
+	map_Ks M_EmissiveLamp_S.png
+	bump M_EmissiveLamp_N.png
+
+newmtl M_Hatch
+	map_Kd M_Hatch_D.png
+	map_Ks M_Hatch_S.png
+	bump M_Hatch_N.png
+
+newmtl Glass_Inst
+	map_Kd Glass_Inst_D.png
+	map_Ks Glass_Inst_S.png
+	bump Glass_Inst_N.png
+
+newmtl Metal
+	map_Kd Metal_D.png
+	map_Ks Metal_S.png
+	bump Metal_N.png
+
+newmtl M_GeneralMetal1
+	map_Kd M_GeneralMetal1_D.png
+	map_Ks M_GeneralMetal1_S.png
+	bump M_GeneralMetal1_N.png
+
+newmtl M_Hatch_Detail
+	map_Kd M_Hatch_Detail_D.png
+	map_Ks M_Hatch_Detail_S.png
+	bump M_Hatch_Detail_N.png
+
+newmtl m_Base
+	map_Kd m_Base_D.png
+	map_Ks m_Base_S.png
+	bump m_Base_N.png
+
+newmtl M_TrimBelt
+	map_Kd M_TrimBelt_D.png
+	map_Ks M_TrimBelt_S.png
+	bump M_TrimBelt_N.png
+
+newmtl m_BeltRoll_Inst
+	map_Kd m_BeltRoll_Inst_D.png
+	map_Ks m_BeltRoll_Inst_S.png
+	bump m_BeltRoll_Inst_N.png
+
+newmtl m_BeltRoll_Inst_OtherWay
+	map_Kd m_BeltRoll_Inst_OtherWay_D.png
+	map_Ks m_BeltRoll_Inst_OtherWay_S.png
+	bump m_BeltRoll_Inst_OtherWay_N.png
+
+newmtl Glass_Inst2
+	map_Kd Glass_Inst2_D.png
+	map_Ks Glass_Inst2_S.png
+	bump Glass_Inst2_N.png
+
+newmtl m_Base_Inst_Black
+	map_Kd m_Base_Inst_Black_D.png
+	map_Ks m_Base_Inst_Black_S.png
+	bump m_Base_Inst_Black_N.png
+
+newmtl m_MetalBaseDark
+	map_Kd m_MetalBaseDark_D.png
+	map_Ks m_MetalBaseDark_S.png
+	bump m_MetalBaseDark_N.png
+
+newmtl M_PanelFanEdge
+	map_Kd M_PanelFanEdge_D.png
+	map_Ks M_PanelFanEdge_S.png
+	bump M_PanelFanEdge_N.png
+
+newmtl M_FanPanels
+	map_Kd M_FanPanels_D.png
+	map_Ks M_FanPanels_S.png
+	bump M_FanPanels_N.png
+
+newmtl m_Hole_Inst
+	map_Kd m_Hole_Inst_D.png
+	map_Ks m_Hole_Inst_S.png
+	bump m_Hole_Inst_N.png
+
+newmtl M_WallPlateMetalDetail
+	map_Kd M_WallPlateMetalDetail_D.png
+	map_Ks M_WallPlateMetalDetail_S.png
+	bump M_WallPlateMetalDetail_N.png
+
+newmtl M_PanelTrim
+	map_Kd M_PanelTrim_D.png
+	map_Ks M_PanelTrim_S.png
+	bump M_PanelTrim_N.png
+
+newmtl M_GeneralMetalFan
+	map_Kd M_GeneralMetalFan_D.png
+	map_Ks M_GeneralMetalFan_S.png
+	bump M_GeneralMetalFan_N.png
+
+newmtl M_GeneralMetalFanPanels
+	map_Kd M_GeneralMetalFanPanels_D.png
+	map_Ks M_GeneralMetalFanPanels_S.png
+	bump M_GeneralMetalFanPanels_N.png
+
+newmtl M_MetalBars
+	map_Kd M_MetalBars_D.png
+	map_Ks M_MetalBars_S.png
+	bump M_MetalBars_N.png
+
+newmtl M_TrimDoorFrame
+	map_Kd M_TrimDoorFrame_D.png
+	map_Ks M_TrimDoorFrame_S.png
+	bump M_TrimDoorFrame_N.png
+
+newmtl M_PanelYellow
+	map_Kd M_PanelYellow_D.png
+	map_Ks M_PanelYellow_S.png
+	bump M_PanelYellow_N.png
+
+newmtl M_WallPlateMetal
+	map_Kd M_WallPlateMetal_D.png
+	map_Ks M_WallPlateMetal_S.png
+	bump M_WallPlateMetal_N.png
+
+newmtl BasicShapeMaterial
+	map_Kd BasicShapeMaterial_D.png
+	map_Ks BasicShapeMaterial_S.png
+	bump BasicShapeMaterial_N.png
+

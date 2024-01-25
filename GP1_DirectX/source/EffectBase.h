@@ -6,7 +6,7 @@ namespace dae
 	class Texture;
 }
 
-#define IS_VALID_EFFECT(var) if (!var->IsValid()) std::cout << #var << " is not a valid bind (not used in shader)" << std::endl;
+#define IS_VALID_EFFECT(var) if (!var->IsValid()) std::cout << #var << " is not a valid bind (not used in shader just a warning :) )" << std::endl;
 #define BIND(var,fxName, type) var = m_EffectPtr->GetVariableByName(fxName)->type(); IS_VALID_EFFECT(var)
 
 class EffectBase

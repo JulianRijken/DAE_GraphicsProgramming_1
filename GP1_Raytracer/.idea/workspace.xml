@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CMakeSettings">
+    <configurations>
+      <configuration PROFILE_NAME="Debug" ENABLED="true" CONFIG_NAME="Debug" />
+    </configurations>
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="f301328e-360a-4649-81a9-f9edbf2f62f7" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Jul.h" beforeDir="false" afterPath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Jul.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Math/MathHelpers.h" beforeDir="false" afterPath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Math/MathHelpers.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Math/Vector3.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Math/Vector3.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Math/Vector4.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Math/Vector4.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Misc/BRDFs.h" beforeDir="false" afterPath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Misc/BRDFs.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Misc/Camera.h" beforeDir="false" afterPath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Misc/Camera.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Misc/DataTypes.h" beforeDir="false" afterPath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Misc/DataTypes.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Misc/Material.h" beforeDir="false" afterPath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Misc/Material.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Misc/Scene.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Misc/Scene.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Misc/Scene.h" beforeDir="false" afterPath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Misc/Scene.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Misc/Utils.h" beforeDir="false" afterPath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Misc/Utils.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Renderer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Renderer.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Renderer.h" beforeDir="false" afterPath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/Renderer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../GP1_Raytracer-main-CMake/source/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/BRDFs.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/Camera.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/ColorRGB.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/DataTypes.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/Jul.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/Jul.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/Material.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/Math.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/MathHelpers.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/Matrix.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/Matrix.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/RayTracer.vcxproj.user" beforeDir="false" afterPath="$PROJECT_DIR$/source/RayTracer.vcxproj.user" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/Renderer.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/Renderer.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/Scene.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/Scene.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/Timer.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/Timer.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/Utils.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/Vector3.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/Vector3.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/Vector4.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/Vector4.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/main.cpp" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 1
+}</component>
+  <component name="ProjectId" id="2X2DN4uAf9LqElPEBwcIGBgEsUM" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "C:/Git/DAE/DAE_GraphicsProgramming_1/GP1_Raytracer-main-CMake",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="f301328e-360a-4649-81a9-f9edbf2f62f7" name="Changes" comment="" />
+      <created>1697818238059</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1697818238059</updated>
+      <workItem from="1697818239088" duration="145000" />
+      <workItem from="1697818668894" duration="51000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

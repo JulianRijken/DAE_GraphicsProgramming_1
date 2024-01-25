@@ -10,6 +10,27 @@ Texture2D g_NormalMap : NormalMap;
 Texture2D g_SpecularMap : SpecularMap;
 Texture2D g_GlossMap : GlossMap;
 
+float g_DiffuseStrengthKd;
+float g_SampledPhongExponent;
+float g_SpecularKs;
+
+float3 g_AmbientColor;
+
+struct Light
+{
+    float Intensity;
+    float3 Origin;
+    float3 Direction;
+    float4 Color;
+    //uint Type;
+};
+
+cbuffer LightBuffer : register(b1)
+{
+    Light lights[4]; // Limit to max 10 lights
+};
+
+
 SamplerState g_TextureSampler : Sampler;
 
 RasterizerState g_RasterizerState
@@ -47,6 +68,7 @@ struct VS_OUTPUT
     float3 Tangent : TANGENT;
     uint MaterialIndex : MATERIAL_INDEX;
     float3 VertexToCamera : VERTEX_TO_CAMERA;
+    float3 PositionWorld : POSITION_WORLD;
 };
 
 // VERTEX SHADER (VS)
@@ -57,8 +79,11 @@ VS_OUTPUT VS(VS_INPUT input)
     
     // Transform output to world space (Using mesh matrix)
     output.Position = mul(float4(input.Position, 1.f), g_MeshWorldMatrix);
-    output.Normal = mul(input.Normal, (float3x3) g_MeshWorldMatrix);
-    output.Tangent = mul(input.Tangent, (float3x3) g_MeshWorldMatrix);
+    output.PositionWorld = output.Position.rgb;
+
+    // We still normalize here to avoid errors in the input
+    output.Normal = normalize(mul(input.Normal, (float3x3) g_MeshWorldMatrix));
+    output.Tangent = normalize(mul(input.Tangent, (float3x3) g_MeshWorldMatrix));
     
     // Get view direction based on world postion
     output.VertexToCamera = normalize(g_CameraOrigin - output.Position.xyz);
@@ -75,52 +100,83 @@ VS_OUTPUT VS(VS_INPUT input)
     return output;
 }
 
-float nrand(int random)
-{
-    return frac(sin(dot(random, float2(12.9898f, 78.233f))) * 43758.5453f);
-}
 
 // PIXEL SHADER (PX)
 float4 PS(VS_OUTPUT input) : SV_TARGET
 {
-    
-    float4 sampleDiffuseColor = float4(1, 1, 1, 1); // Optional add material color (Not the same as vertex color)
-    float4 ambientColor = float4(0.03f,0.03f,0.03f,1.0f);
-    float sampledSpecular = 1.0f;
-    float sampledPhongExponent = 25.0f;
-    float diffuseStrengthKd = 7.0f;
-    
-    // HINT: Does not check if texture is null
-    sampledPhongExponent *= g_GlossMap.Sample(g_TextureSampler, input.TextureUV).r;
-    sampledSpecular *= g_SpecularMap.Sample(g_TextureSampler, input.TextureUV).r;
-    sampleDiffuseColor *= g_DiffuseMap.Sample(g_TextureSampler, input.TextureUV);
-   
 
-    float3 sampledNormal = input.Normal;
-    if (g_UseNormalMap)  // Transforms normal based on normal map
+    float4 ambientColor = float4(g_AmbientColor, 1.0f);    
+    float4 finalColor = ambientColor;
+
+
+    for (int i = 0; i < 4; ++i) // Use the same array size as in the LightBuffer
     {
-        float3 sampledNormalColor = g_NormalMap.Sample(g_TextureSampler, input.TextureUV).xyz;
-        float3x3 tbnMatrix = float3x3(input.Tangent, cross(input.Normal, input.Tangent), input.Normal);
-        sampledNormal = mul(sampledNormalColor * 2.0f - 1.0f, tbnMatrix);
+
+        //!!! TODO: lightDirection and lightRadiance only work for directional!!! this is not finished!!!
+
+        float3 lightDirection = float3(0,0,0);
+        //if (i == 0)
+        //{
+			lightDirection = lights[i].Direction; // Directional
+        //}
+		//else
+        //{
+			//lightDirection = normalize(input.PositionWorld - lights[i].Origin); // Point
+        //}
+
+
+
+        float4 lightRadiance = float4(0,0,0,1);
+       // if (i == 0)
+        //{
+			lightRadiance = lights[i].Color * lights[i].Intensity; // Directional
+        //}
+		//else
+        //{
+           // float distance = length(lights[i].Origin - input.PositionWorld);
+		    //lightRadiance = lights[i].Color * (lights[i].Intensity * distance * distance); // Point
+        //}
+
+
+
+        float4 sampleDiffuseColor = float4(1, 1, 1, 1); // Optional add material color (Not the same as vertex color)
+        float sampledSpecular = g_SpecularKs;
+        float sampledPhongExponent = g_SampledPhongExponent;
+        float diffuseStrengthKd = g_DiffuseStrengthKd;
+        
+        // HINT: Does not check if texture is null
+        sampledPhongExponent *= g_GlossMap.Sample(g_TextureSampler, input.TextureUV).r;
+        sampledSpecular *= g_SpecularMap.Sample(g_TextureSampler, input.TextureUV).r;
+        sampleDiffuseColor *= g_DiffuseMap.Sample(g_TextureSampler, input.TextureUV);
+    
+
+        float3 sampledNormal = input.Normal;
+        if (g_UseNormalMap)  // Transforms normal based on normal map
+        {
+            float3 sampledNormalColor = g_NormalMap.Sample(g_TextureSampler, input.TextureUV).xyz;
+            float3x3 tbnMatrix = float3x3(input.Tangent, cross(input.Normal, input.Tangent), input.Normal);
+            sampledNormal = mul(sampledNormalColor * 2.0f - 1.0f, tbnMatrix);
+        }
+        
+        sampledNormal = normalize(sampledNormal);
+        
+        // Get lambert diffuse
+        float4 lambertDiffuse = sampleDiffuseColor * diffuseStrengthKd / 3.16f;
+        
+        // Get Cosine Law
+        float observedArea = max(0.0f, dot(sampledNormal, -lightDirection));
+        
+        // Get Specular Intensity
+        float3 reflectedRay = reflect(lightDirection, sampledNormal);
+        float cosAlpha = max(0.0f, dot(reflectedRay, input.VertexToCamera));
+        float specularIntensity = sampledSpecular * pow(cosAlpha, sampledPhongExponent);
+        float4 specularColor = specularIntensity * float4(1, 1, 1, 1);
+        
+
+        finalColor += saturate(lightRadiance * (specularColor + lambertDiffuse) * observedArea);
     }
     
-    // Get lambert diffuse
-    float4 lambertDiffuse = sampleDiffuseColor * diffuseStrengthKd / 3.16f;
-    
-    // Get Cosine Law
-    float observedArea = max(0.0f, dot(sampledNormal, -g_LightDirection));
-    
-    // Get Specular Intensity
-    float3 reflectedRay = reflect(g_LightDirection, sampledNormal);
-    float cosAlpha = max(0.0f, dot(reflectedRay, input.VertexToCamera));
-    float specularIntensity = sampledSpecular * pow(cosAlpha, sampledPhongExponent);
-    float4 specularColor = specularIntensity * float4(1, 1, 1, 1);
-    
-    
-    return saturate((specularColor + lambertDiffuse) * observedArea + ambientColor);
-    
-    // Show material index
-    //return float4(nrand(input.MaterialIndex), nrand(input.MaterialIndex + 1), nrand(input.MaterialIndex + 2), 1);
+    return saturate(finalColor);
 }
 
 

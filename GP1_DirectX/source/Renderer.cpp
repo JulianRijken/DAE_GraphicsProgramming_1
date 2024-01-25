@@ -9,8 +9,10 @@
 #include "EffectOpaque.h"
 #include "EffectPartialCoverage.h"
 #include "GlobalSettings.h"
+#include "Light.h"
 #include "Mesh.h"
 #include "Texture.h"
+#include "Utils.h"
 
 
 namespace dae
@@ -35,18 +37,23 @@ namespace dae
 			std::cout << "DirectX initialization failed!\n";
 		}
 
+		Texture::LoadDefaultTextures(m_DevicePtr);
+
 		m_OpaqueEffectPtr = new EffectOpaque(m_DevicePtr, OPAQUE_SHADER_EFFECT_FILE_PATH);
 		m_PartialCoverageEffectPtr = new EffectPartialCoverage(m_DevicePtr, PARTIAL_COVERAGE_EFFECT_FILE_PATH);
+		m_TestingEffectPtr = new EffectPartialCoverage(m_DevicePtr, TESTING_EFFECT_FILE_PATH);
 
-
-		//InitializeSceneTriangle();
 		InitializeSceneAssignment();
+		//InitializeSceneEnv();
 		//InitializeSceneDiorama();
 		//InitializeSceneCar();
+		//InitializeSceneHallway88();
 	}
 
 	Renderer::~Renderer()
 	{
+
+		Texture::UnloadDefaultTextures();
 
 		// Delete materials
 		for (const std::pair<const std::string, Material*>& pair : m_MaterialPtrMap)
@@ -69,6 +76,7 @@ namespace dae
 
 		delete m_PartialCoverageEffectPtr;
 		delete m_OpaqueEffectPtr;
+		delete m_TestingEffectPtr;
 
 		m_RenderTargetViewPtr->Release();
 		m_RenderTargetBufferPtr->Release();
@@ -215,24 +223,6 @@ namespace dae
 	}
 
 
-	void Renderer::InitializeSceneTriangle()
-	{
-		m_MaterialPtrMap.insert({ "uvGrid",new Material {
-Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
-} });
-
-
-		const std::vector<VertexModel> vertices
-		{
-			{{ 0.0f, 0.5f, 0.5f},{1,0,0}, {0,0}},
-			{{ 0.5f,-0.5f, 0.5f},{0,1,0}, {1,0}},
-			{{-0.5f,-0.5f, 0.5f},{0,0,1}, {1,1}},
-		};
-		const std::vector<uint32_t> indices{ 0,1,2 };
-
-		AddMesh(m_OpaqueEffectPtr, vertices, indices, { m_MaterialPtrMap["uvGrid"] });
-
-	}
 
 	void Renderer::InitializeSceneAssignment()
 	{
@@ -243,10 +233,18 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 		m_OrbitCameraDistance = 50.0f;
 
 		//m_AmbientColor = { 0.03f,0.03f,0.03f };
-		m_OpaqueEffectPtr->SetLightDirection({ 0.577f, -0.577f, 0.577f });
+		//m_OpaqueEffectPtr->SetLightDirection({ 0.577f, -0.577f, 0.577f });
+
+		// Lights
+		AddDirectionalLight({ 0.577f, -0.577f, 0.577f }, { 1,1,1 }, 1.0f);
+		m_OpaqueEffectPtr->SetLights(m_WorldLights);
+
 		m_OpaqueEffectPtr->SetUseNormalMap(true);
 		m_OpaqueEffectPtr->SetSampleState(0);
 
+		m_OpaqueEffectPtr->SetSpecularKs(1.0f);
+		m_OpaqueEffectPtr->SetSampledPhongExponent(25.0f);
+		m_OpaqueEffectPtr->SetDiffuseStrengthKd(7.0f);
 
 
 		m_MaterialPtrMap.insert({ "bike",new Material {
@@ -261,92 +259,138 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 
 		m_MaterialPtrMap.insert({ "fire",new Material {
 		   Texture::LoadFromFile(m_DevicePtr,"fireFX_diffuse.png"),
-		   nullptr,
-		   nullptr,
-		   nullptr,
-		   nullptr,
 		} });
 
 		AddMesh("fireFX.obj", m_PartialCoverageEffectPtr, { m_MaterialPtrMap["fire"] });
 	}
 
+	void Renderer::InitializeSceneEnv()
+	{
+
+		m_CameraPtr->SetFovAngle(45);
+		m_CameraPtr->SetPosition(Vector3{ 0,0.0f,-50.0f });
+		m_CameraPtr->SetNearClipping(0.1f);
+		m_CameraPtr->SetFarClipping(1000.0f);
+		m_OrbitCameraDistance = 50.0f;
+
+		m_OpaqueEffectPtr->SetAmbientColor({ 0.2f,0.2f,0.2f });
+		m_OpaqueEffectPtr->SetLightDirection({ 0.577f, -0.577f, 0.577f });
+		m_OpaqueEffectPtr->SetSampleState(0);
+		m_OpaqueEffectPtr->SetUseNormalMap(true);
+		m_OpaqueEffectPtr->SetDiffuseStrengthKd(1.5f);
+		m_OpaqueEffectPtr->SetSampledPhongExponent(10.0f);
+		m_OpaqueEffectPtr->SetSpecularKs(0.5f);
+
+		// m_MaterialPtrMap.insert({ "uvGrid",new Material {
+		// 	Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
+		// } });
+
+		m_MaterialPtrMap.insert({ "env",new Material {
+			Texture::LoadFromFile(m_DevicePtr, "Env/PanelTrim_AO.png"),
+			nullptr,
+			Texture::LoadFromFile(m_DevicePtr, "Env/PanelTrim_Normal.png"),
+		} });
+
+		m_MaterialPtrMap.insert({ "envPanel",new Material {
+			Texture::LoadFromFile(m_DevicePtr, "Env/M_PanelPillar_D.png"),
+			nullptr,
+			Texture::LoadFromFile(m_DevicePtr, "Env/M_PanelPillar_N.png"),
+		} });
+
+		Mesh* mesh = AddMesh("Env/MainPersistent_SM.obj", m_OpaqueEffectPtr, { m_MaterialPtrMap["envPanel"] });
+		mesh->SetScale(Vector3{ 1,1,1 } *0.1f);
+
+	}
+
+	void Renderer::InitializeSceneHallway88()
+	{
+		m_CameraPtr->SetFovAngle(45);
+		m_CameraPtr->SetPosition(Vector3{ 0,0.0f,-50.0f });
+		m_CameraPtr->SetNearClipping(0.1f);
+		m_CameraPtr->SetFarClipping(1000.0f);
+		m_OrbitCameraDistance = 50.0f;
+
+		m_OpaqueEffectPtr->SetAmbientColor({ 0.2f,0.2f,0.2f });
+		m_OpaqueEffectPtr->SetSampleState(0);
+		m_OpaqueEffectPtr->SetUseNormalMap(true);
+
+		m_OpaqueEffectPtr->SetDiffuseStrengthKd(2.0f);
+		m_OpaqueEffectPtr->SetSampledPhongExponent(2.0f);
+		m_OpaqueEffectPtr->SetSpecularKs(0.1f);
+
+		const std::vector<Mesh*> meshes = AddMeshParse("Hallway88.obj", "Hallway88.mtl", m_OpaqueEffectPtr, "Hallway88/");
+
+		for (Mesh* mesh : meshes)
+			mesh->SetScale(Vector3{ 1,1,1 } *0.1f);
+
+		//AddDirectionalLight({ 0.577f, -0.577f, 0.577f }, { 1,1,1 }, 0.9f);
+		AddDirectionalLight({ -0.577f, -0.577f, -0.577f }, { 1,1,1 }, 0.7f);
+		m_OpaqueEffectPtr->SetLights(m_WorldLights);
+	}
+
 	void Renderer::InitializeSceneCar()
 	{
-		m_MaterialPtrMap.insert({ "uvGrid",new Material {
-Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
-} });
-
 		m_CameraPtr->SetFovAngle(15);
 
 		m_CameraPtr->SetPosition(Vector3{ -53.4506f, 22.7297f, -118.892f });
 		m_CameraPtr->SetPitch(-0.104893f);
 		m_CameraPtr->SetYaw(-0.415f);
-
-
 		m_CameraPtr->SetNearClipping(1);
 		m_CameraPtr->SetFarClipping(500);
 
-		//m_AmbientColor = { 0,0,0 };
+		m_OpaqueEffectPtr->SetLightDirection({ 0.577f, -0.577f, 0.577f });
+		m_OpaqueEffectPtr->SetUseNormalMap(true);
+		m_OpaqueEffectPtr->SetSampleState(0);
 
-		//m_DiffuseStrengthKd = 1.8f;
-		//m_PhongExponentExp = 10.0f;
-		//m_SpecularKs = 0.5f;
-
-
-		//Mesh* carMesh = AddMesh("Car/Car.obj", "Car/Car.mtl", m_MaterialPtrMap);
-		Mesh* carMesh = AddMesh("Car/Car.obj", m_OpaqueEffectPtr, { m_MaterialPtrMap["uvGrid"] });
-		carMesh->SetScale(Vector3{ 1,1,1 } *15);
-		carMesh->SetYawRotation(60.0f * TO_RADIANS);
+		m_OpaqueEffectPtr->SetDiffuseStrengthKd(1.8f);
+		m_OpaqueEffectPtr->SetSampledPhongExponent(10.0f);
+		m_OpaqueEffectPtr->SetSpecularKs(0.5f);
 
 
+		const std::vector<Mesh*> carMesh = AddMeshParse("Car/Car.obj", "Car/Car.mtl", m_OpaqueEffectPtr);
+		for (Mesh* mesh : carMesh)
+		{
+			mesh->SetScale(Vector3{ 1,1,1 } *15);
+			mesh->SetYawRotation(60.0f * TO_RADIANS);
+		}
 
-
-
+		m_MaterialPtrMap.insert({ "uvGrid",new Material {
+			Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
+		} });
 		Mesh* backdrop = AddMesh("Backdrop.obj", m_OpaqueEffectPtr, { m_MaterialPtrMap["uvGrid"] });
 		backdrop->SetScale(Vector3{ 2,1,1 } *11);
 
 
-		//// Lights
-		//AddDirectionalLight({ 0.577f, -0.577f, 0.577f }, { 1,1,1 }, 0.3f);
-		//AddPointLight({ -30.0f, 60, -40.0f }, colors::White, 3000.0f); // Front left light
-		//AddPointLight({ 40.0f, -10, -20.0f }, colors::White, 1500.0f); // Right bottom light
-		//AddPointLight({ 10, 30, 10.0f }, colors::White, 500.0f); // Back light
+		// Lights
+		AddDirectionalLight({ 0.577f, -0.577f, 0.577f }, { 1,1,1 }, 1.0f);
+		// AddPointLight({ -30.0f, 60, -40.0f }, colors::White, 3000.0f); // Front left light
+		// AddPointLight({ 40.0f, -10, -20.0f }, colors::White, 1500.0f); // Right bottom light
+		// AddPointLight({ 10, 30, 10.0f }, colors::White, 500.0f); // Back light
 
-
-		//AddPointLight({ -10.1473f, 70.2765f, -61.4862f }, ColorRGB::Lerp(colors::White, { 1.0f, 1.0f, 0.58f }, 0.4f), 1000.0f); //Front Light Left
-		//AddPointLight({  62.7225f, 47.0482f, -7.69772f }, ColorRGB::Lerp(colors::White, { 1.0f, 1.0f, 0.58f }, 0.4f), 1000.0f); //Front Light right
-		//AddPointLight({ -11.7184f, 40.9686f,  57.3831f }, ColorRGB::Lerp(colors::White,{ 1.0f, 0.651f, 0.678f},0.4f), 800.0f); //Backlight
+		m_OpaqueEffectPtr->SetLights(m_WorldLights);
 	}
 
 	void Renderer::InitializeSceneDiorama()
 	{
-		m_MaterialPtrMap.insert({ "uvGrid",new Material {
-Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
-} });
-
-
 		//m_AmbientColor = { 0.001f,0.001f,0.001f };
 		//m_ClearColor = { 10 };
 
-
 		//AddDirectionalLight({ 0.577f, -0.577f, 0.577f }, { 0.8f,0.8f,1.0f }, 0.5f);
 		m_OpaqueEffectPtr->SetLightDirection({ 0.577f, -0.577f, 0.577f });
+		m_OpaqueEffectPtr->SetUseNormalMap(true);
+		m_OpaqueEffectPtr->SetSampleState(0);
 
+		m_OpaqueEffectPtr->SetDiffuseStrengthKd(3.0f);
+		m_OpaqueEffectPtr->SetSampledPhongExponent(20.0f);
+		m_OpaqueEffectPtr->SetSpecularKs(0.2f);
 
 		//AddPointLight({ 135.7012f, 267.001f, -158.2f }, { 1.0f,0.9f,0.7f }, 10000.0f); // Fake sun
-
 		//AddPointLight({ -65.8307f, 163.166f, 129.75f }, { 1.0f,0.9f,0.7f }, 1000.0f); // Fake sun Back
-
-
-
 		//AddPointLight({ 118.023f, 70.663f, 103.019f }, colors::White, 2000.0f); // Car driving up
-
 		//AddPointLight({ -103.528f, 100.0746f, 10.4314f }, { 1.0f,0.7f,0.3f }, 700.0f); // Garage light
 
-
-		//m_DiffuseStrengthKd = 3.0f;
-		//m_PhongExponentExp = 20.0f;
-		//m_SpecularKs = 0.2f;
+		AddDirectionalLight({ 0.577f, -0.577f, 0.577f }, { 1,1,1 }, 1.0f);
+		m_OpaqueEffectPtr->SetLights(m_WorldLights);
 
 		m_CameraPtr->SetFovAngle(42);
 		m_CameraPtr->SetPosition({ -167.749f, 158.555f, -359.077f });
@@ -355,10 +399,11 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 		m_CameraPtr->SetNearClipping(1.0f);
 		m_CameraPtr->SetFarClipping(1000.0f);
 
-		//m_SpinSpeed = 0.0f;
-
-		Mesh* diorama = AddMesh("Diorama/DioramaGP.obj", m_OpaqueEffectPtr, "Diorama/DioramaGP.mtl");
-		diorama->SetScale(Vector3{ 1,1,1 } *15.0f);
+		const std::vector<Mesh*> diorama = AddMeshParse("Diorama/DioramaGP.obj", "Diorama/DioramaGP.mtl", m_OpaqueEffectPtr);
+		for (Mesh* mesh : diorama)
+		{
+			mesh->SetScale(Vector3{ 1,1,1 } *15.0f);
+		}
 	}
 
 
@@ -376,12 +421,29 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 		return newMesh;
 	}
 
-	Mesh* Renderer::AddMesh(const std::string& objName, EffectBase* effect, const std::string& mtlName)
+	std::vector<Mesh*> Renderer::AddMeshParse(const std::string& objName, const std::string& mtlName, EffectBase* effect, const std::string& pathPrefix)
 	{
-		Mesh* newMesh = new Mesh(m_DevicePtr, effect, objName, mtlName, m_MaterialPtrMap);
-		m_WorldMeshes.push_back(newMesh);
-		return newMesh;
+		std::map<std::string, Material*> parsedMaterials{};
+		Utils::ParseMTL(m_DevicePtr, mtlName, parsedMaterials, pathPrefix);
+
+		std::vector<Mesh*> meshes{};
+		Utils::ParseObjAndCreateMeshes(m_DevicePtr, effect, objName, meshes, parsedMaterials, pathPrefix);
+
+		m_WorldMeshes.insert(m_WorldMeshes.end(), meshes.begin(), meshes.end());
+
+		return meshes;
 	}
+
+	void Renderer::AddPointLight(const Vector3& origin, const ColorRGB& color, float intensity)
+	{
+		m_WorldLights.emplace_back(Light(origin, {}, color, intensity, LightType::Point));
+	}
+
+	void Renderer::AddDirectionalLight(const Vector3& direction, const ColorRGB& color, float intensity)
+	{
+		m_WorldLights.emplace_back(Vector3{ 0,0,0 }, direction.Normalized(), color, intensity, LightType::Directional);
+	}
+
 
 
 	void Renderer::Update(const Timer& timer)
@@ -410,13 +472,20 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 
 		// Clear RTV & DSV
 		m_DeviceContextPtr->ClearRenderTargetView(m_RenderTargetViewPtr, SCREEN_CLEAR_COLOR);
-		m_DeviceContextPtr->ClearDepthStencilView(m_DepthStencilViewPtr, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0.0f);
+		m_DeviceContextPtr->ClearDepthStencilView(m_DepthStencilViewPtr, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 		m_OpaqueEffectPtr->SetCameraOrigin(m_CameraPtr->GetOrigin());
 
 		// Render
+		// Oh my I hate this hack to toggle the fire so much!!! But it's quickly needed for the hand in :(
+		int mesh{};
 		for (const Mesh* worldMesh : m_WorldMeshes)
-			worldMesh->Render(m_DeviceContextPtr, m_CameraPtr->GetViewProjectionMatrixPtr());
+		{
+			if (!(mesh == 1 && !m_ShowFire))
+				worldMesh->Render(m_DeviceContextPtr, m_CameraPtr->GetViewProjectionMatrixPtr());
+
+			mesh++;
+		}
 
 		// Present Back buffer (Swap)
 		m_SwapChainPtr->Present(0, 0);
@@ -467,6 +536,17 @@ Texture::LoadFromFile(m_DevicePtr,"uv_grid_2.png"),
 			std::cout << "Normal Map Disabled" << std::endl;
 
 		m_OpaqueEffectPtr->SetUseNormalMap(m_UseNormalMap);
+	}
+
+	void Renderer::ToggleShowFire()
+	{
+		m_ShowFire = !m_ShowFire;
+
+		if (m_ShowFire)
+			std::cout << "Show Fire Enabled" << std::endl;
+		else
+			std::cout << "Show FireDisabled" << std::endl;
+
 	}
 
 

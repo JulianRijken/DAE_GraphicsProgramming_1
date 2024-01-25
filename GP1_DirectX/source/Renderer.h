@@ -12,6 +12,7 @@ struct SDL_Surface;
 
 namespace dae
 {
+	class Light;
 	class Texture;
 	class Camera;
 
@@ -70,6 +71,7 @@ namespace dae
 		void ToggleMeshRotation();
 		void CycleSampleState();
 		void ToggleUseNormalMap();
+		void ToggleShowFire();
 		
 		bool SaveBufferToImage() const;
 
@@ -78,14 +80,19 @@ namespace dae
 
 		HRESULT InitializeDirectX();
 
-		void InitializeSceneTriangle();
 		void InitializeSceneAssignment();
+		void InitializeSceneEnv();
+		void InitializeSceneHallway88();
 		void InitializeSceneCar();
 		void InitializeSceneDiorama();
 
 		Mesh* AddMesh(EffectBase* effect, const std::vector<VertexModel>& vertices, const std::vector<uint32_t>& indices, const std::vector<Material*>& materials);
 		Mesh* AddMesh(const std::string& objName, EffectBase* effect,const std::vector<Material*>& materials);
-		Mesh* AddMesh(const std::string& objName,EffectBase* effect, const std::string& mtlName);
+		std::vector<Mesh*> AddMeshParse(const std::string& objName, const std::string& mtlName, EffectBase* effect, const std::string& pathPrefix = "");
+
+		void AddPointLight(const Vector3& origin, const ColorRGB& color, float intensity);
+		void AddDirectionalLight(const Vector3& direction, const ColorRGB& color, float intensity);
+
 
 		inline static float ROTATIONS_PER_SECOND{0.125f /* (45 / 360) */};
 		
@@ -101,14 +108,17 @@ namespace dae
 		float m_OrbitCameraDistance{ 400.0f };
 	    bool m_RotateMesh{ false };
 		bool m_UseNormalMap{ true };
+		bool m_ShowFire{ true };
 		
 		Camera* m_CameraPtr;
 		DebugRenderMode m_RenderMode;
 
 		EffectOpaque* m_OpaqueEffectPtr;
 		EffectPartialCoverage* m_PartialCoverageEffectPtr;
+		EffectBase* m_TestingEffectPtr;
 
 		std::vector<Mesh*> m_WorldMeshes;
+		std::vector<Light> m_WorldLights;
 		std::map <std::string, Material* > m_MaterialPtrMap;
 
 		ID3D11Device*			m_DevicePtr{};

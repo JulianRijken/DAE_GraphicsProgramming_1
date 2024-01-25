@@ -21,20 +21,20 @@ EffectBase::EffectBase(ID3D11Device* devicePtr, const std::wstring& effectFileNa
 	IS_VALID_EFFECT(m_TechniquePtr)
 
 
-		////////////////
-		// Bind variable
-		////////////////
-		BIND(m_SampleStateVarPtr, "g_TextureSampler", AsSampler)
+	////////////////
+	// Bind variable
+	////////////////
+	BIND(m_SampleStateVarPtr, "g_TextureSampler", AsSampler)
 
-		BIND(m_WorldViewProjectionMatrixVarPtr, "g_WorldViewProjection", AsMatrix)
-		BIND(m_MeshWorldMatrixVarPtr, "g_MeshWorldMatrix", AsMatrix)
-		BIND(m_CameraOriginVarPtr, "g_CameraOrigin", AsVector)
-		BIND(m_LightDirectionVarPtr, "g_LightDirection", AsVector)
+	BIND(m_WorldViewProjectionMatrixVarPtr, "g_WorldViewProjection", AsMatrix)
+	BIND(m_MeshWorldMatrixVarPtr, "g_MeshWorldMatrix", AsMatrix)
+	BIND(m_CameraOriginVarPtr, "g_CameraOrigin", AsVector)
+	BIND(m_LightDirectionVarPtr, "g_LightDirection", AsVector)
 
-		BIND(m_DiffuseMapVarPtr, "g_DiffuseMap", AsShaderResource)
-		BIND(m_NormalMapVarPtr, "g_NormalMap", AsShaderResource)
-		BIND(m_SpecularMapVarPtr, "g_SpecularMap", AsShaderResource)
-		BIND(m_GlossMapVarPtr, "g_GlossMap", AsShaderResource)
+	BIND(m_DiffuseMapVarPtr, "g_DiffuseMap", AsShaderResource)
+	BIND(m_NormalMapVarPtr, "g_NormalMap", AsShaderResource)
+	BIND(m_SpecularMapVarPtr, "g_SpecularMap", AsShaderResource)
+	BIND(m_GlossMapVarPtr, "g_GlossMap", AsShaderResource)
 }
 
 EffectBase::~EffectBase()
